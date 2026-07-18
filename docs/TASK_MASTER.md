@@ -4,7 +4,9 @@
 
 This is the execution source of truth. Every branch, Codex task, PR, and handoff
 names exactly one task ID. A task is complete only when its acceptance criteria
-pass and its status is updated here.
+pass and its status is updated here. Any new shared field, state, outcome,
+error, environment name, version, or interface follows
+`CONTRACT_CHANGE_GUIDE.md` before dependent implementation starts.
 
 Status values:
 

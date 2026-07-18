@@ -116,10 +116,15 @@ assert.equal(
 const runtimeExample = await readFile(resolve(".env.example"), "utf8");
 const operatorExample = await readFile(resolve(".env.operator.example"), "utf8");
 const technologyStack = await readFile(resolve("docs/TECH_STACK.md"), "utf8");
+const agentsGuide = await readFile(resolve("AGENTS.md"), "utf8");
 const readme = await readFile(resolve("README.md"), "utf8");
 const productFlow = await readFile(resolve("docs/PRODUCT_FLOW.md"), "utf8");
 const sharedContracts = await readFile(
   resolve("docs/SHARED_CONTRACTS.md"),
+  "utf8",
+);
+const contractChangeGuide = await readFile(
+  resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
 );
 const taskMaster = await readFile(resolve("docs/TASK_MASTER.md"), "utf8");
@@ -128,11 +133,48 @@ const integrationProtocol = await readFile(
   "utf8",
 );
 const decisionLog = await readFile(resolve("docs/DECISION_LOG.md"), "utf8");
+const pullRequestTemplate = await readFile(
+  resolve(".github/pull_request_template.md"),
+  "utf8",
+);
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
 assert(operatorExample.includes("DATABASE_MIGRATION_URL="));
 assert.match(technologyStack, /Neon Serverless Postgres/);
 assert.match(technologyStack, /Supabase is not part of the unified runtime/);
 assert.match(technologyStack, /Vercel/);
+
+assertOrdered(agentsGuide, "AGENTS required reading", [
+  "`docs/SHARED_CONTRACTS.md`",
+  "`docs/CONTRACT_CHANGE_GUIDE.md`",
+  "`docs/TASK_MASTER.md`",
+]);
+assertOrdered(readme, "README start-here guide order", [
+  "[Shared contracts](docs/SHARED_CONTRACTS.md)",
+  "[Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)",
+  "[Task master](docs/TASK_MASTER.md)",
+]);
+assertOrdered(integrationProtocol, "Codex handoff reading order", [
+  "`docs/SHARED_CONTRACTS.md`",
+  "`docs/CONTRACT_CHANGE_GUIDE.md`",
+  "`docs/TASK_MASTER.md`",
+]);
+assertOrdered(contractChangeGuide, "contract change guide", [
+  "## Is this a shared contract change?",
+  "## Required workflow",
+  "[CONTRACT CHANGE REQUEST]",
+  "## Codex prompt template",
+  "## Reviewer checklist",
+]);
+assert.match(taskMaster, /`CONTRACT_CHANGE_GUIDE\.md`/);
+assert.match(pullRequestTemplate, /## Change classification/);
+assert.match(
+  pullRequestTemplate,
+  /Contract version or cache identity impact:/,
+);
+assert.match(
+  pullRequestTemplate,
+  /`CONTRACT_CHANGE_GUIDE\.md` followed when a shared contract changed/,
+);
 
 assertOrdered(readme, "README submission flow", [
   "-> compact menu extraction",

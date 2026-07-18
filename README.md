@@ -52,10 +52,11 @@ repository.
 1. [Approved technology stack](docs/TECH_STACK.md)
 2. [Product flow](docs/PRODUCT_FLOW.md)
 3. [Shared contracts](docs/SHARED_CONTRACTS.md)
-4. [Task master](docs/TASK_MASTER.md)
-5. [Team ownership](docs/TEAM_OWNERSHIP.md)
-6. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
-7. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
+4. [Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)
+5. [Task master](docs/TASK_MASTER.md)
+6. [Team ownership](docs/TEAM_OWNERSHIP.md)
+7. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
+8. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
 
 ## First gate
 

@@ -76,8 +76,9 @@ Every Codex task starts by reading:
 2. `docs/TECH_STACK.md`
 3. `docs/PRODUCT_FLOW.md`
 4. `docs/SHARED_CONTRACTS.md`
-5. the assigned task in `docs/TASK_MASTER.md`
-6. the owning package README and tests
+5. `docs/CONTRACT_CHANGE_GUIDE.md`
+6. the assigned task in `docs/TASK_MASTER.md`
+7. the owning package README and tests
 
 The task prompt must name:
 
@@ -88,6 +89,10 @@ The task prompt must name:
 - prohibited actions;
 - whether network, provider, database, Preview, or Production access is
   authorized.
+
+Any task that discovers a new cross-package field, state, error, environment
+name, version, or interface follows `CONTRACT_CHANGE_GUIDE.md` before adding
+the dependent implementation.
 
 The final report records commit SHA, files changed, validation, contract
 versions, environment names only, and any remaining gate.

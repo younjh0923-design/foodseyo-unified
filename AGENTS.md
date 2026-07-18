@@ -5,9 +5,10 @@ Read these files before making changes:
 1. `docs/TECH_STACK.md`
 2. `docs/PRODUCT_FLOW.md`
 3. `docs/SHARED_CONTRACTS.md`
-4. `docs/TASK_MASTER.md`
-5. `docs/TEAM_OWNERSHIP.md`
-6. `docs/INTEGRATION_PROTOCOL.md`
+4. `docs/CONTRACT_CHANGE_GUIDE.md`
+5. `docs/TASK_MASTER.md`
+6. `docs/TEAM_OWNERSHIP.md`
+7. `docs/INTEGRATION_PROTOCOL.md`
 
 ## Product boundary
 
@@ -28,6 +29,8 @@ Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
   a new environment name, or automatic deployment behavior.
 - Do not redefine shared enums or status strings inside an app or feature
   package.
+- Follow `docs/CONTRACT_CHANGE_GUIDE.md` whenever a task discovers a new shared
+  field, state, outcome, error, environment name, version, or interface.
 - Contract changes require a dedicated contract PR and review from all three
   workstream owners before dependent implementation merges.
 - Do not weaken source provenance, restaurant confirmation, cache identity,
