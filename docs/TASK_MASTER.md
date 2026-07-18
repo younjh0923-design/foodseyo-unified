@@ -18,15 +18,15 @@ Status values:
 - `DEFERRED`: outside the submission cut and never used for a required flow
   capability.
 
-A task whose dependency is not `DONE` remains `BLOCKED`. For coordinated
-milestone tasks intentionally landing in one PR, such as U1, an output approved
-in `REVIEW` inside that PR may unblock the next milestone task without
-pretending the PR is already merged. `DONE` still means the completed output is
-on `main`.
+A task whose dependency is not `DONE` remains `BLOCKED`. `REVIEW` means the
+current output is ready for its required reviewers; `DONE` means the approved
+output is merged into `main`. An ordered U1 task does not unblock its successor
+until it is `DONE`.
 
 ## Non-negotiable program rules
 
-- No implementation before U1 shared contracts are approved.
+- No implementation before U1.6 freezes the selected shared contracts at
+  `1.0.0`.
 - No local copy of shared vocabulary, environment names, or version tokens.
 - No real OpenAI call in automated validation.
 - No Preview or Production migration or deployment without its release task.
@@ -72,26 +72,36 @@ on `main`.
 
 ## Milestone U1 - Freeze the team compatibility contract
 
-All U1 tasks land in one contract PR before feature branches begin.
+U1 lands through small, ordered, contract-only PRs. Contracts remain
+`0.1.0`/`draft` throughout U1. Feature branches begin only after U1.6 promotes
+the selected contracts to `1.0.0` with all-owner approval.
 
 Execution order:
 
-1. U1.1 approves product and evidence invariants.
+1. U1.1 approves product, evidence, ownership, and trust-boundary invariants.
 2. U1.2 and U1.4 may proceed after U1.1.
 3. U1.3 proceeds after U1.2.
 4. U1.5 proceeds after U1.3.
-5. All three owners approve the complete U1 contract PR before merge.
+5. U1.6 verifies the complete compatibility contract and promotes it to
+   `1.0.0`.
+6. U1 proposals may be registered in parallel without approval. Contract PRs
+   obey task dependencies and the approval tier in
+   `CONTRACT_CHANGE_QUEUE.md`; U1 cross-cutting decisions and the final freeze
+   receive all-owner review.
 
-### U1.1 Approve product and evidence invariants
+### U1.1 Approve product, evidence, ownership, and trust invariants
 
 - **Owner:** all three
 - **Dependency:** U0.2
-- **Status:** READY
+- **Status:** REVIEW
 - **Decide:** restaurant/menu/Dish boundaries, evidence precedence, unknown
-  semantics, source/general labeling, raw-image retention, and the minimum
-  submission Dish boundary versus advanced P3 scope.
-- **Acceptance:** all three approve `PRODUCT_FLOW.md`; unresolved items are
-  explicitly marked rather than inferred.
+  semantics, source/general labeling, raw-image retention, minimum submission
+  Dish boundary versus advanced P3 scope, workstream ownership, and guarded
+  semantic handoffs.
+- **Acceptance:** all three approve `PRODUCT_FLOW.md` and
+  `TEAM_OWNERSHIP.md`; direct YTW-to-Juhyung data is limited to UI-safe
+  operational fields; unresolved items are explicitly marked rather than
+  inferred.
 
 ### U1.2 Freeze shared vocabulary
 
@@ -103,12 +113,14 @@ Execution order:
 - **Decide:** allowed sensory values, ingredient roles, restaurant states,
   menu scopes, menu lifecycle, Dish match states, knowledge review states.
 - **Acceptance:** no ambiguous `taste` field; heat/richness cannot mix; contract
-  tests pass; selected version becomes `1.0.0`.
+  tests pass; the candidate vocabulary is complete but remains `0.1.0`/`draft`
+  until U1.6.
 
 ### U1.3 Freeze boundary DTOs
 
 - **Owner:** Youn
-- **Inputs:** Juhyung source needs, YTW UI needs
+- **Inputs:** YTW upstream producer needs, Juhyung explanation/UI consumer
+  needs
 - **Dependency:** U1.2
 - **Status:** BLOCKED
 - **Blocked by:** U1.2
@@ -144,18 +156,35 @@ Execution order:
 - **Status:** BLOCKED
 - **Blocked by:** U1.3
 - **Acceptance:** each package publishes an interface and fake adapter; no
-  feature package imports another package's internals.
+  feature package imports another package's internals; UI-safe operational data
+  is distinct from semantic extraction; unvalidated menu meaning cannot reach
+  explanation or final presentation.
+
+### U1.6 Approve and publish compatibility contract 1.0.0
+
+- **Owner:** all three
+- **Dependency:** U1.2, U1.3, U1.4, U1.5
+- **Status:** BLOCKED
+- **Blocked by:** U1.2, U1.3, U1.4, and U1.5
+- **Scope:** verify vocabulary, DTOs, outcomes, environment registry, versions,
+  package interfaces, fixtures, invalid cases, and ownership handoffs as one
+  compatible system.
+- **Acceptance:** all three approve the exact final HEAD; selected contract and
+  package versions are `1.0.0`; `pnpm verify` passes; the freeze is merged to
+  `main`; only then may U2 feature branches begin.
 
 ## Milestone U2 - Parallel greenfield foundations
 
-U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
+U2 starts only after U1.6 is `DONE`. U2.1, U2.2, U2.3, and U2.4 then run in
+parallel against the frozen interfaces and deterministic fakes.
 
 ### U2.1 Data and pipeline foundation
 
 - **Owner:** Youn
 - **Branch:** `data/pipeline-foundation`
-- **Dependency:** U1
+- **Dependency:** U1.6
 - **Status:** BLOCKED
+- **Blocked by:** U1.6
 - **Scope:** application service interfaces, canonical validator, deterministic
   merge-policy skeleton, fake repositories, transaction boundary.
 - **No:** Neon migration or connection, live database, provider call, UI.
@@ -164,10 +193,11 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 ### U2.2 Source acquisition foundation
 
-- **Owner:** Juhyung
+- **Owner:** YTW
 - **Branch:** `sources/acquisition-foundation`
-- **Dependency:** U1
+- **Dependency:** U1.6
 - **Status:** BLOCKED
+- **Blocked by:** U1.6
 - **Scope:** uploaded-menu adapter and interface-only adapters for official web,
   PDF, ordering page, and Web Search discovery; source classification and
   normalized `MenuSourceInput`.
@@ -176,25 +206,46 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Acceptance:** deterministic fixtures cover supported, unsupported,
   duplicate, conflicting, timeout, and no-source cases.
 
-### U2.3 Restaurant and web foundation
+### U2.3 Restaurant-resolution foundation
 
 - **Owner:** YTW
-- **Branch:** `restaurant/web-foundation`
-- **Dependency:** U1
+- **Branch:** `restaurant/resolution-foundation`
+- **Dependency:** U1.6
 - **Status:** BLOCKED
-- **Scope:** mobile shell, upload/review UI, restaurant candidate/confirmation
-  UI, fake Google Places adapter, result source/general separation.
-- **No:** real Places call in tests, restaurant auto-confirmation, persistent
-  image storage, fake success claims.
-- **Acceptance:** accessible mobile flow works end-to-end with deterministic
-  fixtures and no horizontal overflow.
+- **Blocked by:** U1.6
+- **Scope:** server-side intake contract, restaurant candidate and confirmation
+  service, fake Google Places adapter, confirmation evidence, and UI-safe
+  candidate/progress/action/outcome data.
+- **No:** browser provider call, real Places call in tests, restaurant
+  auto-confirmation, persistent image storage, canonical menu claims, or fake
+  success.
+- **Acceptance:** deterministic fixtures cover candidate, confirmed,
+  conflicting, rejected, location-unavailable, and menu-only fallback cases;
+  no UI-safe DTO contains provider internals or unvalidated menu meaning.
 
-### U2.4 Continuous integration
+### U2.4 Web and result-experience foundation
+
+- **Owner:** Juhyung
+- **Branch:** `ui/result-experience-foundation`
+- **Dependency:** U1.6
+- **Status:** BLOCKED
+- **Blocked by:** U1.6
+- **Scope:** mobile shell, photo/link input, upload review, restaurant
+  candidate and confirmation presentation, progress and retry states, plus
+  result screens driven by frozen fake application view models.
+- **No:** direct Google/OpenAI call from the browser, provider DTO, database
+  row, unvalidated menu claim, or fake capability claim.
+- **Acceptance:** accessible deterministic flows cover input, user
+  confirmation, official-source progress, fallback progress, safe errors,
+  source/general/unknown presentation, input preservation, and no horizontal
+  overflow.
+
+### U2.5 Continuous integration
 
 - **Owner:** Youn
-- **Dependency:** U1
+- **Dependency:** U1.6
 - **Status:** BLOCKED
-- **Blocked by:** U1
+- **Blocked by:** U1.6
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
@@ -220,7 +271,7 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 ### S1.2 Official menu-source acquisition
 
-- **Owner:** Juhyung
+- **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.2
 - **Status:** BLOCKED
@@ -236,7 +287,7 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 ### S1.3 OpenAI Web Search menu fallback
 
-- **Owner:** Juhyung
+- **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** S1.2
 - **Status:** BLOCKED
@@ -252,8 +303,9 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 ### S1.4 Compact menu extraction
 
-- **Owner:** Juhyung
-- **Reviewer:** Youn
+- **Owner:** YTW
+- **Reviewers:** Youn for canonical/provenance boundary; Juhyung for
+  downstream consumption
 - **Dependency:** S1.2, S1.3
 - **Status:** BLOCKED
 - **Blocked by:** S1.2 and S1.3
@@ -267,7 +319,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 ### S1.5 Canonical normalization and validation
 
 - **Owner:** Youn
-- **Reviewer:** Juhyung
+- **Reviewers:** YTW for extraction/provenance input; Juhyung for
+  explanation/UI consumption
 - **Dependency:** U2.1, S1.4
 - **Status:** BLOCKED
 - **Blocked by:** U2.1 and S1.4
@@ -279,7 +332,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 ### S1.6 Juhyung menu and dish explanation
 
 - **Owner:** Juhyung
-- **Reviewers:** Youn for canonical/safety contracts; YTW for presentation
+- **Reviewers:** Youn for canonical/safety contracts; YTW for upstream outcome
+  compatibility
 - **Dependency:** S1.5
 - **Status:** BLOCKED
 - **Blocked by:** S1.5
@@ -293,11 +347,11 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 ### S1.7 Integrated mobile experience
 
-- **Owner:** YTW
-- **Reviewers:** Youn, Juhyung
-- **Dependency:** S1.1, S1.2, S1.3, S1.5, S1.6
+- **Owner:** Juhyung
+- **Reviewers:** Youn, YTW
+- **Dependency:** U2.4, S1.1, S1.2, S1.3, S1.5, S1.6
 - **Status:** BLOCKED
-- **Blocked by:** S1.1, S1.2, S1.3, S1.5, and S1.6
+- **Blocked by:** U2.4, S1.1, S1.2, S1.3, S1.5, and S1.6
 - **Scope:** photo and link intake, restaurant confirmation, source-acquisition
   progress/fallback state, overview, category disclosures, Dish Detail,
   source/general labels, safety notice, and retry-safe errors.
@@ -447,8 +501,8 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The next contract activity is **U1.1 - Approve product and evidence
-invariants**, followed by the dependency order documented above. All U1 outputs
-land in one contract PR. Do not start U2 feature code until all three owners
-approve U1 and the selected contract versions are promoted from `0.1.0` to
+The current contract activity is **U1.1 - Approve product, evidence, ownership,
+and trust-boundary invariants**. After its all-owner review and merge, continue
+through the ordered U1 dependencies. Do not start U2 feature code until U1.6 is
+`DONE` and the selected contract versions are promoted from `0.1.0`/`draft` to
 `1.0.0`.

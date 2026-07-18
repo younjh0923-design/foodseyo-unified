@@ -6,9 +6,10 @@ Read these files before making changes:
 2. `docs/PRODUCT_FLOW.md`
 3. `docs/SHARED_CONTRACTS.md`
 4. `docs/CONTRACT_CHANGE_GUIDE.md`
-5. `docs/TASK_MASTER.md`
-6. `docs/TEAM_OWNERSHIP.md`
-7. `docs/INTEGRATION_PROTOCOL.md`
+5. `docs/CONTRACT_CHANGE_QUEUE.md`
+6. `docs/TASK_MASTER.md`
+7. `docs/TEAM_OWNERSHIP.md`
+8. `docs/INTEGRATION_PROTOCOL.md`
 
 ## Product boundary
 
@@ -19,6 +20,23 @@ precedence:
 `source_stated > inferred_from_source > culinary_baseline > unknown`
 
 Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
+
+## Workstream and trust boundaries
+
+- YTW owns the upstream server-side path from normalized photo/link input
+  through restaurant resolution, menu-source acquisition, Web Search fallback,
+  and compact extraction.
+- Youn owns canonical normalization, culinary and safety rules, persistence,
+  cache, integration validation, and release gates.
+- Juhyung owns constrained explanation and the mobile-first user experience.
+- YTW may send only UI-safe candidates, progress, user-action states, and typed
+  outcomes directly to Juhyung. Extracted menu meaning and provenance must pass
+  through Youn-owned canonical validation before Juhyung may explain or prepare
+  them for result presentation; final publication remains behind Youn's
+  persistence and integration gate.
+- These boundaries prohibit unilateral implementation in another owner's area;
+  they do not prohibit review, integration testing, or an approved contract
+  change.
 
 ## Contract-first development
 
@@ -31,8 +49,14 @@ Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
   package.
 - Follow `docs/CONTRACT_CHANGE_GUIDE.md` whenever a task discovers a new shared
   field, state, outcome, error, environment name, version, or interface.
-- Contract changes require a dedicated contract PR and review from all three
-  workstream owners before dependent implementation merges.
+- Register proposed shared changes in the GitHub contract-change queue before
+  implementation. Registration requires no approval and does not change the
+  active contract.
+- Contract changes require a dedicated contract PR and the impact-tier approval
+  defined in `docs/CONTRACT_CHANGE_QUEUE.md`. Cross-cutting or final-freeze
+  changes still require all three owners.
+- No feature implementation begins until the final U1 compatibility freeze is
+  merged and the selected contracts are `1.0.0`.
 - Do not weaken source provenance, restaurant confirmation, cache identity,
   ownership, transaction, or safety rules to make a feature easier.
 
@@ -43,6 +67,15 @@ autonomously. Ask the account holder only for login, MFA, account registration,
 legal acceptance, billing, secret entry that cannot remain inside an
 authenticated tool session, or an unapproved irreversible Production action.
 Use official CLI/API fallbacks when browser automation fails.
+
+## Session startup queue check
+
+Before selecting or continuing repository work, inspect every open GitHub
+contract-change proposal, then deeply review items in the current workstream,
+assigned to the current owner, or marked cross-workstream. Report relevant new
+or blocking proposals before implementation. If labels are unavailable, search
+open issue titles for `[CONTRACT CHANGE]`. Never treat unavailable GitHub access
+as an empty queue or consume an unmerged proposed shape.
 
 Never:
 

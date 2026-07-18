@@ -16,4 +16,8 @@ Development, Preview, and Production use isolated Neon branches. Development
 is always validated first; Preview and Production require their explicit
 release checkpoints.
 
-Implementation starts after U1 and requires a Development database checkpoint.
+This package does not accept unvalidated provider DTOs, expose ORM types or
+database rows to the UI, or implement provider and presentation behavior.
+
+Implementation starts only after U1.6 and requires a Development database
+checkpoint.

@@ -2,97 +2,165 @@
 
 ## Ownership model
 
-Each workstream has one accountable owner and at least one reviewer. Ownership
-means deciding implementation details inside an approved contract, maintaining
-tests, and updating the task master. It does not permit unilateral changes to
-shared contracts.
+Each workstream has one accountable owner and named reviewers. Ownership means
+deciding implementation details inside an approved contract, maintaining tests,
+and updating the task master. It does not permit unilateral changes to shared
+contracts or another owner's implementation.
+
+A "does not own" boundary prevents duplicate implementation and trust bypass.
+It does not prevent an owner from reviewing another area, reporting a defect,
+contributing an approved fix, or participating in integration tests.
+
+## Runtime trust flow
+
+The workstreams develop against frozen fakes and interfaces in parallel after
+U1.6. Runtime data does not fan out without regard to trust:
+
+```text
+Juhyung input UI
+  -> approved application boundary
+  -> YTW server intake, restaurant resolution, acquisition, extraction
+       -> UI-safe candidate/progress/action/outcome data -> Juhyung UI
+       -> extracted menu meaning and provenance -> Youn canonical validation
+  -> Youn validated canonical application data
+       -> Juhyung constrained explanation
+       -> Youn persistence, cache, integration, and publication gate
+       -> Juhyung final result UI
+```
+
+The direct YTW-to-Juhyung lane never carries raw provider output, source
+bodies, unvalidated menu meaning, or claims presented as final analysis.
 
 ## Roles
 
-### Youn (`younjh0923-design`) - architecture, contracts, data, integration
+### YTW (`ytw010629`) - upstream intake, restaurant resolution, acquisition, extraction
 
 Primary ownership:
 
-- `packages/contracts`
-- `packages/database`
-- `packages/merge-policy`
-- repository CI, security, integration, and release gates
-- final canonical validation and cross-workstream integration
+- server-side photo/link intake normalization;
+- `packages/restaurant-resolution`;
+- Google Places candidates, confirmation evidence, and safe fallback;
+- `packages/source-acquisition`;
+- official website, PDF, ordering-page, and Web Search acquisition;
+- source classification, URL and provenance handling, and acquisition fixtures;
+- compact menu extraction and its provider adapter in
+  `packages/menu-analysis`;
+- typed upstream no-result, timeout, invalid-source, and user-action outcomes;
+- UI-safe candidate, progress, and confirmation data supplied through shared
+  contracts.
 
-Reference strengths:
+YTW does not unilaterally:
 
-- canonical data and evidence contracts;
-- PostgreSQL integrity, transactions, exact cache, and ownership;
-- network-free validation and rollout discipline.
+- implement the mobile UI or decide final presentation;
+- treat provider extraction as canonical fact;
+- add culinary vocabulary, evidence precedence, or safety rules;
+- write directly to the database or expose database rows;
+- send raw provider responses, source bodies, or unvalidated menu claims to
+  the UI;
+- add a shared DTO, state, error, environment name, or version outside a
+  contract PR;
+- migrate, deploy, or change Preview or Production.
 
-### Juhyung (`juhyungbaek0621`) - menu acquisition, provider adapters, and explanation
-
-Primary ownership:
-
-- `packages/source-acquisition`
-- official-site, PDF, ordering-page, and Web Search discovery adapters
-- source classification, source normalization, and acquisition fixtures
-- provider request construction and bounded source extraction
-- menu and dish explanation implementation, provider prompt, and deterministic
-  explanation fallback
-
-Reference strengths:
-
-- compact mobile exploration;
-- multilingual menu handling;
-- source acquisition, menu explanation, and progressive detail concepts.
-
-### YTW (`ytw010629`) - restaurant resolution and product experience
+### Youn (`younjh0923-design`) - contracts, canonical truth, data, integration
 
 Primary ownership:
 
-- `packages/restaurant-resolution`
-- Google Places candidate search and confirmation UX
-- `apps/web`
-- menu evidence versus general-guidance presentation
-- mobile accessibility and end-to-end user flow
+- `packages/contracts`;
+- canonical normalization and semantic validation in
+  `packages/menu-analysis`;
+- culinary vocabulary, separate sensory axes, evidence precedence, unknown,
+  allergen, and dietary-safety rules;
+- `packages/dish-knowledge`;
+- `packages/merge-policy`;
+- `packages/database`;
+- Neon PostgreSQL, Drizzle, migrations, roles, repositories, transactions,
+  exact cache, ownership, and restaurant-menu reuse;
+- privacy-safe observability contracts;
+- repository CI, security, cross-workstream integration, and release gates.
 
-Reference strengths:
+Youn does not unilaterally:
 
-- restaurant context confirmation;
-- source references and source/general knowledge separation;
-- restaurant/menu-first mobile interaction.
+- implement Google Places, official-source, Web Search, or compact-extraction
+  adapter internals;
+- accept a provider DTO as the canonical or database contract;
+- persist an unvalidated or partial menu structure;
+- implement the mobile UI or decide Juhyung-owned explanation wording;
+- expose ORM types or database rows to the web application;
+- change YTW or Juhyung interfaces without the shared-contract process;
+- modify Preview or Production without the explicit release checkpoint.
+
+### Juhyung (`juhyungbaek0621`) - constrained explanation and user experience
+
+Primary ownership:
+
+- `apps/web`;
+- mobile-first photo/link input and review experience;
+- restaurant candidate, confirmation, progress, and fallback presentation;
+- constrained menu and Dish explanation in `packages/menu-analysis`;
+- explanation prompt, bounded retry, deterministic fallback, and renderer
+  semantics;
+- source-stated, inferred, culinary-baseline, and unknown presentation;
+- overview, category disclosure, Dish Detail, safe error, retry, and input
+  preservation flows;
+- accessibility, mobile overflow, navigation, and end-to-end user experience.
+
+Juhyung does not unilaterally:
+
+- call Google Places, source-acquisition, Web Search, or extraction providers
+  from the browser;
+- present YTW's unvalidated extraction as final analysis;
+- consume provider DTOs, provider responses, ORM types, or database rows;
+- add facts, ingredients, sensory values, certainty, dietary claims, or
+  allergen claims absent from validated canonical data;
+- convert `unknown` into absence, false, dietary-safe, or allergen-safe;
+- define a local shared state, error, vocabulary value, environment name, or
+  version;
+- write cache or persistence policy, migrate, deploy, or change Production.
 
 ## Shared responsibilities
 
-- All three approve `@foodseyo/contracts` version `1.0.0`.
-- Each feature PR has a reviewer from another workstream.
-- Any database, safety, privacy, or Production change requires Youn review.
-- Any source-acquisition or provider-boundary change requires Juhyung review.
-- Any menu/dish explanation implementation change requires Juhyung review and
-  Youn review for canonical, evidence, and safety compliance.
-- Any restaurant-resolution or user-visible workflow change requires YTW
-  review.
-- Every owner supplies deterministic fixtures and a short handoff for another
-  Codex task to continue the work.
+- All three approve the U1.6 `@foodseyo/contracts` version `1.0.0` freeze.
+- Anyone may register a contract proposal without approval. Scoped shared
+  contract PRs receive approval from the accountable owner and every directly
+  affected owner, with at least two people total.
+- Cross-cutting semantic, safety, persistence/cache, environment/platform,
+  ownership/trust, and breaking changes receive all-owner review.
+- Every feature PR has a reviewer from another affected workstream.
+- YTW reviews upstream intake, restaurant, acquisition, and extraction changes.
+- Youn reviews canonical, evidence, safety, privacy, database, cache, and
+  release changes.
+- Juhyung reviews constrained explanation and user-visible workflow changes.
+- Every owner supplies deterministic fixtures and a short handoff that another
+  Codex task can execute without private chat context.
+- All owners participate in integrated adversarial validation and the final
+  release decision.
 
 ## Directory ownership
 
 ```text
-/packages/contracts/              Youn + all-owner approval
+/packages/contracts/              Youn + impact-tier owner approval
 /packages/database/               Youn
+/packages/dish-knowledge/         Youn
 /packages/merge-policy/           Youn
-/packages/source-acquisition/     Juhyung
-/packages/menu-analysis/          Juhyung for provider/explanation; Youn for canonical validation
+/packages/observability/          Youn
+/packages/source-acquisition/     YTW; Youn reviews security/provenance
 /packages/restaurant-resolution/  YTW
-/apps/web/                         YTW
-/docs/                             owner of changed contract + one reviewer
+/packages/menu-analysis/          YTW extraction; Youn canonical; Juhyung explanation
+/apps/web/                         Juhyung
+/docs/                             accountable owner + affected reviewers
 /.github/                          Youn
 ```
 
 ## Avoiding integration conflicts
 
 - Do not have two people edit the same shared contract in separate feature PRs.
-- Land contract PRs before dependent feature work.
+- Land the ordered U1 contract PRs and the U1.6 freeze before feature work.
 - Keep fixtures in the owning package, not a global unstructured folder.
-- UI imports view models from an application boundary; it does not import
-  database rows.
+- UI imports application view models from an approved boundary; it does not
+  import provider DTOs or database rows.
 - Database repositories accept and return contract DTOs; they do not leak ORM
   types.
 - Provider adapters return provider DTOs that are normalized before becoming
   canonical types.
+- A direct upstream-to-UI event contains only fields explicitly approved as
+  UI-safe operational data.

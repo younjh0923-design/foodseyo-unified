@@ -129,38 +129,69 @@ version token. Moving branch names and model aliases are not version evidence.
 - Source collection, menu validity, and knowledge review time are different
   fields.
 
+## Workstream handoffs
+
+The team implements against frozen interfaces in parallel after U1.6. Parallel
+development does not mean that the same untrusted payload is broadcast to
+every workstream.
+
+1. Juhyung's web input experience submits photos, links, and user actions
+   through an approved application boundary.
+2. YTW owns server-side intake normalization, restaurant resolution, official
+   and Web Search acquisition, and compact extraction.
+3. YTW may return only UI-safe candidates, progress, user-action states, and
+   typed outcomes directly to Juhyung.
+4. YTW sends structured extraction, safe source references, and provenance to
+   Youn-owned canonical validation.
+5. Youn sends only validated canonical application data to Juhyung for
+   constrained explanation and result-view preparation.
+6. Juhyung returns only contract-valid constrained explanation output through
+   the application boundary.
+7. Youn owns atomic persistence, cache publication, final integration
+   validation, and the publication gate.
+8. Juhyung presents the final analysis result only after that publication gate
+   succeeds or an explicitly frozen safe fallback permits otherwise.
+
+Exact DTO names and fields remain a U1.3 decision. No package may invent a
+temporary local handoff shape while that contract is pending.
+
 ## Package boundaries
 
 ```text
 apps/web
-  consumes contracts and application services
+  Juhyung owns the mobile-first input, progress, confirmation, explanation, and
+  result experience; it consumes contracts and application services
 
 packages/contracts
-  owns vocabulary, schemas, versions, public error codes, environment names
+  Youn owns vocabulary, schemas, versions, public error codes, environment
+  names, and cross-workstream interfaces with impact-tier review
 
 packages/restaurant-resolution
-  owns Google Places candidates and confirmation evidence
+  YTW owns Google Places candidates, confirmation evidence, and UI-safe
+  restaurant-resolution outcomes
 
 packages/source-acquisition
-  owns official sources, PDFs, order pages, and Web Search discovery
+  YTW owns uploaded-menu intake plus official sources, PDFs, order pages, and
+  Web Search discovery
 
 packages/menu-analysis
-  owns compact extraction, provider adapters, and Juhyung's constrained
-  menu/dish explanation; canonical normalization and semantic validation remain
-  Youn-owned boundaries
+  YTW owns compact extraction and its provider adapter; Youn owns canonical
+  normalization and semantic validation; Juhyung owns constrained menu/dish
+  explanation
 
 packages/dish-knowledge
-  owns Dish candidates, reviewed baselines, and typed culinary claims
+  Youn owns Dish candidates, reviewed baselines, and typed culinary claims
 
 packages/merge-policy
-  owns evidence precedence and effective profiles
+  Youn owns evidence precedence and effective profiles
 
 packages/database
-  owns Neon PostgreSQL integration, Drizzle schema, migrations, roles,
-  repositories, transactions
+  Youn owns Neon PostgreSQL integration, Drizzle schema, migrations, roles,
+  repositories, transactions, cache, and ownership
 
 packages/observability
-  owns privacy-safe event names and fields
+  Youn owns privacy-safe event names and fields; all workstreams emit only
+  approved fields
 ```
 
 Feature packages depend on `contracts`, not on each other's internal files.
@@ -188,11 +219,18 @@ Cross-feature calls use an exported interface or application service.
 
 ## Contract-change protocol
 
-1. Open a contract-only PR.
-2. Explain semantic impact and migration/cache consequences.
-3. Update contract tests and the decision log.
-4. Obtain review from all three workstream owners.
-5. Merge the contract PR.
-6. Rebase dependent feature branches and implement against the merged version.
+1. Register the proposal in the GitHub contract-change queue without waiting
+   for unrelated proposals.
+2. Triage its area, affected owners, approval tier, dependencies, and duplicate
+   or conflicting proposals.
+3. Open a contract-only PR when its task dependency permits.
+4. Explain semantic impact and migration/cache consequences.
+5. Update contract tests and the decision log.
+6. Obtain the impact-tier approvals defined in
+   `CONTRACT_CHANGE_QUEUE.md`; cross-cutting changes and U1.6 require all three.
+7. Merge the contract PR.
+8. Before U1.6, continue only the next dependency-eligible contract task.
+9. After U1.6 promotes the selected contracts to `1.0.0`, update feature
+   branches from `main` and implement against the frozen version.
 
 No feature PR may quietly modify a shared string or version.

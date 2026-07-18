@@ -19,6 +19,8 @@
   review-time compatibility.
 - **Impact:** Contract changes land before feature changes and require all-owner
   review.
+- **Governance status:** The universal approval detail is superseded by U-009;
+  contract-first sequencing remains accepted.
 - **Status:** Accepted
 - **Date:** 2026-07-18
 
@@ -53,10 +55,12 @@
   submission critical path. Release is blocked if any required path is not
   green. Source breadth, advanced Dish coverage, and nonessential polish may be
   reduced to protect the deadline.
-- **Ownership:** YTW owns Places resolution and the mobile experience; Juhyung
-  owns source acquisition, Web Search, provider adapters, and menu/dish
-  explanation; Youn owns contracts, normalization, merge/safety validation,
-  database, integration, and release gates.
+- **Original ownership:** YTW owned Places resolution and the mobile
+  experience; Juhyung owned source acquisition, Web Search, provider adapters,
+  and menu/dish explanation; Youn owned contracts, normalization, merge/safety
+  validation, database, integration, and release gates.
+- **Ownership status:** Superseded by U-008 without changing the required
+  product flow.
 - **Status:** Accepted
 - **Date:** 2026-07-18
 
@@ -91,7 +95,8 @@
   interfaces use `extraction -> canonical validation -> explanation ->
   persistence`. Until U1 freezes the minimum Dish boundary, no implementation
   assumes that a reviewed baseline exists.
-- **Status:** Proposed - pending all-owner review
+- **Approval evidence:** All-owner review and merge of PR #3.
+- **Status:** Accepted
 - **Date:** 2026-07-18
 
 ## U-007 - Manual PR enforcement on the current private plan
@@ -103,8 +108,59 @@
   expose branch protection for this private repository.
 - **Impact:** No feature or contract change is pushed directly to `main`.
   Feature PRs require a non-author owner review; shared-contract PRs require all
-  three owner approvals. U2.4 revisits automated checks and protection when
+  three owner approvals. U2.5 revisits automated checks and protection when
   supported. This decision does not authorize billing or repository-visibility
   changes.
-- **Status:** Proposed - pending all-owner review
+- **Governance status:** The universal shared-contract approval detail is
+  superseded by U-009; recorded PR review and no-direct-main-push rules remain.
+- **Approval evidence:** All-owner review and merge of PR #3.
+- **Status:** Accepted
+- **Date:** 2026-07-18
+
+## U-008 - Parallel workstreams with guarded semantic handoffs
+
+- **Decision:** YTW owns the upstream server path from normalized input through
+  restaurant resolution, menu-source acquisition, Web Search fallback, and
+  compact extraction. Youn owns canonical normalization, culinary and safety
+  contracts, persistence, cache, integration validation, and release gates.
+  Juhyung owns constrained explanation and the mobile-first user experience.
+- **Trust boundary:** YTW may send UI-safe candidates, progress, confirmation
+  requests, user-action states, and typed outcomes directly to Juhyung.
+  Extracted menu meaning and provenance go to Youn; Juhyung receives them for
+  explanation or final result presentation only after canonical validation.
+- **Parallelism:** After U1.6 freezes the selected contracts at `1.0.0`, all
+  three workstreams implement concurrently against shared interfaces and
+  deterministic fakes. Parallel development does not bypass the runtime trust
+  order.
+- **Meaning of exclusions:** A "does not own" list prevents duplicate or
+  bypassing implementation. It does not prohibit review, defect reporting,
+  integration testing, or a separately approved contract change.
+- **Impact:** `TEAM_OWNERSHIP.md`, `TASK_MASTER.md`, package boundaries,
+  `CODEOWNERS`, Codex instructions, and validation must use this allocation.
+  No feature implementation is authorized by this decision before U1.6.
+- **Status:** Proposed; becomes Accepted only after all-owner approval and
+  merge of its contract PR.
+- **Date:** 2026-07-18
+
+## U-009 - Queued proposals and impact-tier contract approval
+
+- **Decision:** GitHub Issues hold a non-blocking queue of proposed contract
+  changes. Registration requires no approval. A scoped shared contract receives
+  approval from its accountable owner and every directly affected producer or
+  consumer owner, with at least two people total. Cross-cutting semantic,
+  evidence, safety, persistence/cache, environment/platform, ownership/trust,
+  breaking, and final-freeze changes require all three owners.
+- **Reason:** Requiring all three owners before even recording or progressing an
+  unrelated proposal serializes three Codex workstreams and encourages private
+  assumptions. Removing approval entirely would allow incompatible contracts
+  and unsafe semantic bypasses.
+- **Codex startup rule:** Every Codex task scans the complete open queue, then
+  deeply reviews proposals in its owned area, assigned to its owner, or marked
+  cross-workstream. Proposed shapes are never implemented before their contract
+  PR merges.
+- **Impact:** Proposal discovery and research may run in parallel. Related
+  contract PRs remain serialized by contract group and task dependency. Silence
+  is not approval, and a disputed tier escalates by one level.
+- **Status:** Proposed; becomes Accepted only after the required approval and
+  merge of its governance PR.
 - **Date:** 2026-07-18
