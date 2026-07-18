@@ -2,8 +2,18 @@
 
 Owner: `younjh0923-design`
 
-Drizzle schema, reviewed migrations, least-privilege roles, repositories,
-transactions, exact cache, and concurrency validation. ORM types do not cross
-the package boundary.
+The approved platform is Neon Serverless Postgres. This package owns the
+Drizzle schema, reviewed PostgreSQL migrations, least-privilege runtime and
+migrator roles, repositories, transactions, exact cache, and real concurrency
+validation. ORM types do not cross the package boundary.
+
+Application runtime receives an environment-scoped pooled `DATABASE_URL`.
+Migration tooling receives a direct `DATABASE_MIGRATION_URL` only through an
+operator or dedicated migration CI environment. No Supabase SDK, service-role
+credential, migration, Auth, or Storage dependency belongs in this package.
+
+Development, Preview, and Production use isolated Neon branches. Development
+is always validated first; Preview and Production require their explicit
+release checkpoints.
 
 Implementation starts after U1 and requires a Development database checkpoint.

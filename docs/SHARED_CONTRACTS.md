@@ -9,6 +9,11 @@ packages import from it; they do not create local copies.
 Contract versions remain `0.1.0` and `draft` until all three owners approve
 them. Approval changes the selected contracts to `1.0.0` in a dedicated PR.
 
+Platform choices are frozen separately in `TECH_STACK.md`. The unified
+application uses Vercel with Neon Serverless Postgres. Supabase names, SDKs,
+service-role credentials, migrations, Auth, and Storage are not approved
+runtime dependencies.
+
 ## Contract groups
 
 ### Vocabulary
@@ -53,7 +58,7 @@ Environment variables are split by trust boundary.
 
 - `FOODSEYO_RUNTIME_ENV`
 - `APP_BASE_URL`
-- `DATABASE_URL`
+- `DATABASE_URL` - environment-scoped pooled Neon runtime connection
 - `OPENAI_API_KEY`
 - `OPENAI_MENU_EXTRACTION_MODEL`
 - `OPENAI_WEB_SEARCH_MODEL`
@@ -66,11 +71,15 @@ Environment variables are split by trust boundary.
 
 **Operator or dedicated migration CI only**
 
-- `DATABASE_MIGRATION_URL`
+- `DATABASE_MIGRATION_URL` - direct Neon migrator connection
 
 There are no approved public browser environment variables. A key must not use
-the `NEXT_PUBLIC_` prefix. `DATABASE_MIGRATION_URL` must never enter application
-runtime, Vercel build variables, logs, docs, or test fixtures.
+the `NEXT_PUBLIC_` prefix. The `DATABASE_MIGRATION_URL` value must never enter
+application runtime, Vercel build variables, logs, docs, or test fixtures.
+
+There are no approved `SUPABASE_*` variables or legacy OpenAI model aliases.
+Imported code must use the names above rather than adding compatibility
+duplicates.
 
 ### Version variables
 
@@ -134,7 +143,8 @@ packages/merge-policy
   owns evidence precedence and effective profiles
 
 packages/database
-  owns Drizzle schema, migrations, roles, repositories, transactions
+  owns Neon PostgreSQL integration, Drizzle schema, migrations, roles,
+  repositories, transactions
 
 packages/observability
   owns privacy-safe event names and fields

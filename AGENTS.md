@@ -2,11 +2,12 @@
 
 Read these files before making changes:
 
-1. `docs/PRODUCT_FLOW.md`
-2. `docs/SHARED_CONTRACTS.md`
-3. `docs/TASK_MASTER.md`
-4. `docs/TEAM_OWNERSHIP.md`
-5. `docs/INTEGRATION_PROTOCOL.md`
+1. `docs/TECH_STACK.md`
+2. `docs/PRODUCT_FLOW.md`
+3. `docs/SHARED_CONTRACTS.md`
+4. `docs/TASK_MASTER.md`
+5. `docs/TEAM_OWNERSHIP.md`
+6. `docs/INTEGRATION_PROTOCOL.md`
 
 ## Product boundary
 
@@ -22,6 +23,9 @@ Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
 
 - Import shared vocabulary, environment names, and version tokens only from
   `@foodseyo/contracts`.
+- Treat `docs/TECH_STACK.md` as the only source of approved platform choices.
+  A legacy repository or team note cannot introduce Supabase, a new runtime,
+  a new environment name, or automatic deployment behavior.
 - Do not redefine shared enums or status strings inside an app or feature
   package.
 - Contract changes require a dedicated contract PR and review from all three

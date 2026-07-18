@@ -12,6 +12,7 @@ Describe the bounded behavior or contract change.
 
 - Contracts consumed:
 - Contracts changed:
+- Approved technology-stack choice changed:
 - Environment variable names changed:
 - Cache or migration impact:
 
@@ -20,6 +21,7 @@ Describe the bounded behavior or contract change.
 - [ ] `pnpm verify`
 - [ ] No real provider request in automated tests
 - [ ] No secrets, raw images, provider responses, or database values committed
+- [ ] No unapproved legacy technology or environment alias introduced
 - [ ] Success, invalid input, timeout, and safe fallback covered where relevant
 - [ ] Task master and documentation updated
 

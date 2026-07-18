@@ -32,14 +32,30 @@ These capabilities are submission requirements, not post-submission
 aspirations. `docs/TASK_MASTER.md` is the execution source of truth for their
 owners, dependencies, and release gates.
 
+## Approved platform
+
+- Application hosting and release target: **Vercel**
+- Database platform: **Neon Serverless Postgres**
+- Database schema and migration layer: **Drizzle**, after its assigned
+  Development checkpoint
+- AI provider: **OpenAI**, server-side only
+- Restaurant resolution: **Google Places**, server-side only
+- Package manager: **pnpm**
+
+Supabase is a legacy-repository dependency and is not part of the unified
+runtime. Exact approved, prohibited, and still-pending choices live in
+`docs/TECH_STACK.md`; legacy environment names must not be copied into this
+repository.
+
 ## Start here
 
-1. [Product flow](docs/PRODUCT_FLOW.md)
-2. [Shared contracts](docs/SHARED_CONTRACTS.md)
-3. [Task master](docs/TASK_MASTER.md)
-4. [Team ownership](docs/TEAM_OWNERSHIP.md)
-5. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
-6. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
+1. [Approved technology stack](docs/TECH_STACK.md)
+2. [Product flow](docs/PRODUCT_FLOW.md)
+3. [Shared contracts](docs/SHARED_CONTRACTS.md)
+4. [Task master](docs/TASK_MASTER.md)
+5. [Team ownership](docs/TEAM_OWNERSHIP.md)
+6. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
+7. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
 
 ## First gate
 

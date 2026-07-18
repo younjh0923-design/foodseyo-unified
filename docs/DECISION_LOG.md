@@ -58,3 +58,22 @@
   database, integration, and release gates.
 - **Status:** Accepted
 - **Date:** 2026-07-18
+
+## U-005 - Unified platform source of truth
+
+- **Decision:** Vercel is the application host and Neon Serverless Postgres is
+  the database platform. Drizzle owns the future PostgreSQL schema and reviewed
+  migrations. Runtime uses environment-scoped pooled `DATABASE_URL`; direct
+  `DATABASE_MIGRATION_URL` remains outside application runtime.
+- **Reason:** The three legacy repositories and integration notes used
+  incompatible Supabase, PostgreSQL, environment-name, folder, and deployment
+  assumptions. The unified repository needs one explicit platform contract.
+- **Impact:** Supabase database, Auth, Storage, SDK, service-role credentials,
+  and migrations are not approved. Legacy OpenAI model variable names are not
+  aliases. Development, Preview, and Production use isolated Neon branches and
+  keep explicit release gates.
+- **Pending:** Framework versions, Postgres driver, exact model values, upload
+  limits, and cache lifetime remain frozen only by their named tasks; they must
+  not be guessed from a legacy repository.
+- **Status:** Accepted
+- **Date:** 2026-07-18
