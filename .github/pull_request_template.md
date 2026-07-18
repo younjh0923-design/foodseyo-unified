@@ -22,6 +22,7 @@ Describe the bounded behavior or contract change.
 - Contracts changed:
 - Contract change request or decision:
 - Producers and consumers:
+- Ownership or handoff impact:
 - Backward-compatibility impact:
 - Contract version or cache identity impact:
 - Approved technology-stack choice changed:

@@ -48,14 +48,17 @@ name.
 | Change | Accountable owner | Required review |
 | --- | --- | --- |
 | Shared vocabulary, DTO, version, environment name | Youn | all three owners |
-| Source or provider boundary | Juhyung | Youn plus affected owners |
-| Restaurant resolution or user workflow | YTW | Youn plus affected owners |
+| Server intake, restaurant resolution, source acquisition, compact extraction | YTW | Youn plus Juhyung when UI-visible |
 | Canonical, evidence, safety, database, cache | Youn | affected owner plus all-owner review when shared |
+| Constrained explanation or user workflow | Juhyung | Youn plus YTW when upstream states change |
 | Platform choice or shared dependency | Youn | all three owners |
 | Preview or Production behavior | Youn release owner | explicit release checkpoint |
 
 Ownership permits implementation decisions inside an approved contract. It
-does not permit unilateral shared-contract changes.
+does not permit unilateral shared-contract changes. A statement that an owner
+"does not" perform another workstream's task prevents duplicate or bypassing
+implementation; it does not prevent code review, integration testing, defect
+reporting, or a separately approved ownership change.
 
 ## Required workflow
 
@@ -133,12 +136,13 @@ because branch protection is not available.
 
 ### 6. Merge the contract before feature code
 
-After the contract PR is approved and merged:
+After a contract PR is approved and merged:
 
-1. dependent feature branches update from current `main`;
-2. features import the shared contract rather than copying it;
-3. each feature adds its own deterministic fixtures and implementation tests;
-4. no compatibility alias is added for an unapproved legacy name.
+1. before U1.6, continue only the next ordered contract task;
+2. after U1.6, dependent feature branches update from current `main`;
+3. features import the shared contract rather than copying it;
+4. each feature adds its own deterministic fixtures and implementation tests;
+5. no compatibility alias is added for an unapproved legacy name.
 
 ## Change-type rules
 
@@ -248,8 +252,10 @@ all-owner review before dependent code is added.
 
 ## Before and after contract 1.0.0
 
-Before U1 approval, proposed values are added to the single coordinated U1
-contract PR and remain `0.1.0`/`draft` until all three owners approve.
+Before U1.6, proposed values land through the ordered U1 contract-only PRs and
+remain `0.1.0`/`draft`. Each shared decision receives all-owner review, and no
+feature implementation begins until the final U1.6 freeze promotes the
+selected contracts to `1.0.0`.
 
 After `1.0.0`, every semantic addition or modification uses a new dedicated
 contract PR. A feature that discovers the need waits for that PR to merge and

@@ -133,8 +133,26 @@ const integrationProtocol = await readFile(
   "utf8",
 );
 const decisionLog = await readFile(resolve("docs/DECISION_LOG.md"), "utf8");
+const teamOwnership = await readFile(
+  resolve("docs/TEAM_OWNERSHIP.md"),
+  "utf8",
+);
 const pullRequestTemplate = await readFile(
   resolve(".github/pull_request_template.md"),
+  "utf8",
+);
+const codeOwners = await readFile(resolve(".github/CODEOWNERS"), "utf8");
+const webPackage = await readFile(resolve("apps/web/README.md"), "utf8");
+const restaurantPackage = await readFile(
+  resolve("packages/restaurant-resolution/README.md"),
+  "utf8",
+);
+const sourcePackage = await readFile(
+  resolve("packages/source-acquisition/README.md"),
+  "utf8",
+);
+const menuAnalysisPackage = await readFile(
+  resolve("packages/menu-analysis/README.md"),
   "utf8",
 );
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
@@ -183,15 +201,17 @@ assert.match(
   pullRequestTemplate,
   /Provider photo\/reference persistence boundary reviewed/,
 );
+assert.match(pullRequestTemplate, /Ownership or handoff impact:/);
 
 assertOrdered(readme, "README submission flow", [
-  "-> compact menu extraction",
+  "-> YTW-owned compact menu extraction",
   "-> Youn-owned canonical normalization",
   "-> Juhyung-owned menu and dish explanation",
   "-> Youn-owned database persistence",
+  "-> Juhyung-owned mobile ordering-decision experience",
 ]);
 assertOrdered(productFlow, "product target flow", [
-  "-> compact menu extraction",
+  "-> YTW-owned compact menu extraction",
   "-> evidence-priority merge",
   "-> structured validation",
   "-> Juhyung-owned constrained explanation rendering",
@@ -224,6 +244,59 @@ assert.match(
   sharedContracts,
   /Restaurant photo bytes and opaque or short-lived Google photo\/provider[\s\S]*Google Place ID remains[\s\S]*external-identity exception\./,
 );
+assertOrdered(sharedContracts, "workstream handoffs", [
+  "YTW may return only UI-safe candidates",
+  "YTW sends structured extraction",
+  "Youn sends only validated canonical application data",
+  "Juhyung returns only contract-valid constrained explanation output",
+  "Youn owns atomic persistence",
+  "Juhyung presents the final analysis result",
+]);
+assert.match(
+  agentsGuide,
+  /Extracted menu meaning and provenance must pass[\s\S]*Youn-owned canonical validation/,
+);
+assert.match(
+  contractChangeGuide,
+  /Server intake, restaurant resolution, source acquisition, compact extraction \| YTW/,
+);
+assert.match(
+  contractChangeGuide,
+  /Constrained explanation or user workflow \| Juhyung/,
+);
+assert.match(
+  teamOwnership,
+  /YTW \(`ytw010629`\) - upstream intake, restaurant resolution, acquisition, extraction/,
+);
+assert.match(
+  teamOwnership,
+  /Youn \(`younjh0923-design`\) - contracts, canonical truth, data, integration/,
+);
+assert.match(
+  teamOwnership,
+  /Juhyung \(`juhyungbaek0621`\) - constrained explanation and user experience/,
+);
+assert.match(
+  teamOwnership,
+  /The direct YTW-to-Juhyung lane never carries raw provider output/,
+);
+assert.match(
+  codeOwners,
+  /\/packages\/source-acquisition\/ @ytw010629 @younjh0923-design/,
+);
+assert.match(
+  codeOwners,
+  /\/packages\/menu-analysis\/ @ytw010629 @younjh0923-design @juhyungbaek0621/,
+);
+assert.match(codeOwners, /\/apps\/web\/ @juhyungbaek0621/);
+assert.match(webPackage, /Owner: `juhyungbaek0621`/);
+assert.match(sourcePackage, /Owner: `ytw010629`/);
+assert.match(restaurantPackage, /Owner: `ytw010629`/);
+assertOrdered(menuAnalysisPackage, "menu-analysis ownership", [
+  "YTW (`ytw010629`): compact extraction",
+  "Youn (`younjh0923-design`): provider-to-canonical normalization",
+  "Juhyung (`juhyungbaek0621`): constrained explanation",
+]);
 
 const submissionDecision = decisionLog.slice(
   decisionLog.indexOf("## U-004 - Final submission flow is non-optional"),
@@ -235,6 +308,27 @@ assertOrdered(submissionDecision, "U-004 decision", [
   "Juhyung-owned menu/dish",
   "Youn-owned database persistence",
 ]);
+const ownershipDecision = decisionLog.slice(
+  decisionLog.indexOf(
+    "## U-008 - Parallel workstreams with guarded semantic handoffs",
+  ),
+);
+assertOrdered(ownershipDecision, "U-008 decision", [
+  "YTW owns the upstream server path",
+  "Youn owns canonical normalization",
+  "Juhyung owns constrained explanation",
+  "YTW may send UI-safe candidates",
+  "Extracted menu meaning and provenance go to Youn",
+  "After U1.6 freezes",
+]);
+assert.match(
+  decisionLog,
+  /## U-006 - Canonical validation precedes explanation[\s\S]*\*\*Status:\*\* Accepted/,
+);
+assert.match(
+  decisionLog,
+  /## U-007 - Manual PR enforcement[\s\S]*\*\*Status:\*\* Accepted/,
+);
 
 assert.match(productFlow, /## Submission Dish boundary/);
 assert.match(sharedContracts, /### Minimum submission Dish contract/);
@@ -266,8 +360,8 @@ for (const match of taskMaster.matchAll(/\*\*Status:\*\*\s+([^\r\n]+)/g)) {
 assertTaskStatus(taskMaster, "### U0.2 Common contract draft", "DONE");
 assertTaskStatus(
   taskMaster,
-  "### U1.1 Approve product and evidence invariants",
-  "READY",
+  "### U1.1 Approve product, evidence, ownership, and trust invariants",
+  "REVIEW",
 );
 assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "BLOCKED");
 assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
@@ -277,7 +371,38 @@ assertTaskStatus(
   "BLOCKED",
 );
 assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
-assertTaskStatus(taskMaster, "### U2.4 Continuous integration", "BLOCKED");
+assertTaskStatus(
+  taskMaster,
+  "### U1.6 Approve and publish compatibility contract 1.0.0",
+  "BLOCKED",
+);
+assertTaskStatus(
+  taskMaster,
+  "### U2.4 Web and result-experience foundation",
+  "BLOCKED",
+);
+assertTaskStatus(taskMaster, "### U2.5 Continuous integration", "BLOCKED");
+const sourceFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.2 Source acquisition foundation",
+);
+assert.match(sourceFoundation, /\*\*Owner:\*\* YTW/);
+const webFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.4 Web and result-experience foundation",
+);
+assert.match(webFoundation, /\*\*Owner:\*\* Juhyung/);
+for (const heading of [
+  "### S1.2 Official menu-source acquisition",
+  "### S1.3 OpenAI Web Search menu fallback",
+  "### S1.4 Compact menu extraction",
+]) {
+  assert.match(markdownTaskSection(taskMaster, heading), /\*\*Owner:\*\* YTW/);
+}
+assert.match(
+  markdownTaskSection(taskMaster, "### S1.7 Integrated mobile experience"),
+  /\*\*Owner:\*\* Juhyung/,
+);
 const integratedValidation = markdownTaskSection(
   taskMaster,
   "### S3.1 Integrated adversarial validation",

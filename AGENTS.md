@@ -20,6 +20,23 @@ precedence:
 
 Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
 
+## Workstream and trust boundaries
+
+- YTW owns the upstream server-side path from normalized photo/link input
+  through restaurant resolution, menu-source acquisition, Web Search fallback,
+  and compact extraction.
+- Youn owns canonical normalization, culinary and safety rules, persistence,
+  cache, integration validation, and release gates.
+- Juhyung owns constrained explanation and the mobile-first user experience.
+- YTW may send only UI-safe candidates, progress, user-action states, and typed
+  outcomes directly to Juhyung. Extracted menu meaning and provenance must pass
+  through Youn-owned canonical validation before Juhyung may explain or prepare
+  them for result presentation; final publication remains behind Youn's
+  persistence and integration gate.
+- These boundaries prohibit unilateral implementation in another owner's area;
+  they do not prohibit review, integration testing, or an approved contract
+  change.
+
 ## Contract-first development
 
 - Import shared vocabulary, environment names, and version tokens only from
@@ -33,6 +50,8 @@ Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
   field, state, outcome, error, environment name, version, or interface.
 - Contract changes require a dedicated contract PR and review from all three
   workstream owners before dependent implementation merges.
+- No feature implementation begins until the final U1 compatibility freeze is
+  merged and the selected contracts are `1.0.0`.
 - Do not weaken source provenance, restaurant confirmation, cache identity,
   ownership, transaction, or safety rules to make a feature easier.
 

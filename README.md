@@ -13,20 +13,25 @@ The submission must complete one coherent path:
 
 ```text
 menu/sign photos plus a restaurant, map, or official-source link
--> Google Places restaurant and branch resolution
--> official menu-source discovery and acquisition
--> OpenAI Web Search fallback when official acquisition fails
--> compact menu extraction
+-> YTW-owned Google Places restaurant and branch resolution
+-> YTW-owned official menu-source discovery and acquisition
+-> YTW-owned OpenAI Web Search fallback when official acquisition fails
+-> YTW-owned compact menu extraction
 -> Youn-owned canonical normalization, culinary consistency, and safety checks
 -> Juhyung-owned menu and dish explanation from validated canonical structure
 -> Youn-owned database persistence and reuse
--> mobile ordering-decision experience
+-> Juhyung-owned mobile ordering-decision experience
 ```
 
 Google Places identifies the restaurant branch and supplies official-source
 clues such as its website. It is not treated as a full menu-item API. Every
 acquired menu must pass the shared source, provenance, canonical, and safety
 contracts before explanation or persistence.
+
+The three workstreams develop in parallel after U1, but the runtime trust path
+does not bypass validation. YTW may send UI-safe candidates, progress, and
+typed outcomes directly to Juhyung; extracted menu meaning reaches Juhyung only
+after Youn-owned canonical validation.
 
 These capabilities are submission requirements, not post-submission
 aspirations. `docs/TASK_MASTER.md` is the execution source of truth for their
@@ -61,8 +66,9 @@ repository.
 ## First gate
 
 All three team members must approve the `@foodseyo/contracts` vocabulary,
-environment registry, version registry, and module boundaries before feature
-implementation begins. Until that approval, contract versions remain `0.1.0`.
+environment registry, version registry, role handoffs, and module boundaries
+through U1.6 before feature implementation begins. Until that approval,
+contract versions remain `0.1.0`/`draft`.
 
 ## Local validation
 

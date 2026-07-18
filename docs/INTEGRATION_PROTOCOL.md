@@ -49,7 +49,7 @@ Until branch protection is available:
 - each shared-contract PR records approval from all three owners;
 - Youn verifies the review record and `pnpm verify` result before merge.
 
-U2.4 must revisit automated checks and branch protection when supported.
+U2.5 must revisit automated checks and branch protection when supported.
 Nothing in this fallback authorizes a billing change or making the repository
 public.
 
@@ -78,7 +78,8 @@ Every Codex task starts by reading:
 4. `docs/SHARED_CONTRACTS.md`
 5. `docs/CONTRACT_CHANGE_GUIDE.md`
 6. the assigned task in `docs/TASK_MASTER.md`
-7. the owning package README and tests
+7. `docs/TEAM_OWNERSHIP.md`
+8. the owning package README and tests
 
 The task prompt must name:
 
@@ -97,9 +98,28 @@ the dependent implementation.
 The final report records commit SHA, files changed, validation, contract
 versions, environment names only, and any remaining gate.
 
+## Parallel work and runtime handoffs
+
+After U1.6, YTW, Youn, and Juhyung build their frozen interfaces in parallel
+with deterministic fakes. Runtime trust remains ordered:
+
+- YTW may send UI-safe candidates, progress, user-action states, and typed
+  outcomes directly to Juhyung.
+- YTW sends extracted menu meaning and provenance to Youn-owned canonical
+  validation.
+- Juhyung receives menu meaning for explanation and result-view preparation
+  only after that validation.
+- Youn owns persistence, cache publication, integration verification, and
+  release gates; final result presentation waits for the publication gate or
+  an explicitly frozen safe fallback.
+
+No owner creates a long-lived personal integration branch or imports another
+package's internal types to bypass these handoffs.
+
 ## Integration cadence before submission
 
-- Merge contract bootstrap first.
+- Merge the ordered U1 contract-only slices first and complete the U1.6
+  `1.0.0` freeze before feature implementation.
 - Treat the agreed photo/link -> Places -> official menu -> Web Search fallback
   -> compact extraction -> canonical validation -> explanation -> database
   -> mobile path as one mandatory release chain.
