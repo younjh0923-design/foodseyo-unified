@@ -1,0 +1,21 @@
+{
+  "basicTaste": "umami",
+  "flavorNote": "smoky",
+  "texture": "crispy",
+  "heat": {
+    "state": "known",
+    "value": "mild"
+  },
+  "richness": {
+    "state": "known",
+    "value": "moderate"
+  },
+  "heatAdjustability": {
+    "state": "known",
+    "value": "user_selectable"
+  },
+  "ingredientRole": "typical",
+  "dishMatchState": "matched",
+  "knowledgeOrigin": "model_generated",
+  "knowledgeReviewState": "unreviewed"
+}

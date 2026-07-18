@@ -1,6 +1,7 @@
 export const CONTRACT_STATUS = "draft" as const;
 
 export const CONTRACT_VERSIONS = {
+  sharedVocabulary: "shared-vocabulary/0.1.0",
   menuSource: "menu-source/0.1.0",
   restaurantResolution: "restaurant-resolution/0.1.0",
   compactExtraction: "compact-extraction/0.1.0",

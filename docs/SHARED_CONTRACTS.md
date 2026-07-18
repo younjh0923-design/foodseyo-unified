@@ -18,17 +18,36 @@ runtime dependencies.
 
 ### Vocabulary
 
-The shared package freezes:
+The shared package and `SENSORY_VOCABULARY.md` freeze:
 
-- basic tastes, flavor notes, textures, heat, and richness as separate axes;
+- `sweet`, `salty`, `sour`, `bitter`, and `umami` as the five canonical basic
+  tastes; `savory` and `savoury` are input aliases for `umami`, not canonical
+  values;
+- basic tastes, controlled flavor notes, controlled textures, ordered heat,
+  and ordered richness as five separate axes;
+- `known` or `unknown` as the value state outside the heat and richness
+  scales;
+- heat adjustability separately from observed or typical heat;
 - ingredient roles;
 - evidence bases and precedence;
 - restaurant-resolution states;
 - menu source types and menu scopes;
-- menu-version, Dish-match, and knowledge-review states.
+- menu-version and Dish-match states;
+- knowledge origin separately from knowledge review state.
 
 Do not add a generic `taste` string, unrestricted claim type, or polymorphic
 JSON reference that bypasses type-specific integrity.
+
+Flavor and texture labels are a versioned Foodseyo lexicon informed by sensory
+standards, not a claim that Foodseyo performs a certified laboratory sensory
+assessment. A descriptor such as `nutty`, `buttery`, `cheesy`, or `creamy`
+describes perception and never proves an ingredient, allergen, or dietary
+property.
+
+`model_generated` is knowledge origin and never a review state. Knowledge may
+be `unreviewed`, `reviewed`, `superseded`, or `retired`. Dish matching uses
+`candidate`, `matched`, `rejected`, or `unresolved`; review belongs to the
+knowledge claim, not the match.
 
 ### Minimum submission Dish contract
 

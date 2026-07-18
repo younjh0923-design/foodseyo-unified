@@ -96,11 +96,18 @@ The required menu-source sequence is:
 
 The system preserves independent sensory axes:
 
-- basic tastes;
-- flavor notes;
-- textures;
-- heat;
-- richness.
+- basic tastes: sweet, salty, sour, bitter, and umami;
+- controlled flavor notes;
+- controlled textures;
+- ordered pungent heat;
+- ordered perceived richness.
+
+The exact controlled values, aliases, definitions, and scale semantics live in
+`SENSORY_VOCABULARY.md` and `@foodseyo/contracts`. Heat is a chemesthetic
+burning or pungent sensation rather than a basic taste. Richness is a derived
+user-facing perception summary, not a basic taste. `unknown` is a state outside
+both ordered scales, and heat adjustability is separate from the observed or
+typical heat level.
 
 Dish knowledge is a variable culinary baseline, not a universal fact about
 every preparation. Current menu evidence wins:

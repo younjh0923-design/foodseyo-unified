@@ -168,3 +168,30 @@
   `144b190e68766aa68548bc1633f137d5f27b17aa`.
 - **Status:** Accepted
 - **Date:** 2026-07-18
+
+## U-010 - Standards-informed sensory vocabulary boundaries
+
+- **Decision:** Foodseyo keeps five distinct sensory axes: basic taste, flavor
+  note, texture, heat, and richness. Canonical basic tastes are `sweet`,
+  `salty`, `sour`, `bitter`, and `umami`; `savory` and `savoury` normalize to
+  `umami`. Flavor and texture use controlled, defined, versioned Foodseyo
+  lexicons. Heat and richness use separate ordered scales.
+- **Unknown and safety:** `unknown` is a value state outside ordered scales.
+  It never means zero, absence, allergen-safe, or dietary-safe. Heat
+  adjustability is recorded independently from observed or typical heat.
+- **Knowledge lifecycle:** `model_generated`, `human_authored`, and `imported`
+  are origin kinds. `unreviewed`, `reviewed`, `superseded`, and `retired` are
+  review states. Dish-match state does not double as knowledge review.
+- **Standards boundary:** ISO sensory vocabulary, descriptor-selection,
+  sensory-profile, texture-profile, and response-scale standards inform the
+  design. The controlled Foodseyo lexicons are not represented as universal
+  ISO descriptor lists or a certified laboratory assessment.
+- **Descriptor safety:** Perceptual labels such as `nutty`, `buttery`,
+  `cheesy`, and `creamy` do not prove ingredients, allergens, or dietary
+  properties.
+- **Version impact:** The candidate vocabulary receives
+  `shared-vocabulary/0.1.0`; all contracts remain `0.1.0`/`draft` until U1.6.
+- **Proposal evidence:** all three owners approved issue #6. Acceptance
+  requires all-owner review of the exact U1.2 contract PR head and its merge.
+- **Status:** Accepted on merge of the reviewed U1.2 contract PR
+- **Date:** 2026-07-18

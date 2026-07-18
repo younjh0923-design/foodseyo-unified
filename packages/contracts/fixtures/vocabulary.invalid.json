@@ -1,0 +1,14 @@
+{
+  "taste": "savory-smoky-hot",
+  "basicTaste": "savory",
+  "heat": {
+    "state": "known",
+    "value": "unknown"
+  },
+  "richness": {
+    "state": "unknown",
+    "value": "rich"
+  },
+  "dishMatchState": "reviewed",
+  "knowledgeReviewState": "model_generated"
+}

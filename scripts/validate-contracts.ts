@@ -3,16 +3,26 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import {
+  BASIC_TASTE_ALIASES,
   BASIC_TASTES,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
+  DISH_MATCH_STATES,
   EVIDENCE_BASES,
+  FLAVOR_NOTE_DEFINITIONS,
   FLAVOR_NOTES,
+  HEAT_ADJUSTABILITY_STATES,
   HEAT_LEVELS,
+  KNOWLEDGE_ORIGIN_KINDS,
+  KNOWLEDGE_REVIEW_STATES,
+  MENU_SCOPES,
   OPERATOR_ENV_NAMES,
   PUBLIC_ENV_NAMES,
   RICHNESS_LEVELS,
+  SENSORY_AXES,
+  SENSORY_VALUE_STATES,
   SERVER_ENV_NAMES,
+  TEXTURE_DEFINITIONS,
   TEXTURES,
 } from "../packages/contracts/src/index.js";
 
@@ -58,23 +68,138 @@ const assertTaskStatus = (
   );
 };
 
+const assertDescriptorDefinitions = (
+  values: readonly string[],
+  definitions: Readonly<
+    Record<string, { readonly definition: string; readonly aliases: readonly string[] }>
+  >,
+  label: string,
+) => {
+  assert.deepEqual(Object.keys(definitions), values, `${label} keys drifted`);
+  const normalizedTokens = new Set<string>(values);
+
+  for (const value of values) {
+    const descriptor = definitions[value];
+    assert(descriptor, `${label} is missing ${value}`);
+    assert(descriptor.definition.trim().length > 0, `${value} lacks a definition`);
+    unique(descriptor.aliases, `${value} aliases`);
+
+    for (const alias of descriptor.aliases) {
+      assert.equal(
+        normalizedTokens.has(alias),
+        false,
+        `${label} alias ${alias} collides with a canonical value or alias`,
+      );
+      normalizedTokens.add(alias);
+    }
+  }
+};
+
+const asObject = (value: unknown, label: string): Record<string, unknown> => {
+  assert(
+    typeof value === "object" && value !== null && !Array.isArray(value),
+    `${label} must be an object`,
+  );
+  return value as Record<string, unknown>;
+};
+
+unique(SENSORY_AXES, "SENSORY_AXES");
 unique(BASIC_TASTES, "BASIC_TASTES");
 unique(FLAVOR_NOTES, "FLAVOR_NOTES");
 unique(TEXTURES, "TEXTURES");
 unique(HEAT_LEVELS, "HEAT_LEVELS");
 unique(RICHNESS_LEVELS, "RICHNESS_LEVELS");
+unique(SENSORY_VALUE_STATES, "SENSORY_VALUE_STATES");
+unique(HEAT_ADJUSTABILITY_STATES, "HEAT_ADJUSTABILITY_STATES");
 unique(EVIDENCE_BASES, "EVIDENCE_BASES");
+unique(MENU_SCOPES, "MENU_SCOPES");
+unique(DISH_MATCH_STATES, "DISH_MATCH_STATES");
+unique(KNOWLEDGE_ORIGIN_KINDS, "KNOWLEDGE_ORIGIN_KINDS");
+unique(KNOWLEDGE_REVIEW_STATES, "KNOWLEDGE_REVIEW_STATES");
+
+assert.deepEqual(SENSORY_AXES, [
+  "basic_taste",
+  "flavor_note",
+  "texture",
+  "heat",
+  "richness",
+]);
+assert.deepEqual(BASIC_TASTES, [
+  "sweet",
+  "salty",
+  "sour",
+  "bitter",
+  "umami",
+]);
+assert.equal(BASIC_TASTES.includes("savory" as never), false);
+assert.equal(BASIC_TASTE_ALIASES.savory, "umami");
+assert.equal(BASIC_TASTE_ALIASES.savoury, "umami");
+assertDescriptorDefinitions(
+  FLAVOR_NOTES,
+  FLAVOR_NOTE_DEFINITIONS,
+  "FLAVOR_NOTE_DEFINITIONS",
+);
+assertDescriptorDefinitions(
+  TEXTURES,
+  TEXTURE_DEFINITIONS,
+  "TEXTURE_DEFINITIONS",
+);
 
 for (const taste of BASIC_TASTES) {
   assert(!FLAVOR_NOTES.includes(taste as never), `${taste} crosses sensory axes`);
 }
 
 assert.notDeepEqual(HEAT_LEVELS, RICHNESS_LEVELS);
+assert.equal(HEAT_LEVELS.includes("unknown" as never), false);
+assert.equal(RICHNESS_LEVELS.includes("unknown" as never), false);
+assert.deepEqual(SENSORY_VALUE_STATES, ["known", "unknown"]);
+assert.deepEqual(HEAT_ADJUSTABILITY_STATES, ["fixed", "user_selectable"]);
+assert.equal(
+  HEAT_LEVELS.some((value) => RICHNESS_LEVELS.includes(value as never)),
+  false,
+  "heat and richness values overlap",
+);
 assert.deepEqual(EVIDENCE_BASES, [
   "source_stated",
   "inferred_from_source",
   "culinary_baseline",
   "unknown",
+]);
+assert.deepEqual(DISH_MATCH_STATES, [
+  "candidate",
+  "matched",
+  "rejected",
+  "unresolved",
+]);
+assert.equal(DISH_MATCH_STATES.includes("reviewed" as never), false);
+assert.deepEqual(KNOWLEDGE_ORIGIN_KINDS, [
+  "model_generated",
+  "human_authored",
+  "imported",
+]);
+assert.deepEqual(KNOWLEDGE_REVIEW_STATES, [
+  "unreviewed",
+  "reviewed",
+  "superseded",
+  "retired",
+]);
+assert.equal(
+  KNOWLEDGE_REVIEW_STATES.includes("model_generated" as never),
+  false,
+);
+assert.deepEqual(MENU_SCOPES, [
+  "default",
+  "all_day",
+  "breakfast",
+  "brunch",
+  "lunch",
+  "dinner",
+  "drinks",
+  "dessert",
+  "happy_hour",
+  "kids",
+  "late_night",
+  "seasonal",
 ]);
 
 assert.equal(CONTRACT_STATUS, "draft");
@@ -121,6 +246,10 @@ const readme = await readFile(resolve("README.md"), "utf8");
 const productFlow = await readFile(resolve("docs/PRODUCT_FLOW.md"), "utf8");
 const sharedContracts = await readFile(
   resolve("docs/SHARED_CONTRACTS.md"),
+  "utf8",
+);
+const sensoryVocabulary = await readFile(
+  resolve("docs/SENSORY_VOCABULARY.md"),
   "utf8",
 );
 const contractChangeGuide = await readFile(
@@ -171,12 +300,14 @@ assert.match(technologyStack, /Vercel/);
 
 assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
+  "`docs/SENSORY_VOCABULARY.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
   "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
 ]);
 assertOrdered(readme, "README start-here guide order", [
   "[Shared contracts](docs/SHARED_CONTRACTS.md)",
+  "[Sensory vocabulary](docs/SENSORY_VOCABULARY.md)",
   "[Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)",
   "[Contract change queue](docs/CONTRACT_CHANGE_QUEUE.md)",
   "[Task master](docs/TASK_MASTER.md)",
@@ -338,6 +469,120 @@ assert.match(
   sharedContracts,
   /Restaurant photo bytes and opaque or short-lived Google photo\/provider[\s\S]*Google Place ID remains[\s\S]*external-identity exception\./,
 );
+assertOrdered(sensoryVocabulary, "sensory axes", [
+  "| Basic taste |",
+  "| Flavor note |",
+  "| Texture |",
+  "| Heat |",
+  "| Richness |",
+]);
+for (const sourceMarker of [
+  "ISO 5492:2008",
+  "ISO 11035:1994",
+  "ISO 13299:2016",
+  "ISO 11036:2020",
+  "ISO 4121:2003",
+  "nidcd.nih.gov/health/taste-disorders",
+  "pmc.ncbi.nlm.nih.gov/articles/PMC4667542/",
+]) {
+  assert.match(
+    sensoryVocabulary,
+    new RegExp(sourceMarker.replaceAll(".", "\\.")),
+  );
+}
+for (const contractMarker of [
+  "standards-informed",
+  "does not claim",
+  "There is no generic `taste` field",
+  "`savory` and `savoury` are accepted input aliases",
+  "not a heat or richness level",
+  "Heat adjustability is independent",
+  "Perceptual descriptors are not ingredient claims",
+  "`model_generated`, `human_authored`, or `imported`",
+]) {
+  assert(
+    sensoryVocabulary.includes(contractMarker),
+    `sensory vocabulary is missing ${contractMarker}`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-010 - Standards-informed sensory vocabulary boundaries[\s\S]*issue #6[\s\S]*\*\*Status:\*\* Accepted on merge/,
+);
+
+const validVocabularyFixture = asObject(
+  JSON.parse(
+    await readFile(
+      resolve("packages/contracts/fixtures/vocabulary.valid.json"),
+      "utf8",
+    ),
+  ),
+  "valid vocabulary fixture",
+);
+const validHeat = asObject(validVocabularyFixture.heat, "valid heat");
+const validRichness = asObject(
+  validVocabularyFixture.richness,
+  "valid richness",
+);
+const validAdjustability = asObject(
+  validVocabularyFixture.heatAdjustability,
+  "valid heat adjustability",
+);
+assert(BASIC_TASTES.includes(validVocabularyFixture.basicTaste as never));
+assert(FLAVOR_NOTES.includes(validVocabularyFixture.flavorNote as never));
+assert(TEXTURES.includes(validVocabularyFixture.texture as never));
+assert(SENSORY_VALUE_STATES.includes(validHeat.state as never));
+assert(HEAT_LEVELS.includes(validHeat.value as never));
+assert(SENSORY_VALUE_STATES.includes(validRichness.state as never));
+assert(RICHNESS_LEVELS.includes(validRichness.value as never));
+assert(SENSORY_VALUE_STATES.includes(validAdjustability.state as never));
+assert(
+  HEAT_ADJUSTABILITY_STATES.includes(validAdjustability.value as never),
+);
+assert(DISH_MATCH_STATES.includes(validVocabularyFixture.dishMatchState as never));
+assert(
+  KNOWLEDGE_ORIGIN_KINDS.includes(
+    validVocabularyFixture.knowledgeOrigin as never,
+  ),
+);
+assert(
+  KNOWLEDGE_REVIEW_STATES.includes(
+    validVocabularyFixture.knowledgeReviewState as never,
+  ),
+);
+
+const invalidVocabularyFixture = asObject(
+  JSON.parse(
+    await readFile(
+      resolve("packages/contracts/fixtures/vocabulary.invalid.json"),
+      "utf8",
+    ),
+  ),
+  "invalid vocabulary fixture",
+);
+const invalidHeat = asObject(invalidVocabularyFixture.heat, "invalid heat");
+const invalidRichness = asObject(
+  invalidVocabularyFixture.richness,
+  "invalid richness",
+);
+assert("taste" in invalidVocabularyFixture);
+assert.equal(
+  BASIC_TASTES.includes(invalidVocabularyFixture.basicTaste as never),
+  false,
+);
+assert.equal(HEAT_LEVELS.includes(invalidHeat.value as never), false);
+assert.equal(invalidRichness.state, "unknown");
+assert.notEqual(invalidRichness.value, undefined);
+assert.equal(
+  DISH_MATCH_STATES.includes(invalidVocabularyFixture.dishMatchState as never),
+  false,
+);
+assert.equal(
+  KNOWLEDGE_REVIEW_STATES.includes(
+    invalidVocabularyFixture.knowledgeReviewState as never,
+  ),
+  false,
+);
 assertOrdered(sharedContracts, "workstream handoffs", [
   "YTW may return only UI-safe candidates",
   "YTW sends structured extraction",
@@ -461,7 +706,7 @@ assertTaskStatus(
   "### U1.1 Approve product, evidence, ownership, and trust invariants",
   "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "READY");
+assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "REVIEW");
 assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
 assertTaskStatus(
   taskMaster,
