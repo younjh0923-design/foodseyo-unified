@@ -35,6 +35,24 @@ One PR should change one contract or one vertical behavior. A PR must state:
 - network, database, and deployment effects;
 - rollback or disable path.
 
+## Current GitHub enforcement
+
+The current private-repository plan does not expose branch protection for this
+repository. `CODEOWNERS` therefore documents review ownership but is not a
+technical lock on `main`.
+
+Until branch protection is available:
+
+- no owner pushes feature or contract changes directly to `main`;
+- every change uses a short-lived branch and pull request;
+- each feature PR records approval from a non-author workstream owner;
+- each shared-contract PR records approval from all three owners;
+- Youn verifies the review record and `pnpm verify` result before merge.
+
+U2.4 must revisit automated checks and branch protection when supported.
+Nothing in this fallback authorizes a billing change or making the repository
+public.
+
 ## Required checks
 
 Every PR:
@@ -58,8 +76,9 @@ Every Codex task starts by reading:
 2. `docs/TECH_STACK.md`
 3. `docs/PRODUCT_FLOW.md`
 4. `docs/SHARED_CONTRACTS.md`
-5. the assigned task in `docs/TASK_MASTER.md`
-6. the owning package README and tests
+5. `docs/CONTRACT_CHANGE_GUIDE.md`
+6. the assigned task in `docs/TASK_MASTER.md`
+7. the owning package README and tests
 
 The task prompt must name:
 
@@ -71,6 +90,10 @@ The task prompt must name:
 - whether network, provider, database, Preview, or Production access is
   authorized.
 
+Any task that discovers a new cross-package field, state, error, environment
+name, version, or interface follows `CONTRACT_CHANGE_GUIDE.md` before adding
+the dependent implementation.
+
 The final report records commit SHA, files changed, validation, contract
 versions, environment names only, and any remaining gate.
 
@@ -78,8 +101,8 @@ versions, environment names only, and any remaining gate.
 
 - Merge contract bootstrap first.
 - Treat the agreed photo/link -> Places -> official menu -> Web Search fallback
-  -> explanation -> canonical validation -> database -> mobile path as one
-  mandatory release chain.
+  -> compact extraction -> canonical validation -> explanation -> database
+  -> mobile path as one mandatory release chain.
 - Integrate thin cross-workstream slices early; do not wait for three completed
   owner branches before testing the shared flow.
 - Integrate at least twice per day.
