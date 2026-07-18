@@ -16,6 +16,12 @@ Status values:
 - `DEFERRED`: outside the submission cut and never used for a required flow
   capability.
 
+A task whose dependency is not `DONE` remains `BLOCKED`. For coordinated
+milestone tasks intentionally landing in one PR, such as U1, an output approved
+in `REVIEW` inside that PR may unblock the next milestone task without
+pretending the PR is already merged. `DONE` still means the completed output is
+on `main`.
+
 ## Non-negotiable program rules
 
 - No implementation before U1 shared contracts are approved.
@@ -54,15 +60,25 @@ Status values:
 
 - **Owner:** Youn
 - **Reviewers:** Juhyung, YTW
-- **Status:** REVIEW
+- **Status:** DONE
 - **Outputs:** `@foodseyo/contracts` vocabulary, environment names, version
   tokens, validation script.
 - **Acceptance:** typecheck and contract validation pass; sensory axes and
   evidence precedence remain separate.
+- **Clarification:** `DONE` means the validated `0.1.0` draft is merged. It does
+  not mean the U1 `1.0.0` contract has been approved.
 
 ## Milestone U1 - Freeze the team compatibility contract
 
 All U1 tasks land in one contract PR before feature branches begin.
+
+Execution order:
+
+1. U1.1 approves product and evidence invariants.
+2. U1.2 and U1.4 may proceed after U1.1.
+3. U1.3 proceeds after U1.2.
+4. U1.5 proceeds after U1.3.
+5. All three owners approve the complete U1 contract PR before merge.
 
 ### U1.1 Approve product and evidence invariants
 
@@ -70,7 +86,8 @@ All U1 tasks land in one contract PR before feature branches begin.
 - **Dependency:** U0.2
 - **Status:** READY
 - **Decide:** restaurant/menu/Dish boundaries, evidence precedence, unknown
-  semantics, source/general labeling, raw-image retention.
+  semantics, source/general labeling, raw-image retention, and the minimum
+  submission Dish boundary versus advanced P3 scope.
 - **Acceptance:** all three approve `PRODUCT_FLOW.md`; unresolved items are
   explicitly marked rather than inferred.
 
@@ -79,7 +96,8 @@ All U1 tasks land in one contract PR before feature branches begin.
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** READY
+- **Status:** BLOCKED
+- **Blocked by:** U1.1
 - **Decide:** allowed sensory values, ingredient roles, restaurant states,
   menu scopes, menu lifecycle, Dish match states, knowledge review states.
 - **Acceptance:** no ambiguous `taste` field; heat/richness cannot mix; contract
@@ -90,7 +108,8 @@ All U1 tasks land in one contract PR before feature branches begin.
 - **Owner:** Youn
 - **Inputs:** Juhyung source needs, YTW UI needs
 - **Dependency:** U1.2
-- **Status:** READY
+- **Status:** BLOCKED
+- **Blocked by:** U1.2
 - **Define:**
   - `RestaurantCandidate`
   - `RestaurantResolution`
@@ -108,7 +127,8 @@ All U1 tasks land in one contract PR before feature branches begin.
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** READY
+- **Status:** BLOCKED
+- **Blocked by:** U1.1
 - **Acceptance:** every variable has owner, secret classification, runtime
   scope, Development/Preview/Production policy, and no printed value.
   Migration credentials remain outside application runtime;
@@ -119,7 +139,8 @@ All U1 tasks land in one contract PR before feature branches begin.
 
 - **Owner:** all three
 - **Dependency:** U1.3
-- **Status:** READY
+- **Status:** BLOCKED
+- **Blocked by:** U1.3
 - **Acceptance:** each package publishes an interface and fake adapter; no
   feature package imports another package's internals.
 
@@ -170,9 +191,10 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 - **Owner:** Youn
 - **Dependency:** U1
-- **Status:** READY after U1
+- **Status:** BLOCKED
+- **Blocked by:** U1
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
-  secret-pattern validation.
+  secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
   tests.
 
@@ -183,6 +205,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.3
+- **Status:** BLOCKED
+- **Blocked by:** U2.3
 - **Scope:** photo/context plus restaurant/map/official-link intake, server-side
   Google Places adapter, bounded candidates, user confirmation,
   evidence-backed status, and official website/source clues.
@@ -197,6 +221,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Juhyung
 - **Reviewer:** Youn
 - **Dependency:** U2.2
+- **Status:** BLOCKED
+- **Blocked by:** U2.2
 - **Scope:** bounded retrieval from the confirmed restaurant's official
   website, menu page, PDF, or ordering page; URL normalization, SSRF defense,
   redirect revalidation, content/type/size limits, provenance, and typed
@@ -211,6 +237,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Juhyung
 - **Reviewer:** Youn
 - **Dependency:** S1.2
+- **Status:** BLOCKED
+- **Blocked by:** S1.2
 - **Feature flag:** `FEATURE_WEB_SEARCH_DISCOVERY`
 - **Scope:** bounded OpenAI Web Search only after official acquisition returns
   a typed no-valid-source outcome; cited source discovery, URL/source
@@ -225,9 +253,12 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Juhyung
 - **Reviewer:** Youn
 - **Dependency:** S1.2, S1.3
-- **Scope:** one bounded GPT-5.6 extraction request, strict schema, page/section/
-  item/price/options/source indexes, compact output from uploaded or acquired
-  menu evidence.
+- **Status:** BLOCKED
+- **Blocked by:** S1.2 and S1.3
+- **Scope:** one bounded configured menu-extraction request, strict schema,
+  page/section/item/price/options/source indexes, compact output from uploaded
+  or acquired menu evidence. The exact model value remains a separately frozen
+  configuration choice.
 - **Acceptance:** invalid, incomplete, timeout, refusal, and oversized cases
   have typed safe outcomes; automated tests make zero OpenAI calls.
 
@@ -236,6 +267,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Youn
 - **Reviewer:** Juhyung
 - **Dependency:** U2.1, S1.4
+- **Status:** BLOCKED
+- **Blocked by:** U2.1 and S1.4
 - **Scope:** provider DTO to canonical DTO, separate sensory axes, ingredient
   basis, source/general separation, semantic issue detection.
 - **Acceptance:** provider strings cannot bypass vocabulary; unknown and safety
@@ -246,6 +279,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Juhyung
 - **Reviewers:** Youn for canonical/safety contracts; YTW for presentation
 - **Dependency:** S1.5
+- **Status:** BLOCKED
+- **Blocked by:** S1.5
 - **Scope:** adapt Juhyung's menu/dish explanation implementation to consume
   only validated canonical structure; bounded provider prompt and deterministic
   fallback; multilingual user-facing wording.
@@ -259,6 +294,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** YTW
 - **Reviewers:** Youn, Juhyung
 - **Dependency:** S1.1, S1.2, S1.3, S1.5, S1.6
+- **Status:** BLOCKED
+- **Blocked by:** S1.1, S1.2, S1.3, S1.5, and S1.6
 - **Scope:** photo and link intake, restaurant confirmation, source-acquisition
   progress/fallback state, overview, category disclosures, Dish Detail,
   source/general labels, safety notice, and retry-safe errors.
@@ -272,7 +309,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 - **Owner:** Youn
 - **Dependency:** S1.5
-- **Status:** BLOCKED by S1.5
+- **Status:** BLOCKED
+- **Blocked by:** S1.5
 - **Scope:** smallest Development schema needed for exact snapshot reuse and
   atomic structured menu persistence on an isolated Neon Development branch,
   using the Youn data contracts as the integration source of truth.
@@ -284,7 +322,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 - **Owner:** Youn
 - **Dependency:** S2.1
-- **Status:** BLOCKED by S2.1
+- **Status:** BLOCKED
+- **Blocked by:** S2.1
 - **Scope:** version-complete key, one owner, bounded duplicate wait,
   owner-only persistence, expired lease recovery.
 - **Acceptance:** real Development PostgreSQL concurrency tests produce one
@@ -295,7 +334,8 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Youn
 - **Reviewer:** YTW
 - **Dependency:** S2.1, S1.1
-- **Status:** BLOCKED by S2.1 and S1.1
+- **Status:** BLOCKED
+- **Blocked by:** S2.1 and S1.1
 - **Scope:** confirmed restaurant plus menu scope plus freshness.
 - **Acceptance:** no unconfirmed restaurant publishes a shared menu; stale
   versions are retained and never silently overwritten; acquired official and
@@ -404,6 +444,8 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The next PR is **U1 - Freeze the team compatibility contract**. Do not start U2
-feature code until all three owners approve U1 and the selected contract
-versions are promoted from `0.1.0` to `1.0.0`.
+The next contract activity is **U1.1 - Approve product and evidence
+invariants**, followed by the dependency order documented above. All U1 outputs
+land in one contract PR. Do not start U2 feature code until all three owners
+approve U1 and the selected contract versions are promoted from `0.1.0` to
+`1.0.0`.

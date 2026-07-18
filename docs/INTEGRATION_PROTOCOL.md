@@ -35,6 +35,24 @@ One PR should change one contract or one vertical behavior. A PR must state:
 - network, database, and deployment effects;
 - rollback or disable path.
 
+## Current GitHub enforcement
+
+The current private-repository plan does not expose branch protection for this
+repository. `CODEOWNERS` therefore documents review ownership but is not a
+technical lock on `main`.
+
+Until branch protection is available:
+
+- no owner pushes feature or contract changes directly to `main`;
+- every change uses a short-lived branch and pull request;
+- each feature PR records approval from a non-author workstream owner;
+- each shared-contract PR records approval from all three owners;
+- Youn verifies the review record and `pnpm verify` result before merge.
+
+U2.4 must revisit automated checks and branch protection when supported.
+Nothing in this fallback authorizes a billing change or making the repository
+public.
+
 ## Required checks
 
 Every PR:
@@ -78,7 +96,7 @@ versions, environment names only, and any remaining gate.
 
 - Merge contract bootstrap first.
 - Treat the agreed photo/link -> Places -> official menu -> Web Search fallback
-  -> explanation -> canonical validation -> database -> mobile path as one
+  -> canonical validation -> explanation -> database -> mobile path as one
   mandatory release chain.
 - Integrate thin cross-workstream slices early; do not wait for three completed
   owner branches before testing the shared flow.

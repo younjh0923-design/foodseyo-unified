@@ -30,6 +30,19 @@ The shared package freezes:
 Do not add a generic `taste` string, unrestricted claim type, or polymorphic
 JSON reference that bypasses type-specific integrity.
 
+### Minimum submission Dish contract
+
+U1 freezes a minimum typed Dish boundary for `DishCandidate`,
+`DishMatchState`, and `EffectiveDishProfile`. It must preserve source-specific
+menu facts, distinguish reviewed general guidance, and return `unknown` when no
+reviewed baseline is available.
+
+The minimum contract is not the complete post-submission Dish knowledge model.
+Alias graphs, broad knowledge accumulation, authoring and review workflows, and
+the complete versioned claim lifecycle remain P3 scope. U1.1 must make any
+remaining minimum-scope decision explicit before U1.3 freezes the DTOs; feature
+code must not infer an unapproved baseline source.
+
 ### Submission input and acquisition sequence
 
 The shared boundary supports one or more menu/sign/context photos and a

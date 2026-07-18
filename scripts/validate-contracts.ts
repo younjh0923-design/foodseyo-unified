@@ -20,6 +20,44 @@ const unique = (values: readonly string[], label: string) => {
   assert.equal(new Set(values).size, values.length, `${label} contains duplicates`);
 };
 
+const assertOrdered = (
+  source: string,
+  label: string,
+  markers: readonly string[],
+) => {
+  let previousIndex = -1;
+
+  for (const marker of markers) {
+    const markerIndex = source.indexOf(marker);
+    assert.notEqual(markerIndex, -1, `${label} is missing ${marker}`);
+    assert(
+      markerIndex > previousIndex,
+      `${label} has an invalid order around ${marker}`,
+    );
+    previousIndex = markerIndex;
+  }
+};
+
+const markdownTaskSection = (source: string, heading: string) => {
+  const start = source.indexOf(heading);
+  assert.notEqual(start, -1, `task master is missing ${heading}`);
+  const remaining = source.slice(start + heading.length);
+  const nextSection = remaining.search(/\n### /);
+  return nextSection === -1 ? remaining : remaining.slice(0, nextSection);
+};
+
+const assertTaskStatus = (
+  taskMaster: string,
+  heading: string,
+  expectedStatus: string,
+) => {
+  const section = markdownTaskSection(taskMaster, heading);
+  assert(
+    section.includes(`- **Status:** ${expectedStatus}`),
+    `${heading} must be ${expectedStatus}`,
+  );
+};
+
 unique(BASIC_TASTES, "BASIC_TASTES");
 unique(FLAVOR_NOTES, "FLAVOR_NOTES");
 unique(TEXTURES, "TEXTURES");
@@ -78,10 +116,96 @@ assert.equal(
 const runtimeExample = await readFile(resolve(".env.example"), "utf8");
 const operatorExample = await readFile(resolve(".env.operator.example"), "utf8");
 const technologyStack = await readFile(resolve("docs/TECH_STACK.md"), "utf8");
+const readme = await readFile(resolve("README.md"), "utf8");
+const productFlow = await readFile(resolve("docs/PRODUCT_FLOW.md"), "utf8");
+const sharedContracts = await readFile(
+  resolve("docs/SHARED_CONTRACTS.md"),
+  "utf8",
+);
+const taskMaster = await readFile(resolve("docs/TASK_MASTER.md"), "utf8");
+const integrationProtocol = await readFile(
+  resolve("docs/INTEGRATION_PROTOCOL.md"),
+  "utf8",
+);
+const decisionLog = await readFile(resolve("docs/DECISION_LOG.md"), "utf8");
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
 assert(operatorExample.includes("DATABASE_MIGRATION_URL="));
 assert.match(technologyStack, /Neon Serverless Postgres/);
 assert.match(technologyStack, /Supabase is not part of the unified runtime/);
 assert.match(technologyStack, /Vercel/);
+
+assertOrdered(readme, "README submission flow", [
+  "-> compact menu extraction",
+  "-> Youn-owned canonical normalization",
+  "-> Juhyung-owned menu and dish explanation",
+  "-> Youn-owned database persistence",
+]);
+assertOrdered(productFlow, "product target flow", [
+  "-> compact menu extraction",
+  "-> evidence-priority merge",
+  "-> structured validation",
+  "-> Juhyung-owned constrained explanation rendering",
+  "-> atomic persistence and publication",
+]);
+assertOrdered(integrationProtocol, "integration release chain", [
+  "-> canonical validation",
+  "-> explanation",
+  "-> database",
+  "-> mobile",
+]);
+
+const submissionDecision = decisionLog.slice(
+  decisionLog.indexOf("## U-004 - Final submission flow is non-optional"),
+  decisionLog.indexOf("## U-005 - Unified platform source of truth"),
+);
+assertOrdered(submissionDecision, "U-004 decision", [
+  "OpenAI Web Search fallback",
+  "Youn-owned canonical culinary consistency",
+  "Juhyung-owned menu/dish",
+  "Youn-owned database persistence",
+]);
+
+assert.match(productFlow, /## Submission Dish boundary/);
+assert.match(sharedContracts, /### Minimum submission Dish contract/);
+assert.match(
+  integrationProtocol,
+  /private-repository plan does not expose branch protection/,
+);
+assert.equal(
+  /GPT-\d/i.test(taskMaster),
+  false,
+  "task master must not freeze an exact model before its configuration task",
+);
+
+const allowedTaskStatuses = new Set([
+  "READY",
+  "IN PROGRESS",
+  "REVIEW",
+  "BLOCKED",
+  "DONE",
+  "DEFERRED",
+]);
+for (const match of taskMaster.matchAll(/\*\*Status:\*\*\s+([^\r\n]+)/g)) {
+  assert(
+    allowedTaskStatuses.has(match[1].trim()),
+    `task master contains unsupported status ${match[1].trim()}`,
+  );
+}
+
+assertTaskStatus(taskMaster, "### U0.2 Common contract draft", "DONE");
+assertTaskStatus(
+  taskMaster,
+  "### U1.1 Approve product and evidence invariants",
+  "READY",
+);
+assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "BLOCKED");
+assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
+assertTaskStatus(
+  taskMaster,
+  "### U1.4 Freeze environment and feature-flag registry",
+  "BLOCKED",
+);
+assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
+assertTaskStatus(taskMaster, "### U2.4 Continuous integration", "BLOCKED");
 
 console.log("Foodseyo shared contract validation passed.");

@@ -17,8 +17,8 @@ menu/sign photos plus a restaurant, map, or official-source link
 -> official menu-source discovery and acquisition
 -> OpenAI Web Search fallback when official acquisition fails
 -> compact menu extraction
--> Juhyung-owned menu and dish explanation
 -> Youn-owned canonical normalization, culinary consistency, and safety checks
+-> Juhyung-owned menu and dish explanation from validated canonical structure
 -> Youn-owned database persistence and reuse
 -> mobile ordering-decision experience
 ```

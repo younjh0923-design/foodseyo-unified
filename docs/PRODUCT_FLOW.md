@@ -39,6 +39,21 @@ menu/sign photos plus a restaurant, map, or official-source link
    restaurants. It must never absorb restaurant-specific prices, recipes,
    portions, availability, or safety claims.
 
+## Submission Dish boundary
+
+The submission requires a minimum typed Dish boundary so extraction,
+canonical validation, explanation, and presentation agree on Dish candidates,
+match state, reviewed general guidance, and `unknown`. U1 must freeze the
+minimum `DishCandidate` and `EffectiveDishProfile` fields before dependent
+implementation starts.
+
+This minimum boundary does not imply that the advanced Dish knowledge system is
+already implemented or required in full for submission. Alias graphs, broad
+cross-restaurant knowledge accumulation, claim-authoring workflows, and the
+complete versioned review lifecycle remain post-submission P3 work. Until U1
+freezes the minimum boundary, no implementation may assume that a reviewed
+baseline exists. A missing reviewed baseline remains `unknown`.
+
 ## Evidence acquisition
 
 The submission intake supports one or more menu, sign, or restaurant-context
