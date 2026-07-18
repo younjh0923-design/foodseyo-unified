@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+.DS_Store
+.vercel/
+
+.env*
+!.env.example
+!.env.operator.example
+
+outputs/
+tmp/

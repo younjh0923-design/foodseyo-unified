@@ -1,0 +1,21 @@
+{
+  "name": "foodseyo-unified",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Greenfield unified Foodseyo submission repository",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "typecheck": "pnpm --filter @foodseyo/contracts typecheck",
+    "validate:contracts": "tsx scripts/validate-contracts.ts",
+    "validate:security": "tsx scripts/validate-repository-security.ts",
+    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:security"
+  },
+  "devDependencies": {
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}
