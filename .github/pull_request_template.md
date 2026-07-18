@@ -33,6 +33,8 @@ Describe the bounded behavior or contract change.
 - [ ] `pnpm verify`
 - [ ] No real provider request in automated tests
 - [ ] No secrets, raw images, provider responses, or database values committed
+- [ ] No raw source URL appears in logs or public errors
+- [ ] Provider photo/reference persistence boundary reviewed where relevant
 - [ ] No unapproved legacy technology or environment alias introduced
 - [ ] Success, invalid input, timeout, and safe fallback covered where relevant
 - [ ] Task master and documentation updated

@@ -101,8 +101,8 @@ versions, environment names only, and any remaining gate.
 
 - Merge contract bootstrap first.
 - Treat the agreed photo/link -> Places -> official menu -> Web Search fallback
-  -> canonical validation -> explanation -> database -> mobile path as one
-  mandatory release chain.
+  -> compact extraction -> canonical validation -> explanation -> database
+  -> mobile path as one mandatory release chain.
 - Integrate thin cross-workstream slices early; do not wait for three completed
   owner branches before testing the shared flow.
 - Integrate at least twice per day.

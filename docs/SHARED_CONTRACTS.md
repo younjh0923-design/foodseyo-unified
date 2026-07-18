@@ -172,6 +172,14 @@ Cross-feature calls use an exported interface or application service.
 - Error responses use stable codes and safe correlation IDs.
 - Raw menu text, image data, filenames, provider responses, and credentials are
   never logged.
+- Raw discovered, redirect, and ordering URLs never appear in logs or public
+  errors. Use validated safe source references, correlation IDs, or
+  intentionally redacted URL metadata at those boundaries.
+- Restaurant photo bytes and opaque or short-lived Google photo/provider
+  references remain provider DTO or application-view-model data. They are not
+  canonical or permanently persisted without a separately reviewed licensing,
+  attribution, freshness/TTL, and storage contract. Google Place ID remains
+  the explicit external-identity exception.
 - Provider calls are server-only, bounded, abortable, and mockable.
 - Network-free fixtures are the default test input.
 - Explanation receives validated canonical structure only. It may not add a

@@ -348,8 +348,9 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 ### S3.1 Integrated adversarial validation
 
 - **Owner:** all three
-- **Dependency:** S1.7, S2.3
+- **Dependency:** S1.7, S2.2, S2.3
 - **Status:** BLOCKED
+- **Blocked by:** S1.7, S2.2, and S2.3
 - **Validate:** malformed images and links, conflicting restaurant candidates,
   unsafe/redirecting/unsupported official sources, official-source miss into
   Web Search fallback, no-source outcome, incomplete extraction, provider

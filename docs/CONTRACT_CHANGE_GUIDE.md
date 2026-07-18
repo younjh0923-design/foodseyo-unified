@@ -37,6 +37,7 @@ Examples:
 | A new environment variable or feature flag | shared platform contract |
 | A database index with no semantic effect | database implementation detail |
 | A stored column or constraint that changes DTO meaning | contract plus database change |
+| Explanation retry, deterministic fallback, or renderer semantic change | shared semantic and version contract |
 
 When uncertain, stop the dependent implementation and submit a contract change
 request. Do not create a temporary local enum, string, alias, or environment
@@ -162,6 +163,13 @@ After the contract PR is approved and merged:
 - Include valid, missing, invalid, conflicting, and forward-compatibility
   fixtures.
 - Never expose provider-internal fields or database rows directly to the UI.
+- Keep restaurant photo bytes and opaque or short-lived Google photo/provider
+  references in the provider DTO or application view model. They are not
+  canonical data and are not permanently persisted unless a separately
+  reviewed contract defines licensing, attribution, freshness/TTL, and storage
+  behavior.
+- Google Place ID is the explicit external-identity exception to that provider
+  reference rule. It remains separate from Foodseyo internal identity.
 
 ### Public outcome and error
 
@@ -175,6 +183,12 @@ For every proposed outcome, decide whether it is:
 Public errors use stable codes, a safe user message, safe correlation ID,
 retryability, and HTTP behavior where relevant. They never expose source
 content, provider responses, credentials, internal URLs, or database details.
+
+A validated source reference used for provenance is not the same as the raw
+discovered or ordering URL received from a user, provider, redirect, or search
+result. Raw source URLs must never appear in logs or public-error payloads.
+Use a safe source reference, correlation ID, or intentionally redacted URL
+metadata instead.
 
 ### Environment variable and feature flag
 
@@ -210,6 +224,11 @@ Record:
 - migration need and rollback plan.
 
 Do not reuse old cache entries under a new meaning.
+
+Changing explanation retry behavior, deterministic-fallback behavior, or
+explanation-renderer semantics is a shared semantic change. Review and advance
+the relevant version token whenever that change can alter persisted, cached, or
+user-visible meaning.
 
 ### Database and migration
 
@@ -317,6 +336,12 @@ merging.
 - [ ] State, non-error outcome, warning, and public error are not conflated.
 - [ ] Runtime schema, TypeScript type, examples, and invalid fixtures agree.
 - [ ] Evidence, provenance, unknown, dietary, and allergen rules remain safe.
+- [ ] Raw source URLs are absent from logs and public errors; only safe source
+      references, correlation IDs, or intentionally redacted metadata cross
+      those boundaries.
+- [ ] Restaurant photo bytes and opaque or short-lived provider references are
+      not canonical or permanently persisted without a separately reviewed
+      licensing, attribution, freshness/TTL, and storage contract.
 - [ ] Environment trust boundaries contain no secret exposure.
 - [ ] Version, persistence, migration, and cache effects are explicit.
 - [ ] Task dependencies and durable decisions are updated.

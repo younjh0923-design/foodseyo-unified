@@ -175,6 +175,14 @@ assert.match(
   pullRequestTemplate,
   /`CONTRACT_CHANGE_GUIDE\.md` followed when a shared contract changed/,
 );
+assert.match(
+  pullRequestTemplate,
+  /No raw source URL appears in logs or public errors/,
+);
+assert.match(
+  pullRequestTemplate,
+  /Provider photo\/reference persistence boundary reviewed/,
+);
 
 assertOrdered(readme, "README submission flow", [
   "-> compact menu extraction",
@@ -190,11 +198,32 @@ assertOrdered(productFlow, "product target flow", [
   "-> atomic persistence and publication",
 ]);
 assertOrdered(integrationProtocol, "integration release chain", [
+  "-> compact extraction",
   "-> canonical validation",
   "-> explanation",
   "-> database",
   "-> mobile",
 ]);
+assert.match(
+  contractChangeGuide,
+  /Raw source URLs must never appear in logs or public-error payloads\./,
+);
+assert.match(
+  contractChangeGuide,
+  /Google Place ID is the explicit external-identity exception/,
+);
+assert.match(
+  contractChangeGuide,
+  /Changing explanation retry behavior, deterministic-fallback behavior, or[\s\S]*explanation-renderer semantics is a shared semantic change\./,
+);
+assert.match(
+  sharedContracts,
+  /Raw discovered, redirect, and ordering URLs never appear in logs or public[\s\S]*errors\./,
+);
+assert.match(
+  sharedContracts,
+  /Restaurant photo bytes and opaque or short-lived Google photo\/provider[\s\S]*Google Place ID remains[\s\S]*external-identity exception\./,
+);
 
 const submissionDecision = decisionLog.slice(
   decisionLog.indexOf("## U-004 - Final submission flow is non-optional"),
@@ -249,5 +278,17 @@ assertTaskStatus(
 );
 assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
 assertTaskStatus(taskMaster, "### U2.4 Continuous integration", "BLOCKED");
+const integratedValidation = markdownTaskSection(
+  taskMaster,
+  "### S3.1 Integrated adversarial validation",
+);
+assert.match(
+  integratedValidation,
+  /\*\*Dependency:\*\* S1\.7, S2\.2, S2\.3/,
+);
+assert.match(
+  integratedValidation,
+  /\*\*Blocked by:\*\* S1\.7, S2\.2, and S2\.3/,
+);
 
 console.log("Foodseyo shared contract validation passed.");
