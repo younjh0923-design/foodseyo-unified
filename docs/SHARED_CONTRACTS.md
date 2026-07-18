@@ -25,6 +25,26 @@ The shared package freezes:
 Do not add a generic `taste` string, unrestricted claim type, or polymorphic
 JSON reference that bypasses type-specific integrity.
 
+### Submission input and acquisition sequence
+
+The shared boundary supports one or more menu/sign/context photos and a
+restaurant, map, or official-source link. It preserves whether each input was
+user supplied, Places discovered, official-source acquired, or Web Search
+discovered.
+
+The submission sequence is contractually ordered:
+
+1. Google Places resolves restaurant candidates and official-source clues;
+2. the confirmed official website, PDF, or ordering page is attempted;
+3. bounded OpenAI Web Search runs only when official acquisition does not yield
+   a valid menu source;
+4. both acquisition routes produce the same validated `MenuSourceInput`;
+5. no-source, timeout, conflicting-source, unsafe-URL, and invalid-content
+   outcomes remain typed and never become fabricated success.
+
+Google Place ID identifies an external restaurant branch. It does not identify
+a menu version and Places is not modeled as a full menu-item provider.
+
 ### Environment variable names
 
 Environment variables are split by trust boundary.
@@ -103,7 +123,9 @@ packages/source-acquisition
   owns official sources, PDFs, order pages, and Web Search discovery
 
 packages/menu-analysis
-  owns compact extraction, normalization, provider adapters, semantic checks
+  owns compact extraction, provider adapters, and Juhyung's constrained
+  menu/dish explanation; canonical normalization and semantic validation remain
+  Youn-owned boundaries
 
 packages/dish-knowledge
   owns Dish candidates, reviewed baselines, and typed culinary claims
@@ -129,6 +151,9 @@ Cross-feature calls use an exported interface or application service.
   never logged.
 - Provider calls are server-only, bounded, abortable, and mockable.
 - Network-free fixtures are the default test input.
+- Explanation receives validated canonical structure only. It may not add a
+  fact, ingredient, dietary/allergen claim, sensory value, or certainty that is
+  absent from that structure.
 
 ## Contract-change protocol
 

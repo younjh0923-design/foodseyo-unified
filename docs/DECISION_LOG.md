@@ -32,5 +32,29 @@
 - **Impact:** Official-source crawling, Web Search fallback, durable restaurant
   publication, and broad Dish reuse may not enter the submission branch until
   the core slice is green.
+- **Status:** Superseded by U-004
+- **Date:** 2026-07-18
+
+## U-004 - Final submission flow is non-optional
+
+- **Decision:** The submission must support photo and link intake, Google
+  Places restaurant/branch resolution, bounded official menu-source
+  acquisition, OpenAI Web Search fallback when official acquisition fails,
+  Juhyung-owned menu/dish explanation, Youn-owned canonical culinary
+  consistency, and Youn-owned database persistence and reuse.
+- **Technical clarification:** Google Places is used for branch identity and
+  official-source discovery. It is not modeled as a full menu-item API.
+- **Reason:** The three owners agreed that this is the minimum differentiated
+  Foodseyo experience required for judging, rather than a post-submission
+  architecture aspiration.
+- **Impact:** The official-source path, Web Search fallback, explanation
+  boundary, canonical consistency layer, and database integration move onto the
+  submission critical path. Release is blocked if any required path is not
+  green. Source breadth, advanced Dish coverage, and nonessential polish may be
+  reduced to protect the deadline.
+- **Ownership:** YTW owns Places resolution and the mobile experience; Juhyung
+  owns source acquisition, Web Search, provider adapters, and menu/dish
+  explanation; Youn owns contracts, normalization, merge/safety validation,
+  database, integration, and release gates.
 - **Status:** Accepted
 - **Date:** 2026-07-18

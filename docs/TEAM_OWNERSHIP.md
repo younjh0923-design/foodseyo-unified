@@ -25,7 +25,7 @@ Reference strengths:
 - PostgreSQL integrity, transactions, exact cache, and ownership;
 - network-free validation and rollout discipline.
 
-### Juhyung (`juhyungbaek0621`) - menu source acquisition and provider adapters
+### Juhyung (`juhyungbaek0621`) - menu acquisition, provider adapters, and explanation
 
 Primary ownership:
 
@@ -33,12 +33,14 @@ Primary ownership:
 - official-site, PDF, ordering-page, and Web Search discovery adapters
 - source classification, source normalization, and acquisition fixtures
 - provider request construction and bounded source extraction
+- menu and dish explanation implementation, provider prompt, and deterministic
+  explanation fallback
 
 Reference strengths:
 
 - compact mobile exploration;
 - multilingual menu handling;
-- source acquisition and progressive detail concepts.
+- source acquisition, menu explanation, and progressive detail concepts.
 
 ### YTW (`ytw010629`) - restaurant resolution and product experience
 
@@ -62,6 +64,8 @@ Reference strengths:
 - Each feature PR has a reviewer from another workstream.
 - Any database, safety, privacy, or Production change requires Youn review.
 - Any source-acquisition or provider-boundary change requires Juhyung review.
+- Any menu/dish explanation implementation change requires Juhyung review and
+  Youn review for canonical, evidence, and safety compliance.
 - Any restaurant-resolution or user-visible workflow change requires YTW
   review.
 - Every owner supplies deterministic fixtures and a short handoff for another
@@ -74,7 +78,7 @@ Reference strengths:
 /packages/database/               Youn
 /packages/merge-policy/           Youn
 /packages/source-acquisition/     Juhyung
-/packages/menu-analysis/          Juhyung, reviewed by Youn
+/packages/menu-analysis/          Juhyung for provider/explanation; Youn for canonical validation
 /packages/restaurant-resolution/  YTW
 /apps/web/                         YTW
 /docs/                             owner of changed contract + one reviewer

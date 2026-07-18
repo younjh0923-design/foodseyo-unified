@@ -13,7 +13,8 @@ Status values:
 - `REVIEW`: implementation is complete and checks are green;
 - `BLOCKED`: a named dependency or account-holder action is required;
 - `DONE`: merged into `main`;
-- `DEFERRED`: outside the submission cut.
+- `DEFERRED`: outside the submission cut and never used for a required flow
+  capability.
 
 ## Non-negotiable program rules
 
@@ -23,7 +24,13 @@ Status values:
 - No Preview or Production migration or deployment without its release task.
 - No raw image, source body, menu text, provider response, credential, or
   database value in logs or Git.
-- A working submission vertical slice outranks unfinished breadth.
+- The required submission chain is photo/link intake -> Places restaurant
+  resolution -> official menu acquisition -> Web Search fallback -> extraction
+  -> canonical validation -> explanation -> database -> mobile experience.
+- Required chain capabilities may not be deferred or silently disabled to
+  protect the deadline. Reduce optional breadth and polish first.
+- Google Places supplies branch identity and official-source clues; it is not
+  treated as a full menu-item API.
 
 ## Official timing
 
@@ -174,63 +181,99 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.3
-- **Scope:** server-side Google Places adapter, bounded candidates, user
-  confirmation, evidence-backed status.
+- **Scope:** photo/context plus restaurant/map/official-link intake, server-side
+  Google Places adapter, bounded candidates, user confirmation,
+  evidence-backed status, and official website/source clues.
 - **Feature flag:** `FEATURE_RESTAURANT_RESOLUTION`
 - **Acceptance:** first candidate is never automatically confirmed; external
-  Place ID remains separate from internal ID; safe fallback permits menu-only
-  analysis.
+  Place ID remains separate from internal ID; supplied links remain provenance;
+  safe fallback permits photo-only analysis without inventing restaurant
+  confirmation.
 
-### S1.2 Compact menu-image extraction
+### S1.2 Official menu-source acquisition
 
 - **Owner:** Juhyung
 - **Reviewer:** Youn
 - **Dependency:** U2.2
+- **Scope:** bounded retrieval from the confirmed restaurant's official
+  website, menu page, PDF, or ordering page; URL normalization, SSRF defense,
+  redirect revalidation, content/type/size limits, provenance, and typed
+  no-source outcomes.
+- **Acceptance:** Places is used only for restaurant identity and source clues;
+  every accepted source produces a validated `MenuSourceInput`; unsafe,
+  conflicting, oversized, unsupported, timeout, and missing-source cases fail
+  safely without logging content.
+
+### S1.3 OpenAI Web Search menu fallback
+
+- **Owner:** Juhyung
+- **Reviewer:** Youn
+- **Dependency:** S1.2
+- **Feature flag:** `FEATURE_WEB_SEARCH_DISCOVERY`
+- **Scope:** bounded OpenAI Web Search only after official acquisition returns
+  a typed no-valid-source outcome; cited source discovery, URL/source
+  validation, cost and timeout bounds.
+- **Acceptance:** a search answer is discovery evidence rather than a canonical
+  menu; discovered sources pass the same acquisition contract; automated tests
+  make zero OpenAI calls; no valid result returns typed no-source rather than
+  fabricated menu content.
+
+### S1.4 Compact menu extraction
+
+- **Owner:** Juhyung
+- **Reviewer:** Youn
+- **Dependency:** S1.2, S1.3
 - **Scope:** one bounded GPT-5.6 extraction request, strict schema, page/section/
-  item/price/options/source indexes, compact output.
+  item/price/options/source indexes, compact output from uploaded or acquired
+  menu evidence.
 - **Acceptance:** invalid, incomplete, timeout, refusal, and oversized cases
   have typed safe outcomes; automated tests make zero OpenAI calls.
 
-### S1.3 Canonical normalization and validation
+### S1.5 Canonical normalization and validation
 
 - **Owner:** Youn
 - **Reviewer:** Juhyung
-- **Dependency:** U2.1, S1.2
+- **Dependency:** U2.1, S1.4
 - **Scope:** provider DTO to canonical DTO, separate sensory axes, ingredient
   basis, source/general separation, semantic issue detection.
 - **Acceptance:** provider strings cannot bypass vocabulary; unknown and safety
   rules hold; every source-stated claim has source indexes.
 
-### S1.4 Constrained explanation
+### S1.6 Juhyung menu and dish explanation
 
-- **Owner:** Youn
-- **Reviewer:** YTW
-- **Dependency:** S1.3
-- **Scope:** deterministic renderer first; optional bounded GPT explanation
-  only from validated structure.
+- **Owner:** Juhyung
+- **Reviewers:** Youn for canonical/safety contracts; YTW for presentation
+- **Dependency:** S1.5
+- **Scope:** adapt Juhyung's menu/dish explanation implementation to consume
+  only validated canonical structure; bounded provider prompt and deterministic
+  fallback; multilingual user-facing wording.
 - **Acceptance:** explanation adds no new fact, ingredient, safety claim, or
-  certainty; deterministic fallback always exists.
+  certainty; separate sensory axes and source/general labels remain visible;
+  deterministic fallback always exists; Youn's canonical and evidence rules
+  remain authoritative.
 
-### S1.5 Integrated mobile experience
+### S1.7 Integrated mobile experience
 
 - **Owner:** YTW
 - **Reviewers:** Youn, Juhyung
-- **Dependency:** S1.1, S1.3, S1.4
-- **Scope:** upload, optional restaurant confirmation, progress, overview,
-  category disclosures, Dish Detail, source/general labels, safety notice,
-  retry-safe errors.
-- **Acceptance:** one coherent mobile walkthrough; no dead control; error
-  recovery does not lose selected images unless privacy policy requires it.
+- **Dependency:** S1.1, S1.2, S1.3, S1.5, S1.6
+- **Scope:** photo and link intake, restaurant confirmation, source-acquisition
+  progress/fallback state, overview, category disclosures, Dish Detail,
+  source/general labels, safety notice, and retry-safe errors.
+- **Acceptance:** one coherent walkthrough exercises the official-source route
+  and one exercises the Web Search fallback; no dead control; error recovery
+  does not lose selected inputs unless privacy policy requires it.
 
-## Milestone S2 - Development persistence, only if the slice is already green
+## Milestone S2 - Required database persistence and reuse
 
 ### S2.1 Development database contract
 
 - **Owner:** Youn
 - **Dependency:** S1.5
-- **Status:** DEFERRED until S1 green
+- **Status:** BLOCKED by S1.5
 - **Scope:** smallest Development schema needed for exact snapshot reuse and
-  atomic structured menu persistence.
+  atomic structured menu persistence, using the Youn data contracts as the
+  integration source of truth.
 - **Acceptance:** Drizzle/SQL reviewed before execution; runtime and migrator
   roles separate; Preview/Production unchanged.
 
@@ -238,7 +281,7 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 
 - **Owner:** Youn
 - **Dependency:** S2.1
-- **Status:** DEFERRED until S1 green
+- **Status:** BLOCKED by S2.1
 - **Scope:** version-complete key, one owner, bounded duplicate wait,
   owner-only persistence, expired lease recovery.
 - **Acceptance:** real Development PostgreSQL concurrency tests produce one
@@ -249,21 +292,25 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Owner:** Youn
 - **Reviewer:** YTW
 - **Dependency:** S2.1, S1.1
-- **Status:** DEFERRED from submission unless all prior gates are green
+- **Status:** BLOCKED by S2.1 and S1.1
 - **Scope:** confirmed restaurant plus menu scope plus freshness.
 - **Acceptance:** no unconfirmed restaurant publishes a shared menu; stale
-  versions are retained and never silently overwritten.
+  versions are retained and never silently overwritten; acquired official and
+  Web Search sources retain provenance; this task is required for submission.
 
 ## Milestone S3 - Submission hardening
 
 ### S3.1 Integrated adversarial validation
 
 - **Owner:** all three
-- **Dependency:** S1.5
+- **Dependency:** S1.7, S2.3
 - **Status:** BLOCKED
-- **Validate:** malformed images, conflicting restaurant candidates, incomplete
-  extraction, provider timeout, duplicate request, source/general contradiction,
-  unknown allergy/dietary state, mobile overflow, refresh/navigation.
+- **Validate:** malformed images and links, conflicting restaurant candidates,
+  unsafe/redirecting/unsupported official sources, official-source miss into
+  Web Search fallback, no-source outcome, incomplete extraction, provider
+  timeout, duplicate request, database rollback and reuse, source/general
+  contradiction, unknown allergy/dietary state, mobile overflow, and
+  refresh/navigation.
 - **Acceptance:** full network-free suite and Production build pass.
 
 ### S3.2 Authorized smoke test
@@ -272,17 +319,19 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Dependency:** S3.1
 - **Status:** BLOCKED
 - **Scope:** one rights-cleared ordinary menu and one dense multi-page menu in
-  Preview, with explicitly authorized provider calls.
+  Preview, including the official-source path and Web Search fallback, with
+  explicitly authorized provider calls.
 - **Acceptance:** no secret or menu content in logs; observed behavior and cost
   recorded without provider response bodies.
 
 ### S3.3 Feature freeze and release review
 
 - **Owner:** all three
-- **Dependency:** S3.1, optionally S3.2
+- **Dependency:** S3.1, S3.2
 - **Status:** BLOCKED
-- **Decision:** ship only green features; disable unfinished adapters via
-  server-side flags.
+- **Decision:** ship only when every required chain capability is green. Flags
+  provide rollback containment but may not hide a missing required submission
+  capability.
 - **Acceptance:** go/no-go matrix, rollback path, environment names/scopes,
   mobile QA, security, and repository setup are verified.
 
@@ -297,33 +346,24 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
   repository access for required judge accounts.
 - **Acceptance:** completed before the internal 17:00 EDT target.
 
-## Post-submission target architecture
+## Post-submission extensions
 
-These tasks preserve the agreed complete flow without endangering the submission
-slice.
+The required acquisition, explanation, consistency, and database path is
+already in S1-S3. The items below extend its breadth after submission.
 
-### P1 Official source discovery and SSRF defense
+### P1 Broader source coverage
 
-- official website, PDF, and ordering-page discovery;
-- URL normalization, DNS/IP validation, redirect revalidation, content limits,
-  source classification, and provenance;
-- no general web crawl.
+- additional country-specific ordering providers and document formats;
+- broader source ranking and freshness monitoring;
+- no unrestricted general web crawl.
 
-### P2 OpenAI Web Search fallback
-
-- used only when official acquisition fails;
-- search answer is discovery evidence, not a canonical menu;
-- discovered URL and extracted content pass the same source contract;
-- bounded cost, timeout, and citation validation.
-
-### P3 Restaurant menu versions
+### P2 Advanced restaurant menu lifecycle
 
 - confirmed branch identity;
 - menu scope, collection time, expiry, active/stale/superseded lifecycle;
-- atomic publication and rollback;
-- least-privilege runtime access.
+- scheduled freshness checks and supersession tooling.
 
-### P4 Dish knowledge model
+### P3 Advanced Dish knowledge model
 
 - Dish concepts, aliases, many-to-many menu-item matches;
 - reviewed, versioned, provenance-bearing culinary claims;
@@ -331,27 +371,27 @@ slice.
   review state, and profile version;
 - no unrestricted EAV or unverifiable polymorphic claim targets.
 
-### P5 Menu-specific claims and merge policy
+### P4 Expanded menu-specific claims and merge policy
 
 - source-stated and inferred restaurant-specific claims;
 - type-safe evidence links;
 - baseline fills only missing context;
 - contradiction, unknown, allergy, and dietary safety tests.
 
-### P6 Explanation versioning
+### P5 Explanation versioning
 
 - renderer version separate from structure version;
 - regenerate wording without reanalyzing unchanged structured facts;
 - validation and deterministic fallback.
 
-### P7 Three-layer reuse
+### P6 Broader three-layer reuse
 
 - exact analysis cache;
 - restaurant menu cache;
 - Dish knowledge reuse;
 - separate invalidation and freshness rules for each layer.
 
-### P8 Preview and Production rollout
+### P7 Ongoing rollout hardening
 
 - Development migration and real PostgreSQL validation;
 - Preview migration and live QA;

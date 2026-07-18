@@ -76,6 +76,11 @@ versions, environment names only, and any remaining gate.
 ## Integration cadence before submission
 
 - Merge contract bootstrap first.
+- Treat the agreed photo/link -> Places -> official menu -> Web Search fallback
+  -> explanation -> canonical validation -> database -> mobile path as one
+  mandatory release chain.
+- Integrate thin cross-workstream slices early; do not wait for three completed
+  owner branches before testing the shared flow.
 - Integrate at least twice per day.
 - Run one shared mobile walkthrough after each integration window.
 - Feature freeze: 2026-07-20 20:00 EDT.
@@ -85,6 +90,11 @@ versions, environment names only, and any remaining gate.
 
 After feature freeze, only defects that block the working demo, repository
 setup, security, or submission requirements may merge.
+
+Feature freeze may reduce optional source breadth, advanced Dish coverage, and
+nonessential polish. It may not reclassify official menu acquisition, Web
+Search fallback, constrained explanation, canonical consistency, or database
+integration as post-submission work.
 
 ## Release boundary
 
