@@ -1,0 +1,110 @@
+name: Contract change request
+description: Propose a shared field, state, outcome, error, environment name, version, or interface.
+title: "[CONTRACT CHANGE] "
+labels:
+  - "type:contract-change"
+  - "status:proposed"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Registration is not approval. Do not implement this proposal until its contract PR is approved and merged.
+  - type: input
+    id: requester
+    attributes:
+      label: Requester and GitHub account
+    validations:
+      required: true
+  - type: input
+    id: task
+    attributes:
+      label: Task ID
+      placeholder: U1.2
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - upstream
+        - canonical
+        - ui
+        - data
+        - platform
+        - cross-workstream
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Proposed approval tier
+      options:
+        - scoped-shared
+        - cross-cutting
+        - final-freeze
+        - non-semantic
+    validations:
+      required: true
+  - type: input
+    id: reviewers
+    attributes:
+      label: Required owner reviewers
+      description: Name the accountable owner and every affected producer or consumer owner.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed item
+      description: State the exact field, value, state, outcome, error, environment name, version, or interface.
+    validations:
+      required: true
+  - type: textarea
+    id: gap
+    attributes:
+      label: Why the current contract is insufficient
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Producers and consumers
+      description: Identify every package, server/client boundary, and workstream that creates or consumes the value.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Compatibility and operational impact
+      description: Cover API, public errors, environment, persistence, cache, migration, security, privacy, evidence, unknown handling, and rollout.
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Version impact
+      description: Explain the proposed version change or why no semantic version changes.
+    validations:
+      required: true
+  - type: textarea
+    id: examples
+    attributes:
+      label: Valid and invalid examples
+      description: Include at least one valid example and one invalid, conflicting, or edge example without secrets or raw source content.
+    validations:
+      required: true
+  - type: textarea
+    id: unresolved
+    attributes:
+      label: Unresolved product decision
+      description: Write "none" only when the meaning is fully specified.
+    validations:
+      required: true
+  - type: checkboxes
+    id: guard
+    attributes:
+      label: Pre-implementation guard
+      options:
+        - label: No dependent implementation, temporary enum, environment alias, migration, provider call, or deployment has been added.
+          required: true

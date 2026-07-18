@@ -8,6 +8,11 @@ The goal is not to prevent change. The goal is to make one reviewed change
 before three workstreams implement three incompatible versions of the same
 idea.
 
+`CONTRACT_CHANGE_QUEUE.md` separates registration, approval, merge, and
+implementation. Anyone may register a proposal immediately. The required
+approval depends on impact rather than treating every change as an all-owner
+blocker.
+
 ## Is this a shared contract change?
 
 Treat a proposed item as shared when any of the following is true:
@@ -47,11 +52,12 @@ name.
 
 | Change | Accountable owner | Required review |
 | --- | --- | --- |
-| Shared vocabulary, DTO, version, environment name | Youn | all three owners |
-| Server intake, restaurant resolution, source acquisition, compact extraction | YTW | Youn plus Juhyung when UI-visible |
-| Canonical, evidence, safety, database, cache | Youn | affected owner plus all-owner review when shared |
-| Constrained explanation or user workflow | Juhyung | Youn plus YTW when upstream states change |
-| Platform choice or shared dependency | Youn | all three owners |
+| Package-private or non-semantic change | Owning workstream | Owning process or one non-author reviewer |
+| Scoped shared vocabulary, DTO, state, or interface | Youn | Accountable owner plus all directly affected owners; at least two people |
+| Server intake, restaurant resolution, source acquisition, compact extraction | YTW | Youn plus Juhyung only when their contracts or UI-visible states are affected |
+| Canonical, evidence, safety, database, cache | Youn | Affected owners; all three for cross-cutting safety, persisted meaning, or cache identity |
+| Constrained explanation or user workflow | Juhyung | Youn plus YTW only when canonical or upstream states change |
+| Platform choice, environment trust boundary, breaking cross-workstream change | Youn | All three owners |
 | Preview or Production behavior | Youn release owner | explicit release checkpoint |
 
 Ownership permits implementation decisions inside an approved contract. It
@@ -62,17 +68,19 @@ reporting, or a separately approved ownership change.
 
 ## Required workflow
 
-### 1. Report the need before implementing it
+### 1. Register the need before implementing it
 
-The person or Codex task that discovers the need submits the change-request
-template below. It must explain why the existing contract cannot represent the
-requirement.
+The person or Codex task that discovers the need opens a GitHub issue using the
+contract-change form. Registration requires no approval and does not have to
+wait for unrelated proposals. It must explain why the existing contract cannot
+represent the requirement.
 
 Do not add the new field or value to a feature package while waiting.
 
 ### 2. Classify the impact
 
-The contract owner determines whether the change affects:
+The contract owner triages the issue, assigns its area and approval tier, names
+the required reviewers, and determines whether the change affects:
 
 - runtime schema and TypeScript types;
 - API or application-service compatibility;
@@ -85,6 +93,8 @@ The contract owner determines whether the change affects:
 - Preview, Production, deployment, or rollback.
 
 Unresolved product meaning is recorded as unresolved. Codex must not guess it.
+If the tier or affected-owner classification is disputed, raise the proposal by
+one approval tier. Queue status never overrides task dependencies.
 
 ### 3. Change the contract first
 
@@ -130,9 +140,20 @@ Before review:
 - confirm the PR names its Task ID, owner, reviewers, changed contracts, and
   platform effects.
 
-Shared-contract changes require all three owners to review the decision. Under
-the current private-repository plan, that approval is recorded on the PR
-because branch protection is not available.
+Required approvals follow `CONTRACT_CHANGE_QUEUE.md`:
+
+- a scoped shared change receives the accountable contract owner's approval and
+  approval from every directly affected producer or consumer owner, with at
+  least two people total;
+- evidence, provenance, unknown, culinary vocabulary, allergen or dietary
+  safety, ownership/trust flow, public error semantics, persisted meaning,
+  cache identity, environment trust, platform, or breaking cross-workstream
+  changes receive all three approvals;
+- U1.6 and irreversible release decisions receive all three approvals on the
+  exact final HEAD.
+
+Under the current private-repository plan, approval is recorded on the PR
+because branch protection is not available. Silence is not approval.
 
 ### 6. Merge the contract before feature code
 
@@ -253,9 +274,10 @@ all-owner review before dependent code is added.
 ## Before and after contract 1.0.0
 
 Before U1.6, proposed values land through the ordered U1 contract-only PRs and
-remain `0.1.0`/`draft`. Each shared decision receives all-owner review, and no
-feature implementation begins until the final U1.6 freeze promotes the
-selected contracts to `1.0.0`.
+remain `0.1.0`/`draft`. Proposals may be queued in parallel, but their PRs obey
+task dependencies and the impact-tier approval matrix. No feature
+implementation begins until the all-owner U1.6 freeze promotes the selected
+contracts to `1.0.0`.
 
 After `1.0.0`, every semantic addition or modification uses a new dedicated
 contract PR. A feature that discovers the need waits for that PR to merge and
@@ -270,6 +292,8 @@ Requester:
 GitHub account:
 Task ID:
 Affected workstream:
+Proposed approval tier:
+Required owner reviewers:
 
 Proposed item:
 Why the current contract is insufficient:
@@ -296,7 +320,7 @@ No implementation has been added before contract approval: yes/no
 
 ```text
 Read AGENTS.md and every required document first, including
-docs/CONTRACT_CHANGE_GUIDE.md.
+docs/CONTRACT_CHANGE_GUIDE.md and docs/CONTRACT_CHANGE_QUEUE.md.
 
 Repository:
 https://github.com/younjh0923-design/foodseyo-unified
@@ -306,6 +330,10 @@ Branch:
 Requester:
 
 Evaluate the attached CONTRACT CHANGE REQUEST.
+
+First inspect the complete open GitHub contract-change queue. Deeply review
+items assigned to this owner, in this workstream, or marked cross-workstream.
+Report a conflicting or duplicate proposal before changing files.
 
 First determine whether the proposal is:
 - package-private implementation;
@@ -354,3 +382,5 @@ merging.
 - [ ] `pnpm verify` and `git diff --check` pass.
 - [ ] No dependent feature implementation is hidden in the contract PR.
 - [ ] Required owner approvals are recorded before merge.
+- [ ] The proposal is registered once in the GitHub queue and has one status.
+- [ ] The approval tier and affected owners match the actual impact.

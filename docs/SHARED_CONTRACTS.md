@@ -164,7 +164,7 @@ apps/web
 
 packages/contracts
   Youn owns vocabulary, schemas, versions, public error codes, environment
-  names, and cross-workstream interfaces with all-owner review
+  names, and cross-workstream interfaces with impact-tier review
 
 packages/restaurant-resolution
   YTW owns Google Places candidates, confirmation evidence, and UI-safe
@@ -219,13 +219,18 @@ Cross-feature calls use an exported interface or application service.
 
 ## Contract-change protocol
 
-1. Open a contract-only PR.
-2. Explain semantic impact and migration/cache consequences.
-3. Update contract tests and the decision log.
-4. Obtain review from all three workstream owners.
-5. Merge the contract PR.
-6. Before U1.6, continue only the next ordered contract task.
-7. After U1.6 promotes the selected contracts to `1.0.0`, update feature
+1. Register the proposal in the GitHub contract-change queue without waiting
+   for unrelated proposals.
+2. Triage its area, affected owners, approval tier, dependencies, and duplicate
+   or conflicting proposals.
+3. Open a contract-only PR when its task dependency permits.
+4. Explain semantic impact and migration/cache consequences.
+5. Update contract tests and the decision log.
+6. Obtain the impact-tier approvals defined in
+   `CONTRACT_CHANGE_QUEUE.md`; cross-cutting changes and U1.6 require all three.
+7. Merge the contract PR.
+8. Before U1.6, continue only the next dependency-eligible contract task.
+9. After U1.6 promotes the selected contracts to `1.0.0`, update feature
    branches from `main` and implement against the frozen version.
 
 No feature PR may quietly modify a shared string or version.

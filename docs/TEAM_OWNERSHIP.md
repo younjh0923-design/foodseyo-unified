@@ -120,7 +120,11 @@ Juhyung does not unilaterally:
 ## Shared responsibilities
 
 - All three approve the U1.6 `@foodseyo/contracts` version `1.0.0` freeze.
-- Every shared-contract PR receives all-owner review.
+- Anyone may register a contract proposal without approval. Scoped shared
+  contract PRs receive approval from the accountable owner and every directly
+  affected owner, with at least two people total.
+- Cross-cutting semantic, safety, persistence/cache, environment/platform,
+  ownership/trust, and breaking changes receive all-owner review.
 - Every feature PR has a reviewer from another affected workstream.
 - YTW reviews upstream intake, restaurant, acquisition, and extraction changes.
 - Youn reviews canonical, evidence, safety, privacy, database, cache, and
@@ -134,7 +138,7 @@ Juhyung does not unilaterally:
 ## Directory ownership
 
 ```text
-/packages/contracts/              Youn + all-owner approval
+/packages/contracts/              Youn + impact-tier owner approval
 /packages/database/               Youn
 /packages/dish-knowledge/         Youn
 /packages/merge-policy/           Youn

@@ -58,10 +58,11 @@ repository.
 2. [Product flow](docs/PRODUCT_FLOW.md)
 3. [Shared contracts](docs/SHARED_CONTRACTS.md)
 4. [Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)
-5. [Task master](docs/TASK_MASTER.md)
-6. [Team ownership](docs/TEAM_OWNERSHIP.md)
-7. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
-8. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
+5. [Contract change queue](docs/CONTRACT_CHANGE_QUEUE.md)
+6. [Task master](docs/TASK_MASTER.md)
+7. [Team ownership](docs/TEAM_OWNERSHIP.md)
+8. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
+9. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
 
 ## First gate
 

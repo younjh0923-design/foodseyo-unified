@@ -3,6 +3,9 @@
 - Task ID:
 - Owner:
 - Reviewer:
+- Contract queue issue:
+- Approval tier:
+- Affected owners:
 
 ## What changed
 
@@ -40,7 +43,8 @@ Describe the bounded behavior or contract change.
 - [ ] Success, invalid input, timeout, and safe fallback covered where relevant
 - [ ] Task master and documentation updated
 - [ ] `CONTRACT_CHANGE_GUIDE.md` followed when a shared contract changed
-- [ ] Required owner approvals recorded before merge
+- [ ] Contract proposal was triaged before dependent implementation
+- [ ] Required impact-tier owner approvals recorded before merge
 
 ## Platform impact
 

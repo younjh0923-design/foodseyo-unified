@@ -19,6 +19,8 @@
   review-time compatibility.
 - **Impact:** Contract changes land before feature changes and require all-owner
   review.
+- **Governance status:** The universal approval detail is superseded by U-009;
+  contract-first sequencing remains accepted.
 - **Status:** Accepted
 - **Date:** 2026-07-18
 
@@ -109,6 +111,8 @@
   three owner approvals. U2.5 revisits automated checks and protection when
   supported. This decision does not authorize billing or repository-visibility
   changes.
+- **Governance status:** The universal shared-contract approval detail is
+  superseded by U-009; recorded PR review and no-direct-main-push rules remain.
 - **Approval evidence:** All-owner review and merge of PR #3.
 - **Status:** Accepted
 - **Date:** 2026-07-18
@@ -136,4 +140,27 @@
   No feature implementation is authorized by this decision before U1.6.
 - **Status:** Proposed; becomes Accepted only after all-owner approval and
   merge of its contract PR.
+- **Date:** 2026-07-18
+
+## U-009 - Queued proposals and impact-tier contract approval
+
+- **Decision:** GitHub Issues hold a non-blocking queue of proposed contract
+  changes. Registration requires no approval. A scoped shared contract receives
+  approval from its accountable owner and every directly affected producer or
+  consumer owner, with at least two people total. Cross-cutting semantic,
+  evidence, safety, persistence/cache, environment/platform, ownership/trust,
+  breaking, and final-freeze changes require all three owners.
+- **Reason:** Requiring all three owners before even recording or progressing an
+  unrelated proposal serializes three Codex workstreams and encourages private
+  assumptions. Removing approval entirely would allow incompatible contracts
+  and unsafe semantic bypasses.
+- **Codex startup rule:** Every Codex task scans the complete open queue, then
+  deeply reviews proposals in its owned area, assigned to its owner, or marked
+  cross-workstream. Proposed shapes are never implemented before their contract
+  PR merges.
+- **Impact:** Proposal discovery and research may run in parallel. Related
+  contract PRs remain serialized by contract group and task dependency. Silence
+  is not approval, and a disputed tier escalates by one level.
+- **Status:** Proposed; becomes Accepted only after the required approval and
+  merge of its governance PR.
 - **Date:** 2026-07-18

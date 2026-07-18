@@ -84,7 +84,10 @@ Execution order:
 4. U1.5 proceeds after U1.3.
 5. U1.6 verifies the complete compatibility contract and promotes it to
    `1.0.0`.
-6. Every shared U1 PR and the final freeze receive all-owner review.
+6. U1 proposals may be registered in parallel without approval. Contract PRs
+   obey task dependencies and the approval tier in
+   `CONTRACT_CHANGE_QUEUE.md`; U1 cross-cutting decisions and the final freeze
+   receive all-owner review.
 
 ### U1.1 Approve product, evidence, ownership, and trust invariants
 

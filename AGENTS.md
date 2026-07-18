@@ -6,9 +6,10 @@ Read these files before making changes:
 2. `docs/PRODUCT_FLOW.md`
 3. `docs/SHARED_CONTRACTS.md`
 4. `docs/CONTRACT_CHANGE_GUIDE.md`
-5. `docs/TASK_MASTER.md`
-6. `docs/TEAM_OWNERSHIP.md`
-7. `docs/INTEGRATION_PROTOCOL.md`
+5. `docs/CONTRACT_CHANGE_QUEUE.md`
+6. `docs/TASK_MASTER.md`
+7. `docs/TEAM_OWNERSHIP.md`
+8. `docs/INTEGRATION_PROTOCOL.md`
 
 ## Product boundary
 
@@ -48,8 +49,12 @@ Never convert `unknown` into absence, false, allergen-safe, or dietary-safe.
   package.
 - Follow `docs/CONTRACT_CHANGE_GUIDE.md` whenever a task discovers a new shared
   field, state, outcome, error, environment name, version, or interface.
-- Contract changes require a dedicated contract PR and review from all three
-  workstream owners before dependent implementation merges.
+- Register proposed shared changes in the GitHub contract-change queue before
+  implementation. Registration requires no approval and does not change the
+  active contract.
+- Contract changes require a dedicated contract PR and the impact-tier approval
+  defined in `docs/CONTRACT_CHANGE_QUEUE.md`. Cross-cutting or final-freeze
+  changes still require all three owners.
 - No feature implementation begins until the final U1 compatibility freeze is
   merged and the selected contracts are `1.0.0`.
 - Do not weaken source provenance, restaurant confirmation, cache identity,
@@ -62,6 +67,15 @@ autonomously. Ask the account holder only for login, MFA, account registration,
 legal acceptance, billing, secret entry that cannot remain inside an
 authenticated tool session, or an unapproved irreversible Production action.
 Use official CLI/API fallbacks when browser automation fails.
+
+## Session startup queue check
+
+Before selecting or continuing repository work, inspect every open GitHub
+contract-change proposal, then deeply review items in the current workstream,
+assigned to the current owner, or marked cross-workstream. Report relevant new
+or blocking proposals before implementation. If labels are unavailable, search
+open issue titles for `[CONTRACT CHANGE]`. Never treat unavailable GitHub access
+as an empty queue or consume an unmerged proposed shape.
 
 Never:
 

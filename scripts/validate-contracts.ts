@@ -127,6 +127,10 @@ const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
 );
+const contractChangeQueue = await readFile(
+  resolve("docs/CONTRACT_CHANGE_QUEUE.md"),
+  "utf8",
+);
 const taskMaster = await readFile(resolve("docs/TASK_MASTER.md"), "utf8");
 const integrationProtocol = await readFile(
   resolve("docs/INTEGRATION_PROTOCOL.md"),
@@ -139,6 +143,10 @@ const teamOwnership = await readFile(
 );
 const pullRequestTemplate = await readFile(
   resolve(".github/pull_request_template.md"),
+  "utf8",
+);
+const contractChangeIssueTemplate = await readFile(
+  resolve(".github/ISSUE_TEMPLATE/contract-change.yml"),
   "utf8",
 );
 const codeOwners = await readFile(resolve(".github/CODEOWNERS"), "utf8");
@@ -164,16 +172,19 @@ assert.match(technologyStack, /Vercel/);
 assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
+  "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
 ]);
 assertOrdered(readme, "README start-here guide order", [
   "[Shared contracts](docs/SHARED_CONTRACTS.md)",
   "[Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)",
+  "[Contract change queue](docs/CONTRACT_CHANGE_QUEUE.md)",
   "[Task master](docs/TASK_MASTER.md)",
 ]);
 assertOrdered(integrationProtocol, "Codex handoff reading order", [
   "`docs/SHARED_CONTRACTS.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
+  "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
 ]);
 assertOrdered(contractChangeGuide, "contract change guide", [
@@ -184,7 +195,11 @@ assertOrdered(contractChangeGuide, "contract change guide", [
   "## Reviewer checklist",
 ]);
 assert.match(taskMaster, /`CONTRACT_CHANGE_GUIDE\.md`/);
+assert.match(taskMaster, /`CONTRACT_CHANGE_QUEUE\.md`/);
 assert.match(pullRequestTemplate, /## Change classification/);
+assert.match(pullRequestTemplate, /Contract queue issue:/);
+assert.match(pullRequestTemplate, /Approval tier:/);
+assert.match(pullRequestTemplate, /Affected owners:/);
 assert.match(
   pullRequestTemplate,
   /Contract version or cache identity impact:/,
@@ -202,6 +217,85 @@ assert.match(
   /Provider photo\/reference persistence boundary reviewed/,
 );
 assert.match(pullRequestTemplate, /Ownership or handoff impact:/);
+assert.match(
+  pullRequestTemplate,
+  /Required impact-tier owner approvals recorded before merge/,
+);
+
+assertOrdered(contractChangeQueue, "contract change queue", [
+  "## GitHub labels",
+  "## Approval tiers",
+  "## Codex startup queue check",
+  "## Concurrency rules",
+  "## Required issue contents",
+]);
+for (const marker of [
+  "type:contract-change",
+  "status:proposed",
+  "status:implemented",
+  "area:cross-workstream",
+  "review:youn",
+  "review:ytw",
+  "review:juhyung",
+  "`scoped-shared`",
+  "`cross-cutting`",
+  "`final-freeze`",
+  "Registration is not approval",
+  "Silence is never approval",
+]) {
+  assert.match(contractChangeQueue, new RegExp(marker.replaceAll("*", "\\*")));
+}
+assert.match(
+  contractChangeQueue,
+  /Failure to access GitHub is not evidence that the queue is empty/,
+);
+assert.match(
+  contractChangeIssueTemplate,
+  /title: "\[CONTRACT CHANGE\] "/,
+);
+assert.match(contractChangeIssueTemplate, /"type:contract-change"/);
+assert.match(contractChangeIssueTemplate, /"status:proposed"/);
+for (const issueField of [
+  "id: requester",
+  "id: task",
+  "id: area",
+  "id: tier",
+  "id: reviewers",
+  "id: proposal",
+  "id: impact",
+  "id: version",
+  "id: examples",
+  "id: unresolved",
+]) {
+  assert.match(contractChangeIssueTemplate, new RegExp(issueField));
+}
+assert.match(
+  contractChangeIssueTemplate,
+  /No dependent implementation, temporary enum, environment alias, migration, provider call, or deployment has been added/,
+);
+assert.match(
+  agentsGuide,
+  /inspect every open GitHub[\s\S]*contract-change proposal/,
+);
+assert.match(
+  integrationProtocol,
+  /scans the[\s\S]*complete open contract-change queue/,
+);
+assert.match(
+  teamOwnership,
+  /Anyone may register a contract proposal without approval/,
+);
+assert.match(
+  decisionLog,
+  /## U-009 - Queued proposals and impact-tier contract approval[\s\S]*\*\*Status:\*\* Proposed/,
+);
+assert.equal(
+  agentsGuide.includes(
+    "Contract changes require a dedicated contract PR and review from all three",
+  ),
+  false,
+  "AGENTS must use impact-tier approval",
+);
 
 assertOrdered(readme, "README submission flow", [
   "-> YTW-owned compact menu extraction",
