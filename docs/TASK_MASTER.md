@@ -111,7 +111,9 @@ All U1 tasks land in one contract PR before feature branches begin.
 - **Status:** READY
 - **Acceptance:** every variable has owner, secret classification, runtime
   scope, Development/Preview/Production policy, and no printed value.
-  Migration credentials remain outside application runtime.
+  Migration credentials remain outside application runtime;
+  `TECH_STACK.md`, environment examples, and TypeScript environment names agree;
+  no Supabase or legacy model alias is approved.
 
 ### U1.5 Freeze module interfaces
 
@@ -133,7 +135,7 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Status:** BLOCKED
 - **Scope:** application service interfaces, canonical validator, deterministic
   merge-policy skeleton, fake repositories, transaction boundary.
-- **No:** Neon migration, live database, provider call, UI.
+- **No:** Neon migration or connection, live database, provider call, UI.
 - **Acceptance:** network-free tests prove source precedence, unknown handling,
   rollback semantics through fakes, and stable public errors.
 
@@ -272,10 +274,11 @@ U2 starts only after U1 is merged. U2.1, U2.2, and U2.3 run in parallel.
 - **Dependency:** S1.5
 - **Status:** BLOCKED by S1.5
 - **Scope:** smallest Development schema needed for exact snapshot reuse and
-  atomic structured menu persistence, using the Youn data contracts as the
-  integration source of truth.
-- **Acceptance:** Drizzle/SQL reviewed before execution; runtime and migrator
-  roles separate; Preview/Production unchanged.
+  atomic structured menu persistence on an isolated Neon Development branch,
+  using the Youn data contracts as the integration source of truth.
+- **Acceptance:** Neon runtime shape and connection method verified; Drizzle/SQL
+  reviewed before execution; pooled least-privilege runtime and direct migrator
+  roles separate; Preview/Production unchanged; no Supabase dependency.
 
 ### S2.2 Exact cache and ownership
 

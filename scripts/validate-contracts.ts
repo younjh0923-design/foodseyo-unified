@@ -60,10 +60,28 @@ assert.equal(
   false,
   "migration credential must not be available to runtime",
 );
+assert.equal(
+  [...runtimeNames, ...operatorNames].some(
+    (name) =>
+      name.startsWith("SUPABASE_") ||
+      [
+        "OPENAI_MODEL",
+        "OPENAI_DEFAULT_MODEL",
+        "OPENAI_VISION_MODEL",
+        "OPENAI_MENU_MODEL",
+      ].includes(name),
+  ),
+  false,
+  "legacy environment names must not enter the unified registry",
+);
 
 const runtimeExample = await readFile(resolve(".env.example"), "utf8");
 const operatorExample = await readFile(resolve(".env.operator.example"), "utf8");
+const technologyStack = await readFile(resolve("docs/TECH_STACK.md"), "utf8");
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
 assert(operatorExample.includes("DATABASE_MIGRATION_URL="));
+assert.match(technologyStack, /Neon Serverless Postgres/);
+assert.match(technologyStack, /Supabase is not part of the unified runtime/);
+assert.match(technologyStack, /Vercel/);
 
 console.log("Foodseyo shared contract validation passed.");

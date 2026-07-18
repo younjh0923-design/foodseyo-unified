@@ -55,10 +55,11 @@ Development PostgreSQL.
 Every Codex task starts by reading:
 
 1. `AGENTS.md`
-2. `docs/PRODUCT_FLOW.md`
-3. `docs/SHARED_CONTRACTS.md`
-4. the assigned task in `docs/TASK_MASTER.md`
-5. the owning package README and tests
+2. `docs/TECH_STACK.md`
+3. `docs/PRODUCT_FLOW.md`
+4. `docs/SHARED_CONTRACTS.md`
+5. the assigned task in `docs/TASK_MASTER.md`
+6. the owning package README and tests
 
 The task prompt must name:
 
