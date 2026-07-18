@@ -93,7 +93,7 @@ Execution order:
 
 - **Owner:** all three
 - **Dependency:** U0.2
-- **Status:** REVIEW
+- **Status:** DONE
 - **Decide:** restaurant/menu/Dish boundaries, evidence precedence, unknown
   semantics, source/general labeling, raw-image retention, minimum submission
   Dish boundary versus advanced P3 scope, workstream ownership, and guarded
@@ -102,14 +102,16 @@ Execution order:
   `TEAM_OWNERSHIP.md`; direct YTW-to-Juhyung data is limited to UI-safe
   operational fields; unresolved items are explicitly marked rather than
   inferred.
+- **Completion evidence:** all three approved the exact PR #4 head
+  `b4e13a8b85fd9a0247e047bb790d33d04164478c`; PR #4 merged to `main` as
+  `144b190e68766aa68548bc1633f137d5f27b17aa`.
 
 ### U1.2 Freeze shared vocabulary
 
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** BLOCKED
-- **Blocked by:** U1.1
+- **Status:** READY
 - **Decide:** allowed sensory values, ingredient roles, restaurant states,
   menu scopes, menu lifecycle, Dish match states, knowledge review states.
 - **Acceptance:** no ambiguous `taste` field; heat/richness cannot mix; contract
@@ -141,8 +143,7 @@ Execution order:
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** BLOCKED
-- **Blocked by:** U1.1
+- **Status:** READY
 - **Acceptance:** every variable has owner, secret classification, runtime
   scope, Development/Preview/Production policy, and no printed value.
   Migration credentials remain outside application runtime;
@@ -501,8 +502,8 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The current contract activity is **U1.1 - Approve product, evidence, ownership,
-and trust-boundary invariants**. After its all-owner review and merge, continue
-through the ordered U1 dependencies. Do not start U2 feature code until U1.6 is
-`DONE` and the selected contract versions are promoted from `0.1.0`/`draft` to
-`1.0.0`.
+U1.1 is complete. Proceed with **U1.2 - Freeze shared vocabulary** and **U1.4 -
+Freeze environment and feature-flag registry** in parallel through separate
+contract-change proposals and contract PRs. U1.3 remains blocked by U1.2. Do
+not start U2 feature code until U1.6 is `DONE` and the selected contract
+versions are promoted from `0.1.0`/`draft` to `1.0.0`.
