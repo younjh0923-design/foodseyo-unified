@@ -287,7 +287,7 @@ assert.match(
 );
 assert.match(
   decisionLog,
-  /## U-009 - Queued proposals and impact-tier contract approval[\s\S]*\*\*Status:\*\* Proposed/,
+  /## U-009 - Queued proposals and impact-tier contract approval[\s\S]*PR #4 head[\s\S]*\*\*Status:\*\* Accepted/,
 );
 assert.equal(
   agentsGuide.includes(
@@ -423,6 +423,10 @@ assert.match(
   decisionLog,
   /## U-007 - Manual PR enforcement[\s\S]*\*\*Status:\*\* Accepted/,
 );
+assert.match(
+  decisionLog,
+  /## U-008 - Parallel workstreams with guarded semantic handoffs[\s\S]*PR #4 head[\s\S]*\*\*Status:\*\* Accepted/,
+);
 
 assert.match(productFlow, /## Submission Dish boundary/);
 assert.match(sharedContracts, /### Minimum submission Dish contract/);
@@ -455,14 +459,14 @@ assertTaskStatus(taskMaster, "### U0.2 Common contract draft", "DONE");
 assertTaskStatus(
   taskMaster,
   "### U1.1 Approve product, evidence, ownership, and trust invariants",
-  "REVIEW",
+  "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "BLOCKED");
+assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "READY");
 assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
 assertTaskStatus(
   taskMaster,
   "### U1.4 Freeze environment and feature-flag registry",
-  "BLOCKED",
+  "READY",
 );
 assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
 assertTaskStatus(

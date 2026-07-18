@@ -138,8 +138,10 @@
 - **Impact:** `TEAM_OWNERSHIP.md`, `TASK_MASTER.md`, package boundaries,
   `CODEOWNERS`, Codex instructions, and validation must use this allocation.
   No feature implementation is authorized by this decision before U1.6.
-- **Status:** Proposed; becomes Accepted only after all-owner approval and
-  merge of its contract PR.
+- **Approval evidence:** all three owners approved the exact PR #4 head
+  `b4e13a8b85fd9a0247e047bb790d33d04164478c`; PR #4 merged to `main` as
+  `144b190e68766aa68548bc1633f137d5f27b17aa`.
+- **Status:** Accepted
 - **Date:** 2026-07-18
 
 ## U-009 - Queued proposals and impact-tier contract approval
@@ -161,6 +163,8 @@
 - **Impact:** Proposal discovery and research may run in parallel. Related
   contract PRs remain serialized by contract group and task dependency. Silence
   is not approval, and a disputed tier escalates by one level.
-- **Status:** Proposed; becomes Accepted only after the required approval and
-  merge of its governance PR.
+- **Approval evidence:** all three owners approved the exact PR #4 head
+  `b4e13a8b85fd9a0247e047bb790d33d04164478c`; PR #4 merged to `main` as
+  `144b190e68766aa68548bc1633f137d5f27b17aa`.
+- **Status:** Accepted
 - **Date:** 2026-07-18
