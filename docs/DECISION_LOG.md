@@ -116,9 +116,10 @@
   migration, deployment, or feature behavior is authorized.
 - **Version impact:** The registry receives `environment-registry/0.1.0`; all
   contracts remain `0.1.0`/`draft` until U1.6.
-- **Proposal evidence:** all three owners approved issue #7. Acceptance
-  requires all-owner review of the exact U1.4 contract PR head and its merge.
-- **Status:** Accepted on merge of the reviewed U1.4 contract PR
+- **Approval evidence:** all three owners approved issue #7 and the exact PR #9
+  head `982a5d52fdc9e18bad819a7602e58d15b0a03ae1`; PR #9 merged to `main` as
+  `e1dac696da91d82d715ae70b513ebef757957980`.
+- **Status:** Accepted
 - **Date:** 2026-07-18
 
 ## U-007 - Manual PR enforcement on the current private plan
@@ -213,7 +214,8 @@
   properties.
 - **Version impact:** The candidate vocabulary receives
   `shared-vocabulary/0.1.0`; all contracts remain `0.1.0`/`draft` until U1.6.
-- **Proposal evidence:** all three owners approved issue #6. Acceptance
-  requires all-owner review of the exact U1.2 contract PR head and its merge.
-- **Status:** Accepted on merge of the reviewed U1.2 contract PR
+- **Approval evidence:** all three owners approved issue #6 and the exact PR #8
+  head `b8447159b1132266af6ac9b17ece891c399e7bf1`; PR #8 merged to `main` as
+  `7c537e19c133285b50bbc096f38510c63a063e56`.
+- **Status:** Accepted
 - **Date:** 2026-07-18

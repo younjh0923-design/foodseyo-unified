@@ -625,7 +625,7 @@ for (const marker of [
 }
 assert.match(
   decisionLog,
-  /## U-011 - Value-free environment and feature-flag registry[\s\S]*issue #7[\s\S]*\*\*Status:\*\* Accepted on merge/,
+  /## U-011 - Value-free environment and feature-flag registry[\s\S]*issue #7[\s\S]*PR #9[\s\S]*e1dac696da91d82d715ae70b513ebef757957980[\s\S]*\*\*Status:\*\* Accepted/,
 );
 
 assertOrdered(agentsGuide, "AGENTS required reading", [
@@ -837,7 +837,7 @@ for (const contractMarker of [
 }
 assert.match(
   decisionLog,
-  /## U-010 - Standards-informed sensory vocabulary boundaries[\s\S]*issue #6[\s\S]*\*\*Status:\*\* Accepted on merge/,
+  /## U-010 - Standards-informed sensory vocabulary boundaries[\s\S]*issue #6[\s\S]*PR #8[\s\S]*7c537e19c133285b50bbc096f38510c63a063e56[\s\S]*\*\*Status:\*\* Accepted/,
 );
 
 const validVocabularyFixture = JSON.parse(
@@ -1007,12 +1007,12 @@ assertTaskStatus(
   "### U1.1 Approve product, evidence, ownership, and trust invariants",
   "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "REVIEW");
-assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
+assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "DONE");
+assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "READY");
 assertTaskStatus(
   taskMaster,
   "### U1.4 Freeze environment and feature-flag registry",
-  "REVIEW",
+  "DONE",
 );
 assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
 assertTaskStatus(
