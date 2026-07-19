@@ -695,7 +695,7 @@ assert.match(
 );
 assert.match(
   decisionLog,
-  /## U-012 - Typed boundary DTOs and derived Dish profiles[\s\S]*Issue #10[\s\S]*\*\*Status:\*\* Proposed/,
+  /## U-012 - Typed boundary DTOs and derived Dish profiles[\s\S]*Issue #10[\s\S]*PR #12[\s\S]*6c7c3d32029674405f111d93bb4cd9982830400d[\s\S]*8050bc44cff2880b97b08576282565e1f44ed27c[\s\S]*\*\*Status:\*\* Accepted/,
 );
 assertOrdered(contractChangeGuide, "contract change guide", [
   "## Is this a shared contract change?",
@@ -1057,13 +1057,13 @@ assertTaskStatus(
   "DONE",
 );
 assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "DONE");
-assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "REVIEW");
+assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "DONE");
 assertTaskStatus(
   taskMaster,
   "### U1.4 Freeze environment and feature-flag registry",
   "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
+assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "READY");
 assertTaskStatus(
   taskMaster,
   "### U1.6 Approve and publish compatibility contract 1.0.0",

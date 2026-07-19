@@ -128,7 +128,7 @@ Execution order:
 - **Inputs:** YTW upstream producer needs, Juhyung explanation/UI consumer
   needs
 - **Dependency:** U1.2
-- **Status:** REVIEW
+- **Status:** DONE
 - **Define:**
   - `RestaurantCandidate`
   - `RestaurantResolution`
@@ -140,11 +140,10 @@ Execution order:
   - safe public error envelope
 - **Acceptance:** runtime schemas, TypeScript types, examples, invalid fixtures,
   and version tokens exist.
-- **Review candidate:** `BOUNDARY_DTOS.md`,
-  `packages/contracts/src/boundary-dtos.ts`, and the network-free valid/invalid
-  fixtures implement `boundary-dtos/0.1.0`. Issue #10 supplies the all-owner
-  Dish semantic direction. Exact-HEAD approval and merge evidence are still
-  required before this task becomes `DONE`.
+- **Completion evidence:** Issue #10 supplied the all-owner Dish semantic
+  direction. YTW and Juhyung approved the exact PR #12 head
+  `6c7c3d32029674405f111d93bb4cd9982830400d`; PR #12 merged to `main` as
+  `8050bc44cff2880b97b08576282565e1f44ed27c`.
 
 ### U1.4 Freeze environment and feature-flag registry
 
@@ -166,8 +165,7 @@ Execution order:
 
 - **Owner:** all three
 - **Dependency:** U1.3
-- **Status:** BLOCKED
-- **Blocked by:** U1.3
+- **Status:** READY
 - **Acceptance:** each package publishes an interface and fake adapter; no
   feature package imports another package's internals; UI-safe operational data
   is distinct from semantic extraction; unvalidated menu meaning cannot reach
@@ -178,7 +176,7 @@ Execution order:
 - **Owner:** all three
 - **Dependency:** U1.2, U1.3, U1.4, U1.5
 - **Status:** BLOCKED
-- **Blocked by:** U1.3 and U1.5
+- **Blocked by:** U1.5
 - **Scope:** verify vocabulary, DTOs, outcomes, environment registry, versions,
   package interfaces, fixtures, invalid cases, and ownership handoffs as one
   compatible system.
@@ -514,9 +512,9 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U1.1, U1.2, and U1.4 are complete. Begin **U1.3 - Freeze boundary DTOs** using
-the approved Dish semantic direction in issue #10 as an input while preserving
-the exact vocabulary, environment, ownership, provenance, unknown, and safety
-contracts already merged. U1.5 remains blocked until U1.3 is complete. Do not
-start U2 feature code until U1.6 is `DONE` and the selected contract versions
-are promoted from `0.1.0`/`draft` to `1.0.0`.
+U1.1 through U1.4 are complete. Begin **U1.5 - Freeze module interfaces**
+against the merged vocabulary, environment registry, and boundary DTOs. Keep
+the work contract-only: define package interfaces and deterministic fake
+adapters without provider calls, database work, UI feature implementation, or
+deployment. Do not start U2 feature code until U1.6 is `DONE` and the selected
+contract versions are promoted from `0.1.0`/`draft` to `1.0.0`.
