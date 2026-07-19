@@ -11,6 +11,22 @@ import {
   type PortResult,
 } from "@foodseyo/contracts";
 
+export {
+  FoundationMenuSourceAcquisitionPort,
+  OfficialPdfDiscoveryAdapter,
+  OfficialWebsiteDiscoveryAdapter,
+  OrderingPageDiscoveryAdapter,
+  UploadedMenuSourceAdapter,
+  WebSearchDiscoveryAdapter,
+  isSafePublicHttpsSourceUrl,
+  type MenuSourceCandidateAdapter,
+  type MenuSourceDiscoveryPort,
+  type SourceAcquisitionDependencies,
+  type TransientContentIdentity,
+  type TransientContentIdentityPort,
+  type TransientDiscoveredMenuSource,
+} from "./foundation.js";
+
 export class FakeMenuSourceAcquisitionPort
   implements MenuSourceAcquisitionPort
 {

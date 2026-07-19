@@ -219,10 +219,14 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `sources/acquisition-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** REVIEW
 - **Scope:** uploaded-menu adapter and interface-only adapters for official web,
   PDF, ordering page, and Web Search discovery; source classification and
   normalized `MenuSourceInput`.
+- **Evidence:** foundation adapters and coordinator live in
+  `packages/source-acquisition`; deterministic network-free fixtures cover
+  supported, unsupported, duplicate, conflict, timeout, unsafe, and no-source
+  behavior. Real retrieval and provider adapters remain in S1.2/S1.3.
 - **No:** unrestricted crawling, provider call in tests, source-body logging,
   canonical persistence.
 - **Acceptance:** deterministic fixtures cover supported, unsupported,
