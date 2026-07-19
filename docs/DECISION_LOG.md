@@ -281,8 +281,10 @@
   work.
 - **Version impact:** Introduces `module-interfaces/0.1.0`. Every selected
   contract remains `0.1.0`/`draft` and unavailable to feature code until U1.6.
-- **Governance evidence:** Issue #14 received all-owner direction approval
-  against main `20535b23c32c5231ab4151ae1d3b8e1475d5154d`. It remains open at
-  `status:approved` until the exact all-owner-reviewed contract PR merges.
-- **Status:** Proposed
+- **Approval evidence:** Issue #14 received all-owner direction approval. YTW
+  and Juhyung approved the exact PR #15 head
+  `b77fcdbeb0a15948a0dd529ea1c4ef739483dccb`; PR #15 merged to `main` as
+  `e732983d1b44d282907d85b6d0ea4132984cc3bb`. Issue #14 then moved to
+  `status:merged` and closed.
+- **Status:** Accepted
 - **Date:** 2026-07-19

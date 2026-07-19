@@ -740,7 +740,7 @@ assert.match(
 );
 assert.match(
   decisionLog,
-  /## U-013 - Provider-neutral module ports and deterministic fakes[\s\S]*Issue #14[\s\S]*20535b23c32c5231ab4151ae1d3b8e1475d5154d[\s\S]*status:approved[\s\S]*\*\*Status:\*\* Proposed/,
+  /## U-013 - Provider-neutral module ports and deterministic fakes[\s\S]*Issue #14[\s\S]*PR #15[\s\S]*b77fcdbeb0a15948a0dd529ea1c4ef739483dccb[\s\S]*e732983d1b44d282907d85b6d0ea4132984cc3bb[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
 );
 assert.match(
   contractChangeQueue,
@@ -1143,11 +1143,11 @@ assertTaskStatus(
   "### U1.4 Freeze environment and feature-flag registry",
   "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "REVIEW");
+assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "DONE");
 assertTaskStatus(
   taskMaster,
   "### U1.6 Approve and publish compatibility contract 1.0.0",
-  "BLOCKED",
+  "READY",
 );
 assertTaskStatus(
   taskMaster,

@@ -165,22 +165,22 @@ Execution order:
 
 - **Owner:** all three
 - **Dependency:** U1.3
-- **Status:** REVIEW
+- **Status:** DONE
 - **Acceptance:** each package publishes an interface and fake adapter; no
   feature package imports another package's internals; UI-safe operational data
   is distinct from semantic extraction; unvalidated menu meaning cannot reach
   explanation or final presentation.
-- **Review evidence:** Issue #14 received all-owner direction approval against
-  main `20535b23c32c5231ab4151ae1d3b8e1475d5154d` and remains open with
-  `status:approved`; the exact U1.5 contract PR head still requires all-owner
-  review before merge.
+- **Completion evidence:** Issue #14 received all-owner direction approval.
+  YTW and Juhyung approved the exact PR #15 head
+  `b77fcdbeb0a15948a0dd529ea1c4ef739483dccb`; PR #15 merged to `main` as
+  `e732983d1b44d282907d85b6d0ea4132984cc3bb`. Issue #14 then moved to
+  `status:merged` and closed.
 
 ### U1.6 Approve and publish compatibility contract 1.0.0
 
 - **Owner:** all three
 - **Dependency:** U1.2, U1.3, U1.4, U1.5
-- **Status:** BLOCKED
-- **Blocked by:** U1.5
+- **Status:** READY
 - **Scope:** verify vocabulary, DTOs, outcomes, environment registry, versions,
   package interfaces, fixtures, invalid cases, and ownership handoffs as one
   compatible system.
@@ -516,9 +516,8 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U1.1 through U1.4 are complete. Review the exact U1.5 contract PR head against
-Issue #14. Keep the work contract-only: interfaces and deterministic fakes
-without provider calls, database work, UI feature implementation, or
-deployment. Do not start U1.6 until U1.5 merges, and do not start U2 feature
-code until U1.6 is `DONE` and the selected contract versions are promoted from
-`0.1.0`/`draft` to `1.0.0`.
+U1.1 through U1.5 are complete. Begin **U1.6 - Approve and publish
+compatibility contract 1.0.0** as a contract-only compatibility audit and
+version promotion. Do not start U2 feature code until U1.6 is `DONE`, the exact
+final HEAD has all-owner approval, and the selected contract versions are
+promoted from `0.1.0`/`draft` to `1.0.0` on `main`.
