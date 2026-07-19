@@ -3,15 +3,23 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import {
+  APPROVED_ENVIRONMENT_NAMES,
   BASIC_TASTES,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
+  ENVIRONMENT_REGISTRY,
   EVIDENCE_BASES,
+  FEATURE_FLAG_ENV_NAMES,
   FLAVOR_NOTES,
   HEAT_LEVELS,
+  isApprovedEnvironmentName,
+  isProhibitedEnvironmentName,
+  LEGACY_ENVIRONMENT_NAMES,
   OPERATOR_ENV_NAMES,
+  parseFeatureFlag,
   PUBLIC_ENV_NAMES,
   RICHNESS_LEVELS,
+  RUNTIME_ENVIRONMENTS,
   SERVER_ENV_NAMES,
   TEXTURES,
 } from "../packages/contracts/src/index.js";
@@ -85,8 +93,21 @@ for (const version of Object.values(CONTRACT_VERSIONS)) {
 const runtimeNames = Object.values(SERVER_ENV_NAMES);
 const operatorNames = Object.values(OPERATOR_ENV_NAMES);
 const publicNames = Object.values(PUBLIC_ENV_NAMES);
+const approvedEnvironmentNames = [...APPROVED_ENVIRONMENT_NAMES];
 unique(runtimeNames, "SERVER_ENV_NAMES");
 unique(operatorNames, "OPERATOR_ENV_NAMES");
+unique(approvedEnvironmentNames, "APPROVED_ENVIRONMENT_NAMES");
+assert.deepEqual(approvedEnvironmentNames, [...runtimeNames, ...operatorNames]);
+assert.deepEqual(Object.keys(ENVIRONMENT_REGISTRY), approvedEnvironmentNames);
+assert.deepEqual(LEGACY_ENVIRONMENT_NAMES, [
+  "OPENAI_MODEL",
+  "OPENAI_DEFAULT_MODEL",
+  "OPENAI_VISION_MODEL",
+  "OPENAI_MENU_MODEL",
+  "SUPABASE_URL",
+  "SUPABASE_SECRET_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+]);
 assert.equal(
   runtimeNames.some((name) => operatorNames.includes(name as never)),
   false,
@@ -112,10 +133,64 @@ assert.equal(
   false,
   "legacy environment names must not enter the unified registry",
 );
+for (const name of approvedEnvironmentNames) {
+  const entry = ENVIRONMENT_REGISTRY[name];
+  assert.equal(entry.name, name);
+  assert.equal(entry.neverLogValue, true);
+  assert.equal(isApprovedEnvironmentName(name), true);
+  assert.equal(isProhibitedEnvironmentName(name), false);
+  assert.deepEqual(Object.keys(entry.environmentPolicy), RUNTIME_ENVIRONMENTS);
+
+  if (entry.secretClass === "secret") {
+    assert.equal(
+      entry.environmentPolicy.test,
+      "forbidden",
+      `${name} secret must be forbidden in network-free tests`,
+    );
+  }
+}
+for (const name of LEGACY_ENVIRONMENT_NAMES) {
+  assert.equal(isApprovedEnvironmentName(name), false);
+  assert.equal(isProhibitedEnvironmentName(name), true);
+}
+assert.equal(isProhibitedEnvironmentName("NEXT_PUBLIC_OPENAI_API_KEY"), true);
+assert.equal(isProhibitedEnvironmentName("NEXT_PUBLIC_DATABASE_URL"), true);
+assert.equal(
+  ENVIRONMENT_REGISTRY.DATABASE_URL.validationRule,
+  "pooled_postgres_url",
+);
+assert.equal(ENVIRONMENT_REGISTRY.DATABASE_URL.boundary, "server_runtime");
+assert.equal(
+  ENVIRONMENT_REGISTRY.DATABASE_MIGRATION_URL.validationRule,
+  "direct_postgres_url",
+);
+assert.equal(
+  ENVIRONMENT_REGISTRY.DATABASE_MIGRATION_URL.boundary,
+  "operator_only",
+);
+assert.deepEqual(FEATURE_FLAG_ENV_NAMES, [
+  "FEATURE_RESTAURANT_RESOLUTION",
+  "FEATURE_WEB_SEARCH_DISCOVERY",
+  "FEATURE_DISH_KNOWLEDGE_REUSE",
+]);
+for (const name of FEATURE_FLAG_ENV_NAMES) {
+  const entry = ENVIRONMENT_REGISTRY[name];
+  assert.equal(entry.secretClass, "non_secret");
+  assert.equal(entry.validationRule, "boolean_literal");
+  assert.equal(entry.defaultBehavior, "fail_closed_false");
+}
+assert.equal(parseFeatureFlag("true"), true);
+for (const value of [undefined, "", "false", "TRUE", "1", "yes"]) {
+  assert.equal(parseFeatureFlag(value), false);
+}
 
 const runtimeExample = await readFile(resolve(".env.example"), "utf8");
 const operatorExample = await readFile(resolve(".env.operator.example"), "utf8");
 const technologyStack = await readFile(resolve("docs/TECH_STACK.md"), "utf8");
+const environmentRegistry = await readFile(
+  resolve("docs/ENVIRONMENT_REGISTRY.md"),
+  "utf8",
+);
 const agentsGuide = await readFile(resolve("AGENTS.md"), "utf8");
 const readme = await readFile(resolve("README.md"), "utf8");
 const productFlow = await readFile(resolve("docs/PRODUCT_FLOW.md"), "utf8");
@@ -165,9 +240,46 @@ const menuAnalysisPackage = await readFile(
 );
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
 assert(operatorExample.includes("DATABASE_MIGRATION_URL="));
+for (const name of runtimeNames) {
+  assert.match(runtimeExample, new RegExp(`^${name}=`, "m"));
+}
+for (const name of [
+  "DATABASE_URL",
+  "OPENAI_API_KEY",
+  "OPENAI_MENU_EXTRACTION_MODEL",
+  "OPENAI_WEB_SEARCH_MODEL",
+  "OPENAI_EXPLANATION_MODEL",
+  "GOOGLE_PLACES_API_KEY",
+]) {
+  assert.match(runtimeExample, new RegExp(`^${name}=$`, "m"));
+}
+assert.match(operatorExample, /^DATABASE_MIGRATION_URL=$/m);
 assert.match(technologyStack, /Neon Serverless Postgres/);
 assert.match(technologyStack, /Supabase is not part of the unified runtime/);
 assert.match(technologyStack, /Vercel/);
+assert.match(
+  technologyStack,
+  /value-free owner[\s\S]*`ENVIRONMENT_REGISTRY\.md`[\s\S]*`@foodseyo\/contracts`/,
+);
+for (const marker of [
+  "`environment-registry/0.1.0`",
+  "contains no environment values",
+  "## Approved server-runtime variables",
+  "## Operator-only variable",
+  "Only the exact lowercase string `true` enables a feature",
+  "no `NEXT_PUBLIC_*` environment name is approved",
+  "no `SUPABASE_*` name is approved",
+  "application runtime cannot read the operator registry",
+]) {
+  assert(
+    environmentRegistry.includes(marker),
+    `environment registry documentation is missing ${marker}`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-011 - Value-free environment and feature-flag registry[\s\S]*issue #7[\s\S]*\*\*Status:\*\* Accepted on merge/,
+);
 
 assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
@@ -466,7 +578,7 @@ assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
 assertTaskStatus(
   taskMaster,
   "### U1.4 Freeze environment and feature-flag registry",
-  "READY",
+  "REVIEW",
 );
 assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
 assertTaskStatus(
