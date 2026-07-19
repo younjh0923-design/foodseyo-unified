@@ -1,4 +1,7 @@
 import {
+  MenuSourceAcquisitionRequestSchema,
+  MenuSourceInputSchema,
+  parseDeterministicFakePlan,
   selectDeterministicFakeResult,
   type DeterministicFakePlan,
   type MenuSourceAcquisitionPort,
@@ -12,20 +15,24 @@ export class FakeMenuSourceAcquisitionPort
   implements MenuSourceAcquisitionPort
 {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<MenuSourceInput>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<MenuSourceInput>,
-  ) {}
+    plan: DeterministicFakePlan<MenuSourceInput>,
+  ) {
+    this.plan = parseDeterministicFakePlan(plan, MenuSourceInputSchema);
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   acquire(
-    _request: MenuSourceAcquisitionRequest,
+    request: MenuSourceAcquisitionRequest,
     context: PortInvocationContext,
   ): Promise<PortResult<MenuSourceInput>> {
     this.#callCount += 1;
+    MenuSourceAcquisitionRequestSchema.parse(request);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }

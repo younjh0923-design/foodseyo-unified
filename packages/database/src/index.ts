@@ -1,4 +1,7 @@
 import {
+  PublicationEligibleAnalysisSchema,
+  PublicationReceiptSchema,
+  parseDeterministicFakePlan,
   selectDeterministicFakeResult,
   type AnalysisPublicationPort,
   type DeterministicFakePlan,
@@ -12,20 +15,27 @@ export class FakeAnalysisPublicationPort
   implements AnalysisPublicationPort
 {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<PublicationReceipt>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<PublicationReceipt>,
-  ) {}
+    plan: DeterministicFakePlan<PublicationReceipt>,
+  ) {
+    this.plan = parseDeterministicFakePlan(
+      plan,
+      PublicationReceiptSchema,
+    );
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   publish(
-    _analysis: PublicationEligibleAnalysis,
+    analysis: PublicationEligibleAnalysis,
     context: PortInvocationContext,
   ): Promise<PortResult<PublicationReceipt>> {
     this.#callCount += 1;
+    PublicationEligibleAnalysisSchema.parse(analysis);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }

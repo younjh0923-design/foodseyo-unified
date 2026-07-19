@@ -1,4 +1,7 @@
 import {
+  SafeObservabilityEventSchema,
+  canRecordDeterministicEvent,
+  type PortInvocationContext,
   type SafeObservabilityEvent,
   type SafeObservabilityPort,
 } from "@foodseyo/contracts";
@@ -15,9 +18,15 @@ export class FakeSafeObservabilityPort implements SafeObservabilityPort {
     return [...this.#events];
   }
 
-  emit(event: SafeObservabilityEvent): Promise<void> {
+  emit(
+    event: SafeObservabilityEvent,
+    context: PortInvocationContext,
+  ): Promise<void> {
     this.#callCount += 1;
-    this.#events.push(event);
+    SafeObservabilityEventSchema.parse(event);
+    if (canRecordDeterministicEvent(context)) {
+      this.#events.push(event);
+    }
     return Promise.resolve();
   }
 }

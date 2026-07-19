@@ -1,6 +1,9 @@
 [
   {
     "case": "non_positive_timeout",
+    "input": {
+      "timeoutMs": 0
+    },
     "expectedIssue": {
       "code": "invalid_invocation_timeout",
       "path": ["invocationContext", "timeoutMs"]
@@ -8,6 +11,9 @@
   },
   {
     "case": "analysis_only_publication",
+    "input": {
+      "publicationState": "analysis_only"
+    },
     "expectedIssue": {
       "code": "publication_not_eligible",
       "path": ["analysis", "publicationState"]
@@ -15,6 +21,9 @@
   },
   {
     "case": "unsafe_observability_field",
+    "input": {
+      "menuText": "sensitive fixture marker"
+    },
     "expectedIssue": {
       "code": "unsafe_observability_field",
       "path": ["observabilityEvent", "menuText"]
@@ -22,9 +31,42 @@
   },
   {
     "case": "internal_package_import",
+    "input": {
+      "specifier": "@foodseyo/database/src/index.ts"
+    },
     "expectedIssue": {
       "code": "internal_package_import",
       "path": ["specifier"]
+    }
+  },
+  {
+    "case": "aborted_success_plan",
+    "input": {
+      "status": "success"
+    },
+    "expectedIssue": {
+      "code": "invalid_aborted_fake_result",
+      "path": ["plan", "abortedResult", "status"]
+    }
+  },
+  {
+    "case": "timed_out_success_plan",
+    "input": {
+      "status": "success"
+    },
+    "expectedIssue": {
+      "code": "invalid_timed_out_fake_result",
+      "path": ["plan", "timedOutResult", "status"]
+    }
+  },
+  {
+    "case": "timed_out_non_timeout_error",
+    "input": {
+      "code": "UPSTREAM_UNAVAILABLE"
+    },
+    "expectedIssue": {
+      "code": "invalid_timed_out_fake_error",
+      "path": ["plan", "timedOutResult", "error", "error", "code"]
     }
   }
 ]

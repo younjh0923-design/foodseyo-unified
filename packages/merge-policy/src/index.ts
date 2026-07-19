@@ -1,4 +1,7 @@
 import {
+  EffectiveProfileMergeRequestSchema,
+  EffectiveProfileMergeResultSchema,
+  parseDeterministicFakePlan,
   selectDeterministicFakeResult,
   type DeterministicFakePlan,
   type EffectiveProfileMergePort,
@@ -12,20 +15,27 @@ export class FakeEffectiveProfileMergePort
   implements EffectiveProfileMergePort
 {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<EffectiveProfileMergeResult>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<EffectiveProfileMergeResult>,
-  ) {}
+    plan: DeterministicFakePlan<EffectiveProfileMergeResult>,
+  ) {
+    this.plan = parseDeterministicFakePlan(
+      plan,
+      EffectiveProfileMergeResultSchema,
+    );
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   merge(
-    _request: EffectiveProfileMergeRequest,
+    request: EffectiveProfileMergeRequest,
     context: PortInvocationContext,
   ): Promise<PortResult<EffectiveProfileMergeResult>> {
     this.#callCount += 1;
+    EffectiveProfileMergeRequestSchema.parse(request);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }

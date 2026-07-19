@@ -1,4 +1,12 @@
 import {
+  AnalysisApplicationResultSchema,
+  AnalysisWorkflowRequestSchema,
+  CanonicalMenuAnalysisSchema,
+  CanonicalValidationRequestSchema,
+  CompactMenuExtractionSchema,
+  ConstrainedExplanationSchema,
+  MenuSourceInputSchema,
+  parseDeterministicFakePlan,
   selectDeterministicFakeResult,
   type AnalysisApplicationResult,
   type AnalysisWorkflowPort,
@@ -20,20 +28,27 @@ export class FakeCompactMenuExtractionPort
   implements CompactMenuExtractionPort
 {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<CompactMenuExtraction>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<CompactMenuExtraction>,
-  ) {}
+    plan: DeterministicFakePlan<CompactMenuExtraction>,
+  ) {
+    this.plan = parseDeterministicFakePlan(
+      plan,
+      CompactMenuExtractionSchema,
+    );
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   extract(
-    _input: MenuSourceInput,
+    input: MenuSourceInput,
     context: PortInvocationContext,
   ): Promise<PortResult<CompactMenuExtraction>> {
     this.#callCount += 1;
+    MenuSourceInputSchema.parse(input);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }
@@ -42,20 +57,27 @@ export class FakeCanonicalMenuValidationPort
   implements CanonicalMenuValidationPort
 {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<CanonicalMenuAnalysis>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<CanonicalMenuAnalysis>,
-  ) {}
+    plan: DeterministicFakePlan<CanonicalMenuAnalysis>,
+  ) {
+    this.plan = parseDeterministicFakePlan(
+      plan,
+      CanonicalMenuAnalysisSchema,
+    );
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   validate(
-    _request: CanonicalValidationRequest,
+    request: CanonicalValidationRequest,
     context: PortInvocationContext,
   ): Promise<PortResult<CanonicalMenuAnalysis>> {
     this.#callCount += 1;
+    CanonicalValidationRequestSchema.parse(request);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }
@@ -64,40 +86,54 @@ export class FakeConstrainedExplanationPort
   implements ConstrainedExplanationPort
 {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<ConstrainedExplanation>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<ConstrainedExplanation>,
-  ) {}
+    plan: DeterministicFakePlan<ConstrainedExplanation>,
+  ) {
+    this.plan = parseDeterministicFakePlan(
+      plan,
+      ConstrainedExplanationSchema,
+    );
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   render(
-    _analysis: CanonicalMenuAnalysis,
+    analysis: CanonicalMenuAnalysis,
     context: PortInvocationContext,
   ): Promise<PortResult<ConstrainedExplanation>> {
     this.#callCount += 1;
+    CanonicalMenuAnalysisSchema.parse(analysis);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }
 
 export class FakeAnalysisWorkflowPort implements AnalysisWorkflowPort {
   #callCount = 0;
+  private readonly plan: DeterministicFakePlan<AnalysisApplicationResult>;
 
   constructor(
-    private readonly plan: DeterministicFakePlan<AnalysisApplicationResult>,
-  ) {}
+    plan: DeterministicFakePlan<AnalysisApplicationResult>,
+  ) {
+    this.plan = parseDeterministicFakePlan(
+      plan,
+      AnalysisApplicationResultSchema,
+    );
+  }
 
   get callCount(): number {
     return this.#callCount;
   }
 
   run(
-    _request: AnalysisWorkflowRequest,
+    request: AnalysisWorkflowRequest,
     context: PortInvocationContext,
   ): Promise<PortResult<AnalysisApplicationResult>> {
     this.#callCount += 1;
+    AnalysisWorkflowRequestSchema.parse(request);
     return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
   }
 }

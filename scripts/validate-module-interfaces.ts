@@ -3,11 +3,17 @@ import { readFile, readdir } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import {
+  ContractValidationError,
   BOUNDARY_DTO_SCHEMAS,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
   MODULE_INTERFACE_VERSION,
+  PortInvocationContextSchema,
+  PublicationReceiptSchema,
+  addContractIssue,
+  createRuntimeSchema,
   isPublicationEligibleAnalysis,
+  parseDeterministicFakePlan,
   type AnalysisApplicationResult,
   type CanonicalMenuAnalysis,
   type CompactMenuExtraction,
@@ -45,6 +51,7 @@ import { FakeMenuSourceAcquisitionPort } from "../packages/source-acquisition/sr
 type JsonObject = Record<string, unknown>;
 type InvalidFixture = {
   readonly case: string;
+  readonly input: Readonly<Record<string, unknown>>;
   readonly expectedIssue: {
     readonly code: string;
     readonly path: readonly (string | number)[];
@@ -138,15 +145,20 @@ const context: PortInvocationContext = {
   signal: controller.signal,
 };
 const abortedController = new AbortController();
-abortedController.abort();
+abortedController.abort(new DOMException("cancelled", "AbortError"));
 const abortedContext: PortInvocationContext = {
   ...context,
   signal: abortedController.signal,
 };
+const timedOutController = new AbortController();
+timedOutController.abort(new DOMException("deadline exceeded", "TimeoutError"));
 const timedOutContext: PortInvocationContext = {
   ...context,
-  timeoutMs: 0,
+  signal: timedOutController.signal,
 };
+PortInvocationContextSchema.parse(context);
+PortInvocationContextSchema.parse(abortedContext);
+PortInvocationContextSchema.parse(timedOutContext);
 
 const plan = <T>(value: T): DeterministicFakePlan<T> => ({
   defaultResult: { status: "success", value },
@@ -186,12 +198,26 @@ assertResultStatus(
   ),
   "outcome",
 );
-assert.equal(restaurantFake.callCount, 2);
+assertResultStatus(
+  await restaurantFake.resolve(
+    {
+      candidates: [restaurantCandidate],
+      priorResolution: restaurantResolution,
+      selectedCandidateId: null,
+      confirmationEvidence: null,
+    },
+    timedOutContext,
+  ),
+  "error",
+);
+assert.equal(restaurantFake.callCount, 3);
 
 const uiEventFake = new FakeUiOperationalEventPort();
 await uiEventFake.emit(restaurantResolution, context);
 await uiEventFake.emit(publicOutcome, context);
-assert.equal(uiEventFake.callCount, 2);
+await uiEventFake.emit(publicOutcome, abortedContext);
+await uiEventFake.emit(publicOutcome, timedOutContext);
+assert.equal(uiEventFake.callCount, 4);
 assert.deepEqual(uiEventFake.events, [restaurantResolution, publicOutcome]);
 
 const sourceFake = new FakeMenuSourceAcquisitionPort(plan(menuSourceInput));
@@ -207,6 +233,30 @@ assertResultStatus(
   ),
   "success",
 );
+assertResultStatus(
+  await sourceFake.acquire(
+    {
+      restaurantResolution,
+      menuScope: menuSourceInput.menuScope,
+      submissionContent: [menuSourceInput.content],
+      requestedAt: menuSourceInput.requestedAt,
+    },
+    abortedContext,
+  ),
+  "outcome",
+);
+assertResultStatus(
+  await sourceFake.acquire(
+    {
+      restaurantResolution,
+      menuScope: menuSourceInput.menuScope,
+      submissionContent: [menuSourceInput.content],
+      requestedAt: menuSourceInput.requestedAt,
+    },
+    timedOutContext,
+  ),
+  "error",
+);
 
 const extractionFake = new FakeCompactMenuExtractionPort(
   plan(compactExtraction),
@@ -214,6 +264,14 @@ const extractionFake = new FakeCompactMenuExtractionPort(
 assertResultStatus(
   await extractionFake.extract(menuSourceInput, context),
   "success",
+);
+assertResultStatus(
+  await extractionFake.extract(menuSourceInput, abortedContext),
+  "outcome",
+);
+assertResultStatus(
+  await extractionFake.extract(menuSourceInput, timedOutContext),
+  "error",
 );
 
 const canonicalFake = new FakeCanonicalMenuValidationPort(
@@ -225,6 +283,13 @@ assertResultStatus(
     context,
   ),
   "success",
+);
+assertResultStatus(
+  await canonicalFake.validate(
+    { extraction: compactExtraction, restaurantResolution },
+    abortedContext,
+  ),
+  "outcome",
 );
 assertResultStatus(
   await canonicalFake.validate(
@@ -250,6 +315,24 @@ assertResultStatus(
   ),
   "success",
 );
+assertResultStatus(
+  await dishFake.findReviewedClaims(
+    {
+      candidates: canonicalAnalysis.dishCandidates as readonly DishCandidate[],
+    },
+    abortedContext,
+  ),
+  "outcome",
+);
+assertResultStatus(
+  await dishFake.findReviewedClaims(
+    {
+      candidates: canonicalAnalysis.dishCandidates as readonly DishCandidate[],
+    },
+    timedOutContext,
+  ),
+  "error",
+);
 assert(
   dishKnowledgeResult.claims.every(
     (claim) => claim.reviewState === "reviewed",
@@ -271,6 +354,28 @@ assertResultStatus(
   ),
   "success",
 );
+assertResultStatus(
+  await mergeFake.merge(
+    {
+      matches: canonicalAnalysis.dishMatches,
+      menuItemClaims: canonicalAnalysis.menuItemClaims,
+      dishClaims: dishKnowledgeResult.claims,
+    },
+    abortedContext,
+  ),
+  "outcome",
+);
+assertResultStatus(
+  await mergeFake.merge(
+    {
+      matches: canonicalAnalysis.dishMatches,
+      menuItemClaims: canonicalAnalysis.menuItemClaims,
+      dishClaims: dishKnowledgeResult.claims,
+    },
+    timedOutContext,
+  ),
+  "error",
+);
 
 const explanation =
   moduleFixtures.explanation as unknown as ConstrainedExplanation;
@@ -284,6 +389,14 @@ const explanationFake = new FakeConstrainedExplanationPort(plan(explanation));
 assertResultStatus(
   await explanationFake.render(canonicalAnalysis, context),
   "success",
+);
+assertResultStatus(
+  await explanationFake.render(canonicalAnalysis, abortedContext),
+  "outcome",
+);
+assertResultStatus(
+  await explanationFake.render(canonicalAnalysis, timedOutContext),
+  "error",
 );
 
 assert.equal(isPublicationEligibleAnalysis(canonicalAnalysis), true);
@@ -310,6 +423,14 @@ assertResultStatus(
   await publicationFake.publish(canonicalAnalysis, context),
   "success",
 );
+assertResultStatus(
+  await publicationFake.publish(canonicalAnalysis, abortedContext),
+  "outcome",
+);
+assertResultStatus(
+  await publicationFake.publish(canonicalAnalysis, timedOutContext),
+  "error",
+);
 
 const applicationResult: AnalysisApplicationResult = {
   analysis: canonicalAnalysis,
@@ -324,36 +445,164 @@ assertResultStatus(
   ),
   "success",
 );
+assertResultStatus(
+  await workflowFake.run(
+    { menuSource: menuSourceInput, restaurantResolution },
+    abortedContext,
+  ),
+  "outcome",
+);
+assertResultStatus(
+  await workflowFake.run(
+    { menuSource: menuSourceInput, restaurantResolution },
+    timedOutContext,
+  ),
+  "error",
+);
 
 const observabilityEvent =
   moduleFixtures.observabilityEvent as unknown as SafeObservabilityEvent;
 const observabilityFake = new FakeSafeObservabilityPort();
-await observabilityFake.emit(observabilityEvent);
-assert.equal(observabilityFake.callCount, 1);
+await observabilityFake.emit(observabilityEvent, context);
+await observabilityFake.emit(observabilityEvent, abortedContext);
+await observabilityFake.emit(observabilityEvent, timedOutContext);
+assert.equal(observabilityFake.callCount, 3);
 assert.deepEqual(observabilityFake.events, [observabilityEvent]);
 
-const expectedInvalidIssues = new Map(
-  (invalidFixtures as InvalidFixture[]).map((fixture) => [
-    fixture.case,
-    fixture.expectedIssue,
-  ]),
+const InternalPackageImportSchema = createRuntimeSchema<string>(
+  "InternalPackageImport",
+  (value, issues) => {
+    if (typeof value !== "string" || /\/src\//u.test(value)) {
+      addContractIssue(issues, "internal_package_import", ["specifier"]);
+    }
+  },
 );
-assert.deepEqual(expectedInvalidIssues.get("non_positive_timeout"), {
-  code: "invalid_invocation_timeout",
-  path: ["invocationContext", "timeoutMs"],
-});
-assert.deepEqual(expectedInvalidIssues.get("analysis_only_publication"), {
-  code: "publication_not_eligible",
-  path: ["analysis", "publicationState"],
-});
-assert.deepEqual(expectedInvalidIssues.get("unsafe_observability_field"), {
-  code: "unsafe_observability_field",
-  path: ["observabilityEvent", "menuText"],
-});
-assert.deepEqual(expectedInvalidIssues.get("internal_package_import"), {
-  code: "internal_package_import",
-  path: ["specifier"],
-});
+
+const expectContractIssue = async (
+  fixture: InvalidFixture,
+  exercise: () => unknown | Promise<unknown>,
+) => {
+  let actualIssues: ContractValidationError["issues"] | null = null;
+  try {
+    await exercise();
+  } catch (error) {
+    assert(
+      error instanceof ContractValidationError,
+      `${fixture.case} must fail with ContractValidationError`,
+    );
+    actualIssues = error.issues;
+  }
+  assert(actualIssues, `${fixture.case} must reject its invalid input`);
+  assert(
+    actualIssues.some(
+      (issue) =>
+        issue.code === fixture.expectedIssue.code &&
+        JSON.stringify(issue.path) ===
+          JSON.stringify(fixture.expectedIssue.path),
+    ),
+    `${fixture.case} must emit ${fixture.expectedIssue.code} at ${fixture.expectedIssue.path.join(".")}; actual ${JSON.stringify(actualIssues)}`,
+  );
+};
+
+for (const fixture of invalidFixtures as InvalidFixture[]) {
+  assert(isRecord(fixture.input), `${fixture.case} requires executable input`);
+  if (fixture.case === "non_positive_timeout") {
+    await expectContractIssue(fixture, () =>
+      restaurantFake.resolve(
+        {
+          candidates: [restaurantCandidate],
+          priorResolution: null,
+          selectedCandidateId: restaurantCandidate.candidateId,
+          confirmationEvidence: restaurantResolution.confirmationEvidence,
+        },
+        {
+          ...context,
+          timeoutMs: Number(fixture.input.timeoutMs),
+        },
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "analysis_only_publication") {
+    await expectContractIssue(fixture, () =>
+      publicationFake.publish(analysisOnly as never, context),
+    );
+    continue;
+  }
+  if (fixture.case === "unsafe_observability_field") {
+    await expectContractIssue(fixture, () =>
+      observabilityFake.emit(
+        {
+          ...observabilityEvent,
+          ...fixture.input,
+        } as never,
+        context,
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "internal_package_import") {
+    await expectContractIssue(fixture, () =>
+      InternalPackageImportSchema.parse(fixture.input.specifier),
+    );
+    continue;
+  }
+  if (fixture.case === "aborted_success_plan") {
+    await expectContractIssue(fixture, () =>
+      parseDeterministicFakePlan(
+        {
+          ...plan(publicationReceipt),
+          abortedResult: {
+            status: fixture.input.status,
+            value: publicationReceipt,
+          },
+        },
+        PublicationReceiptSchema,
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "timed_out_success_plan") {
+    await expectContractIssue(fixture, () =>
+      parseDeterministicFakePlan(
+        {
+          ...plan(publicationReceipt),
+          timedOutResult: {
+            status: fixture.input.status,
+            value: publicationReceipt,
+          },
+        },
+        PublicationReceiptSchema,
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "timed_out_non_timeout_error") {
+    const nonTimeoutError: PublicErrorEnvelope = {
+      error: {
+        code: "UPSTREAM_UNAVAILABLE",
+        message: "A required menu service is temporarily unavailable.",
+        correlationId: publicError.error.correlationId,
+        retryable: true,
+      },
+      httpStatus: 503,
+    };
+    await expectContractIssue(fixture, () =>
+      parseDeterministicFakePlan(
+        {
+          ...plan(publicationReceipt),
+          timedOutResult: {
+            status: "error",
+            error: nonTimeoutError,
+          },
+        },
+        PublicationReceiptSchema,
+      ),
+    );
+    continue;
+  }
+  assert.fail(`Unhandled invalid fixture ${fixture.case}`);
+}
 
 const owningPackages = [
   "restaurant-resolution",

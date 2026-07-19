@@ -3012,6 +3012,22 @@ export const RestaurantResolutionSchema =
     validateRestaurantResolution,
   );
 
+export const RestaurantConfirmationEvidenceSchema =
+  createRuntimeSchema<RestaurantConfirmationEvidence>(
+    "RestaurantConfirmationEvidence",
+    (value, issues) => {
+      validateConfirmationEvidence(value, issues, []);
+    },
+  );
+
+export const TransientMenuContentSchema =
+  createRuntimeSchema<TransientMenuContent>(
+    "TransientMenuContent",
+    (value, issues) => {
+      validateTransientMenuContent(value, issues, []);
+    },
+  );
+
 export const MenuSourceInputSchema = createRuntimeSchema<MenuSourceInput>(
   "MenuSourceInput",
   validateMenuSourceInput,
@@ -3026,6 +3042,43 @@ export const CompactMenuExtractionSchema =
 export const DishCandidateSchema = createRuntimeSchema<DishCandidate>(
   "DishCandidate",
   validateDishCandidate,
+);
+
+export const RestaurantMenuVersionSchema =
+  createRuntimeSchema<RestaurantMenuVersion>(
+    "RestaurantMenuVersion",
+    (value, issues) => {
+      validateRestaurantMenuVersion(value, issues, []);
+    },
+  );
+
+export const MenuItemSchema = createRuntimeSchema<MenuItem>(
+  "MenuItem",
+  (value, issues) => {
+    validateMenuItem(value, issues, []);
+  },
+);
+
+export const MenuItemDishMatchSchema =
+  createRuntimeSchema<MenuItemDishMatch>(
+    "MenuItemDishMatch",
+    (value, issues) => {
+      validateMenuItemDishMatch(value, issues, []);
+    },
+  );
+
+export const MenuItemClaimSchema = createRuntimeSchema<MenuItemClaim>(
+  "MenuItemClaim",
+  (value, issues) => {
+    validateMenuItemClaim(value, issues, []);
+  },
+);
+
+export const DishClaimSchema = createRuntimeSchema<DishClaim>(
+  "DishClaim",
+  (value, issues) => {
+    validateDishClaim(value, issues, []);
+  },
 );
 
 export const EffectiveDishProfileSchema =

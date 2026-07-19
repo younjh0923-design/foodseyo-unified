@@ -76,15 +76,26 @@ receives only `PublicationEligibleAnalysis`.
 Each fake:
 
 - implements the same public port as a later real adapter;
-- returns a configured success, cancellation outcome, or timeout error;
+- validates every invocation context, request, configured result, and emitted
+  event at runtime before treating TypeScript values as trusted;
+- returns a configured success, an existing U1.3 cancellation-safe
+  `PublicOutcome`, or an existing `UPSTREAM_TIMEOUT` error;
 - increments a deterministic call count;
 - performs no environment lookup, provider call, database work, transport,
   logging, retry, clock read, or random operation;
 - records only approved UI-safe or observability events where recording is the
   fake's purpose.
 
-The network-free fixtures lock success, cancellation, timeout,
-publication-ineligible, unsafe-observability, and internal-import cases.
+Cancellation is represented by an aborted `AbortSignal`. A deadline-expired
+invocation uses an aborted signal whose reason is a `TimeoutError`; the positive
+bounded `timeoutMs` remains configuration metadata and never becomes zero.
+Event sinks receive the same invocation context as value ports and do not record
+events after cancellation or deadline expiry.
+
+The network-free fixtures execute actual valid and invalid values through the
+runtime schemas or port boundary. They lock success, cancellation, timeout,
+invalid fake plans, publication-ineligible, unsafe-observability, and
+internal-import cases by exact issue code and path.
 
 ## Import rules
 
