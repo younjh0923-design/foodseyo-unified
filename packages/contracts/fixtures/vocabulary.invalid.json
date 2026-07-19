@@ -1,6 +1,8 @@
 {
   "taste": "savory-smoky-hot",
   "basicTaste": "savory",
+  "flavorNote": "sweet",
+  "texture": "velvety",
   "heat": {
     "state": "known",
     "value": "unknown"
@@ -9,6 +11,17 @@
     "state": "unknown",
     "value": "rich"
   },
+  "heatAdjustability": {
+    "state": "unknown",
+    "value": "fixed"
+  },
+  "ingredientRole": "required",
+  "evidenceBasis": "assumed",
+  "restaurantResolutionState": "confirmed",
+  "menuSourceType": "google_places_menu",
+  "menuScope": "supper",
+  "menuVersionState": "published",
   "dishMatchState": "reviewed",
+  "knowledgeOrigin": "reviewed",
   "knowledgeReviewState": "model_generated"
 }

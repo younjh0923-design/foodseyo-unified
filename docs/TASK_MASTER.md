@@ -146,12 +146,15 @@ Execution order:
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** READY
+- **Status:** REVIEW
 - **Acceptance:** every variable has owner, secret classification, runtime
   scope, Development/Preview/Production policy, and no printed value.
   Migration credentials remain outside application runtime;
   `TECH_STACK.md`, environment examples, and TypeScript environment names agree;
   no Supabase or legacy model alias is approved.
+- **Proposal evidence:** issue #7 was approved by all three owners. The
+  dedicated contract PR still requires all-owner approval on its exact final
+  HEAD before merge.
 
 ### U1.5 Freeze module interfaces
 

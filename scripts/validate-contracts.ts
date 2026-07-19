@@ -3,22 +3,34 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import {
+  APPROVED_ENVIRONMENT_NAMES,
   BASIC_TASTE_ALIASES,
   BASIC_TASTES,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
   DISH_MATCH_STATES,
+  ENVIRONMENT_REGISTRY,
   EVIDENCE_BASES,
+  FEATURE_FLAG_ENV_NAMES,
   FLAVOR_NOTE_DEFINITIONS,
   FLAVOR_NOTES,
   HEAT_ADJUSTABILITY_STATES,
   HEAT_LEVELS,
+  INGREDIENT_ROLES,
+  isApprovedEnvironmentName,
+  isProhibitedEnvironmentName,
   KNOWLEDGE_ORIGIN_KINDS,
   KNOWLEDGE_REVIEW_STATES,
+  LEGACY_ENVIRONMENT_NAMES,
   MENU_SCOPES,
+  MENU_SOURCE_TYPES,
+  MENU_VERSION_STATES,
   OPERATOR_ENV_NAMES,
+  parseFeatureFlag,
   PUBLIC_ENV_NAMES,
+  RESTAURANT_RESOLUTION_STATES,
   RICHNESS_LEVELS,
+  RUNTIME_ENVIRONMENTS,
   SENSORY_AXES,
   SENSORY_VALUE_STATES,
   SERVER_ENV_NAMES,
@@ -95,12 +107,97 @@ const assertDescriptorDefinitions = (
   }
 };
 
-const asObject = (value: unknown, label: string): Record<string, unknown> => {
-  assert(
-    typeof value === "object" && value !== null && !Array.isArray(value),
-    `${label} must be an object`,
+const isObjectRecord = (
+  value: unknown,
+): value is Readonly<Record<string, unknown>> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const validateEnumField = (
+  fixture: Readonly<Record<string, unknown>>,
+  field: string,
+  allowedValues: readonly string[],
+  issues: string[],
+) => {
+  const value = fixture[field];
+  if (typeof value !== "string" || !allowedValues.includes(value)) {
+    issues.push(`invalid_${field}`);
+  }
+};
+
+const validateStatefulField = (
+  fixture: Readonly<Record<string, unknown>>,
+  field: string,
+  allowedValues: readonly string[],
+  issues: string[],
+) => {
+  const selection = fixture[field];
+  if (!isObjectRecord(selection)) {
+    issues.push(`invalid_${field}_selection`);
+    return;
+  }
+
+  if (!SENSORY_VALUE_STATES.includes(selection.state as never)) {
+    issues.push(`invalid_${field}_state`);
+    return;
+  }
+
+  if (selection.state === "unknown") {
+    if ("value" in selection) {
+      issues.push(`unknown_${field}_must_omit_value`);
+    }
+    return;
+  }
+
+  if (
+    typeof selection.value !== "string" ||
+    !allowedValues.includes(selection.value)
+  ) {
+    issues.push(`invalid_${field}_value`);
+  }
+};
+
+const validateVocabularyFixture = (value: unknown): readonly string[] => {
+  if (!isObjectRecord(value)) {
+    return ["fixture_must_be_object"];
+  }
+
+  const issues: string[] = [];
+  if ("taste" in value) {
+    issues.push("generic_taste_forbidden");
+  }
+
+  validateEnumField(value, "basicTaste", BASIC_TASTES, issues);
+  validateEnumField(value, "flavorNote", FLAVOR_NOTES, issues);
+  validateEnumField(value, "texture", TEXTURES, issues);
+  validateStatefulField(value, "heat", HEAT_LEVELS, issues);
+  validateStatefulField(value, "richness", RICHNESS_LEVELS, issues);
+  validateStatefulField(
+    value,
+    "heatAdjustability",
+    HEAT_ADJUSTABILITY_STATES,
+    issues,
   );
-  return value as Record<string, unknown>;
+  validateEnumField(value, "ingredientRole", INGREDIENT_ROLES, issues);
+  validateEnumField(value, "evidenceBasis", EVIDENCE_BASES, issues);
+  validateEnumField(
+    value,
+    "restaurantResolutionState",
+    RESTAURANT_RESOLUTION_STATES,
+    issues,
+  );
+  validateEnumField(value, "menuSourceType", MENU_SOURCE_TYPES, issues);
+  validateEnumField(value, "menuScope", MENU_SCOPES, issues);
+  validateEnumField(value, "menuVersionState", MENU_VERSION_STATES, issues);
+  validateEnumField(value, "dishMatchState", DISH_MATCH_STATES, issues);
+  validateEnumField(value, "knowledgeOrigin", KNOWLEDGE_ORIGIN_KINDS, issues);
+  validateEnumField(
+    value,
+    "knowledgeReviewState",
+    KNOWLEDGE_REVIEW_STATES,
+    issues,
+  );
+
+  return issues;
 };
 
 unique(SENSORY_AXES, "SENSORY_AXES");
@@ -111,8 +208,12 @@ unique(HEAT_LEVELS, "HEAT_LEVELS");
 unique(RICHNESS_LEVELS, "RICHNESS_LEVELS");
 unique(SENSORY_VALUE_STATES, "SENSORY_VALUE_STATES");
 unique(HEAT_ADJUSTABILITY_STATES, "HEAT_ADJUSTABILITY_STATES");
+unique(INGREDIENT_ROLES, "INGREDIENT_ROLES");
 unique(EVIDENCE_BASES, "EVIDENCE_BASES");
+unique(RESTAURANT_RESOLUTION_STATES, "RESTAURANT_RESOLUTION_STATES");
+unique(MENU_SOURCE_TYPES, "MENU_SOURCE_TYPES");
 unique(MENU_SCOPES, "MENU_SCOPES");
+unique(MENU_VERSION_STATES, "MENU_VERSION_STATES");
 unique(DISH_MATCH_STATES, "DISH_MATCH_STATES");
 unique(KNOWLEDGE_ORIGIN_KINDS, "KNOWLEDGE_ORIGIN_KINDS");
 unique(KNOWLEDGE_REVIEW_STATES, "KNOWLEDGE_REVIEW_STATES");
@@ -159,11 +260,40 @@ assert.equal(
   false,
   "heat and richness values overlap",
 );
+assert.deepEqual(HEAT_LEVELS, [
+  "none",
+  "mild",
+  "medium",
+  "hot",
+  "very_hot",
+]);
+assert.deepEqual(RICHNESS_LEVELS, ["light", "moderate", "rich"]);
+assert.deepEqual(INGREDIENT_ROLES, [
+  "core",
+  "typical",
+  "optional",
+  "regional_variant",
+  "preparation_dependent",
+]);
 assert.deepEqual(EVIDENCE_BASES, [
   "source_stated",
   "inferred_from_source",
   "culinary_baseline",
   "unknown",
+]);
+assert.deepEqual(RESTAURANT_RESOLUTION_STATES, [
+  "candidate",
+  "user_confirmed",
+  "externally_verified",
+  "rejected",
+  "conflicting",
+]);
+assert.deepEqual(MENU_SOURCE_TYPES, [
+  "uploaded_menu",
+  "official_website",
+  "official_pdf",
+  "ordering_page",
+  "web_search_discovery",
 ]);
 assert.deepEqual(DISH_MATCH_STATES, [
   "candidate",
@@ -201,6 +331,27 @@ assert.deepEqual(MENU_SCOPES, [
   "late_night",
   "seasonal",
 ]);
+assert.deepEqual(MENU_VERSION_STATES, [
+  "draft",
+  "active",
+  "stale",
+  "superseded",
+  "retired",
+]);
+assert.match(
+  FLAVOR_NOTE_DEFINITIONS.nutty.definition,
+  /not evidence that nuts are present/,
+);
+for (const descriptor of ["buttery", "cheesy"] as const) {
+  assert.match(
+    FLAVOR_NOTE_DEFINITIONS[descriptor].definition,
+    /not evidence that dairy is present/,
+  );
+}
+assert.match(
+  TEXTURE_DEFINITIONS.creamy.definition,
+  /not evidence that dairy is present/,
+);
 
 assert.equal(CONTRACT_STATUS, "draft");
 for (const version of Object.values(CONTRACT_VERSIONS)) {
@@ -210,8 +361,21 @@ for (const version of Object.values(CONTRACT_VERSIONS)) {
 const runtimeNames = Object.values(SERVER_ENV_NAMES);
 const operatorNames = Object.values(OPERATOR_ENV_NAMES);
 const publicNames = Object.values(PUBLIC_ENV_NAMES);
+const approvedEnvironmentNames = [...APPROVED_ENVIRONMENT_NAMES];
 unique(runtimeNames, "SERVER_ENV_NAMES");
 unique(operatorNames, "OPERATOR_ENV_NAMES");
+unique(approvedEnvironmentNames, "APPROVED_ENVIRONMENT_NAMES");
+assert.deepEqual(approvedEnvironmentNames, [...runtimeNames, ...operatorNames]);
+assert.deepEqual(Object.keys(ENVIRONMENT_REGISTRY), approvedEnvironmentNames);
+assert.deepEqual(LEGACY_ENVIRONMENT_NAMES, [
+  "OPENAI_MODEL",
+  "OPENAI_DEFAULT_MODEL",
+  "OPENAI_VISION_MODEL",
+  "OPENAI_MENU_MODEL",
+  "SUPABASE_URL",
+  "SUPABASE_SECRET_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+]);
 assert.equal(
   runtimeNames.some((name) => operatorNames.includes(name as never)),
   false,
@@ -237,10 +401,64 @@ assert.equal(
   false,
   "legacy environment names must not enter the unified registry",
 );
+for (const name of approvedEnvironmentNames) {
+  const entry = ENVIRONMENT_REGISTRY[name];
+  assert.equal(entry.name, name);
+  assert.equal(entry.neverLogValue, true);
+  assert.equal(isApprovedEnvironmentName(name), true);
+  assert.equal(isProhibitedEnvironmentName(name), false);
+  assert.deepEqual(Object.keys(entry.environmentPolicy), RUNTIME_ENVIRONMENTS);
+
+  if (entry.secretClass === "secret") {
+    assert.equal(
+      entry.environmentPolicy.test,
+      "forbidden",
+      `${name} secret must be forbidden in network-free tests`,
+    );
+  }
+}
+for (const name of LEGACY_ENVIRONMENT_NAMES) {
+  assert.equal(isApprovedEnvironmentName(name), false);
+  assert.equal(isProhibitedEnvironmentName(name), true);
+}
+assert.equal(isProhibitedEnvironmentName("NEXT_PUBLIC_OPENAI_API_KEY"), true);
+assert.equal(isProhibitedEnvironmentName("NEXT_PUBLIC_DATABASE_URL"), true);
+assert.equal(
+  ENVIRONMENT_REGISTRY.DATABASE_URL.validationRule,
+  "pooled_postgres_url",
+);
+assert.equal(ENVIRONMENT_REGISTRY.DATABASE_URL.boundary, "server_runtime");
+assert.equal(
+  ENVIRONMENT_REGISTRY.DATABASE_MIGRATION_URL.validationRule,
+  "direct_postgres_url",
+);
+assert.equal(
+  ENVIRONMENT_REGISTRY.DATABASE_MIGRATION_URL.boundary,
+  "operator_only",
+);
+assert.deepEqual(FEATURE_FLAG_ENV_NAMES, [
+  "FEATURE_RESTAURANT_RESOLUTION",
+  "FEATURE_WEB_SEARCH_DISCOVERY",
+  "FEATURE_DISH_KNOWLEDGE_REUSE",
+]);
+for (const name of FEATURE_FLAG_ENV_NAMES) {
+  const entry = ENVIRONMENT_REGISTRY[name];
+  assert.equal(entry.secretClass, "non_secret");
+  assert.equal(entry.validationRule, "boolean_literal");
+  assert.equal(entry.defaultBehavior, "fail_closed_false");
+}
+assert.equal(parseFeatureFlag("true"), true);
+for (const value of [undefined, "", "false", "TRUE", "1", "yes"]) {
+  assert.equal(parseFeatureFlag(value), false);
+}
 
 const runtimeExample = await readFile(resolve(".env.example"), "utf8");
 const operatorExample = await readFile(resolve(".env.operator.example"), "utf8");
 const technologyStack = await readFile(resolve("docs/TECH_STACK.md"), "utf8");
+const environmentRegistry = await readFile(
+  resolve("docs/ENVIRONMENT_REGISTRY.md"),
+  "utf8",
+);
 const agentsGuide = await readFile(resolve("AGENTS.md"), "utf8");
 const readme = await readFile(resolve("README.md"), "utf8");
 const productFlow = await readFile(resolve("docs/PRODUCT_FLOW.md"), "utf8");
@@ -294,9 +512,46 @@ const menuAnalysisPackage = await readFile(
 );
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
 assert(operatorExample.includes("DATABASE_MIGRATION_URL="));
+for (const name of runtimeNames) {
+  assert.match(runtimeExample, new RegExp(`^${name}=`, "m"));
+}
+for (const name of [
+  "DATABASE_URL",
+  "OPENAI_API_KEY",
+  "OPENAI_MENU_EXTRACTION_MODEL",
+  "OPENAI_WEB_SEARCH_MODEL",
+  "OPENAI_EXPLANATION_MODEL",
+  "GOOGLE_PLACES_API_KEY",
+]) {
+  assert.match(runtimeExample, new RegExp(`^${name}=$`, "m"));
+}
+assert.match(operatorExample, /^DATABASE_MIGRATION_URL=$/m);
 assert.match(technologyStack, /Neon Serverless Postgres/);
 assert.match(technologyStack, /Supabase is not part of the unified runtime/);
 assert.match(technologyStack, /Vercel/);
+assert.match(
+  technologyStack,
+  /value-free owner[\s\S]*`ENVIRONMENT_REGISTRY\.md`[\s\S]*`@foodseyo\/contracts`/,
+);
+for (const marker of [
+  "`environment-registry/0.1.0`",
+  "contains no environment values",
+  "## Approved server-runtime variables",
+  "## Operator-only variable",
+  "Only the exact lowercase string `true` enables a feature",
+  "no `NEXT_PUBLIC_*` environment name is approved",
+  "no `SUPABASE_*` name is approved",
+  "application runtime cannot read the operator registry",
+]) {
+  assert(
+    environmentRegistry.includes(marker),
+    `environment registry documentation is missing ${marker}`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-011 - Value-free environment and feature-flag registry[\s\S]*issue #7[\s\S]*\*\*Status:\*\* Accepted on merge/,
+);
 
 assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
@@ -510,79 +765,50 @@ assert.match(
   /## U-010 - Standards-informed sensory vocabulary boundaries[\s\S]*issue #6[\s\S]*\*\*Status:\*\* Accepted on merge/,
 );
 
-const validVocabularyFixture = asObject(
-  JSON.parse(
-    await readFile(
-      resolve("packages/contracts/fixtures/vocabulary.valid.json"),
-      "utf8",
-    ),
+const validVocabularyFixture = JSON.parse(
+  await readFile(
+    resolve("packages/contracts/fixtures/vocabulary.valid.json"),
+    "utf8",
   ),
-  "valid vocabulary fixture",
-);
-const validHeat = asObject(validVocabularyFixture.heat, "valid heat");
-const validRichness = asObject(
-  validVocabularyFixture.richness,
-  "valid richness",
-);
-const validAdjustability = asObject(
-  validVocabularyFixture.heatAdjustability,
-  "valid heat adjustability",
-);
-assert(BASIC_TASTES.includes(validVocabularyFixture.basicTaste as never));
-assert(FLAVOR_NOTES.includes(validVocabularyFixture.flavorNote as never));
-assert(TEXTURES.includes(validVocabularyFixture.texture as never));
-assert(SENSORY_VALUE_STATES.includes(validHeat.state as never));
-assert(HEAT_LEVELS.includes(validHeat.value as never));
-assert(SENSORY_VALUE_STATES.includes(validRichness.state as never));
-assert(RICHNESS_LEVELS.includes(validRichness.value as never));
-assert(SENSORY_VALUE_STATES.includes(validAdjustability.state as never));
-assert(
-  HEAT_ADJUSTABILITY_STATES.includes(validAdjustability.value as never),
-);
-assert(DISH_MATCH_STATES.includes(validVocabularyFixture.dishMatchState as never));
-assert(
-  KNOWLEDGE_ORIGIN_KINDS.includes(
-    validVocabularyFixture.knowledgeOrigin as never,
-  ),
-);
-assert(
-  KNOWLEDGE_REVIEW_STATES.includes(
-    validVocabularyFixture.knowledgeReviewState as never,
-  ),
+) as unknown;
+assert.deepEqual(
+  validateVocabularyFixture(validVocabularyFixture),
+  [],
+  "the complete valid vocabulary fixture must be accepted",
 );
 
-const invalidVocabularyFixture = asObject(
-  JSON.parse(
-    await readFile(
-      resolve("packages/contracts/fixtures/vocabulary.invalid.json"),
-      "utf8",
-    ),
+const invalidVocabularyFixture = JSON.parse(
+  await readFile(
+    resolve("packages/contracts/fixtures/vocabulary.invalid.json"),
+    "utf8",
   ),
-  "invalid vocabulary fixture",
+) as unknown;
+const invalidVocabularyIssues = validateVocabularyFixture(
+  invalidVocabularyFixture,
 );
-const invalidHeat = asObject(invalidVocabularyFixture.heat, "invalid heat");
-const invalidRichness = asObject(
-  invalidVocabularyFixture.richness,
-  "invalid richness",
-);
-assert("taste" in invalidVocabularyFixture);
-assert.equal(
-  BASIC_TASTES.includes(invalidVocabularyFixture.basicTaste as never),
-  false,
-);
-assert.equal(HEAT_LEVELS.includes(invalidHeat.value as never), false);
-assert.equal(invalidRichness.state, "unknown");
-assert.notEqual(invalidRichness.value, undefined);
-assert.equal(
-  DISH_MATCH_STATES.includes(invalidVocabularyFixture.dishMatchState as never),
-  false,
-);
-assert.equal(
-  KNOWLEDGE_REVIEW_STATES.includes(
-    invalidVocabularyFixture.knowledgeReviewState as never,
-  ),
-  false,
-);
+for (const expectedIssue of [
+  "generic_taste_forbidden",
+  "invalid_basicTaste",
+  "invalid_flavorNote",
+  "invalid_texture",
+  "invalid_heat_value",
+  "unknown_richness_must_omit_value",
+  "unknown_heatAdjustability_must_omit_value",
+  "invalid_ingredientRole",
+  "invalid_evidenceBasis",
+  "invalid_restaurantResolutionState",
+  "invalid_menuSourceType",
+  "invalid_menuScope",
+  "invalid_menuVersionState",
+  "invalid_dishMatchState",
+  "invalid_knowledgeOrigin",
+  "invalid_knowledgeReviewState",
+]) {
+  assert(
+    invalidVocabularyIssues.includes(expectedIssue),
+    `the complete invalid vocabulary fixture must report ${expectedIssue}`,
+  );
+}
 assertOrdered(sharedContracts, "workstream handoffs", [
   "YTW may return only UI-safe candidates",
   "YTW sends structured extraction",
@@ -711,7 +937,7 @@ assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
 assertTaskStatus(
   taskMaster,
   "### U1.4 Freeze environment and feature-flag registry",
-  "READY",
+  "REVIEW",
 );
 assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "BLOCKED");
 assertTaskStatus(

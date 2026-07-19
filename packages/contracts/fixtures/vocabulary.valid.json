@@ -15,6 +15,11 @@
     "value": "user_selectable"
   },
   "ingredientRole": "typical",
+  "evidenceBasis": "source_stated",
+  "restaurantResolutionState": "user_confirmed",
+  "menuSourceType": "official_website",
+  "menuScope": "dinner",
+  "menuVersionState": "active",
   "dishMatchState": "matched",
   "knowledgeOrigin": "model_generated",
   "knowledgeReviewState": "unreviewed"

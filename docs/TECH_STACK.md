@@ -63,6 +63,12 @@ Operator or dedicated migration CI only:
 DATABASE_MIGRATION_URL
 ```
 
+The value-free owner, secret classification, trust boundary, environment
+policy, conditional requirement, validation rule, and feature-flag default for
+every approved name are frozen in `ENVIRONMENT_REGISTRY.md` and
+`@foodseyo/contracts`. Exact values and framework-specific loading mechanics
+are not part of U1.4.
+
 Model values, database URLs, API keys, resource IDs, and other secrets are not
 documented in Git. Model names are configuration values; their meaning is
 versioned through the matching contract rather than a moving alias.
