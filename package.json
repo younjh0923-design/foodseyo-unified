@@ -13,10 +13,15 @@
     "validate:boundary-dtos": "tsx scripts/validate-boundary-dtos.ts",
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
+    "validate:u2-data-pipeline": "tsx scripts/validate-u2-data-pipeline.ts",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:security"
+    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:u2-data-pipeline && pnpm validate:security"
   },
   "devDependencies": {
+    "@foodseyo/contracts": "workspace:*",
+    "@foodseyo/database": "workspace:*",
+    "@foodseyo/menu-analysis": "workspace:*",
+    "@foodseyo/merge-policy": "workspace:*",
     "tsx": "4.20.6",
     "typescript": "5.9.3"
   }

@@ -1188,8 +1188,12 @@ assertTaskStatus(
   "### U1.6 Approve and publish compatibility contract 1.0.0",
   "DONE",
 );
-for (const heading of [
+assertTaskStatus(
+  taskMaster,
   "### U2.1 Data and pipeline foundation",
+  "REVIEW",
+);
+for (const heading of [
   "### U2.2 Source acquisition foundation",
   "### U2.3 Restaurant-resolution foundation",
   "### U2.4 Web and result-experience foundation",

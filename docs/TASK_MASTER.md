@@ -207,12 +207,17 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Youn
 - **Branch:** `data/pipeline-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** REVIEW
 - **Scope:** application service interfaces, canonical validator, deterministic
   merge-policy skeleton, fake repositories, transaction boundary.
 - **No:** Neon migration or connection, live database, provider call, UI.
 - **Acceptance:** network-free tests prove source precedence, unknown handling,
   rollback semantics through fakes, and stable public errors.
+- **Review evidence:** frozen `1.0.0` ports, schemas, publication guard,
+  outcomes, and errors are consumed without a contracts-package change;
+  `pnpm validate:u2-data-pipeline` covers canonical binding, precedence,
+  conflict rejection, branch/source isolation, unknown preservation,
+  eligible-only publication, transaction commit, and rollback.
 
 ### U2.2 Source acquisition foundation
 
