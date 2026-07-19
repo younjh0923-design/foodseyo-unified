@@ -111,12 +111,15 @@ Execution order:
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** READY
+- **Status:** REVIEW
 - **Decide:** allowed sensory values, ingredient roles, restaurant states,
   menu scopes, menu lifecycle, Dish match states, knowledge review states.
 - **Acceptance:** no ambiguous `taste` field; heat/richness cannot mix; contract
   tests pass; the candidate vocabulary is complete but remains `0.1.0`/`draft`
   until U1.6.
+- **Proposal evidence:** issue #6 was approved by all three owners. The
+  dedicated contract PR still requires all-owner approval on its exact final
+  HEAD before merge.
 
 ### U1.3 Freeze boundary DTOs
 
@@ -505,8 +508,9 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U1.1 is complete. Proceed with **U1.2 - Freeze shared vocabulary** and **U1.4 -
-Freeze environment and feature-flag registry** in parallel through separate
-contract-change proposals and contract PRs. U1.3 remains blocked by U1.2. Do
-not start U2 feature code until U1.6 is `DONE` and the selected contract
-versions are promoted from `0.1.0`/`draft` to `1.0.0`.
+U1.1 is complete. Complete exact-HEAD review of the **U1.2 - Freeze shared
+vocabulary** contract PR while **U1.4 - Freeze environment and feature-flag
+registry** proceeds independently through its own contract PR. U1.3 remains
+blocked until U1.2 merges. Do not start U2 feature code until U1.6 is `DONE`
+and the selected contract versions are promoted from `0.1.0`/`draft` to
+`1.0.0`.

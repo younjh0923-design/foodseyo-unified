@@ -5,11 +5,12 @@ Read these files before making changes:
 1. `docs/TECH_STACK.md`
 2. `docs/PRODUCT_FLOW.md`
 3. `docs/SHARED_CONTRACTS.md`
-4. `docs/CONTRACT_CHANGE_GUIDE.md`
-5. `docs/CONTRACT_CHANGE_QUEUE.md`
-6. `docs/TASK_MASTER.md`
-7. `docs/TEAM_OWNERSHIP.md`
-8. `docs/INTEGRATION_PROTOCOL.md`
+4. `docs/SENSORY_VOCABULARY.md`
+5. `docs/CONTRACT_CHANGE_GUIDE.md`
+6. `docs/CONTRACT_CHANGE_QUEUE.md`
+7. `docs/TASK_MASTER.md`
+8. `docs/TEAM_OWNERSHIP.md`
+9. `docs/INTEGRATION_PROTOCOL.md`
 
 ## Product boundary
 

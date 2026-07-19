@@ -4,23 +4,37 @@ import { resolve } from "node:path";
 
 import {
   APPROVED_ENVIRONMENT_NAMES,
+  BASIC_TASTE_ALIASES,
   BASIC_TASTES,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
+  DISH_MATCH_STATES,
   ENVIRONMENT_REGISTRY,
   EVIDENCE_BASES,
   FEATURE_FLAG_ENV_NAMES,
+  FLAVOR_NOTE_DEFINITIONS,
   FLAVOR_NOTES,
+  HEAT_ADJUSTABILITY_STATES,
   HEAT_LEVELS,
+  INGREDIENT_ROLES,
   isApprovedEnvironmentName,
   isProhibitedEnvironmentName,
+  KNOWLEDGE_ORIGIN_KINDS,
+  KNOWLEDGE_REVIEW_STATES,
   LEGACY_ENVIRONMENT_NAMES,
+  MENU_SCOPES,
+  MENU_SOURCE_TYPES,
+  MENU_VERSION_STATES,
   OPERATOR_ENV_NAMES,
   parseFeatureFlag,
   PUBLIC_ENV_NAMES,
+  RESTAURANT_RESOLUTION_STATES,
   RICHNESS_LEVELS,
   RUNTIME_ENVIRONMENTS,
+  SENSORY_AXES,
+  SENSORY_VALUE_STATES,
   SERVER_ENV_NAMES,
+  TEXTURE_DEFINITIONS,
   TEXTURES,
 } from "../packages/contracts/src/index.js";
 
@@ -66,24 +80,353 @@ const assertTaskStatus = (
   );
 };
 
+const assertDescriptorDefinitions = (
+  values: readonly string[],
+  definitions: Readonly<
+    Record<string, { readonly definition: string; readonly aliases: readonly string[] }>
+  >,
+  label: string,
+) => {
+  assert.deepEqual(Object.keys(definitions), values, `${label} keys drifted`);
+  const normalizedTokens = new Set<string>(values);
+
+  for (const value of values) {
+    const descriptor = definitions[value];
+    assert(descriptor, `${label} is missing ${value}`);
+    assert(descriptor.definition.trim().length > 0, `${value} lacks a definition`);
+    unique(descriptor.aliases, `${value} aliases`);
+
+    for (const alias of descriptor.aliases) {
+      assert.equal(
+        normalizedTokens.has(alias),
+        false,
+        `${label} alias ${alias} collides with a canonical value or alias`,
+      );
+      normalizedTokens.add(alias);
+    }
+  }
+};
+
+const isObjectRecord = (
+  value: unknown,
+): value is Readonly<Record<string, unknown>> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const validateEnumField = (
+  fixture: Readonly<Record<string, unknown>>,
+  field: string,
+  allowedValues: readonly string[],
+  issues: string[],
+) => {
+  const value = fixture[field];
+  if (typeof value !== "string" || !allowedValues.includes(value)) {
+    issues.push(`invalid_${field}`);
+  }
+};
+
+const validateStatefulField = (
+  fixture: Readonly<Record<string, unknown>>,
+  field: string,
+  allowedValues: readonly string[],
+  issues: string[],
+) => {
+  const selection = fixture[field];
+  if (!isObjectRecord(selection)) {
+    issues.push(`invalid_${field}_selection`);
+    return;
+  }
+
+  if (!SENSORY_VALUE_STATES.includes(selection.state as never)) {
+    issues.push(`invalid_${field}_state`);
+    return;
+  }
+
+  if (selection.state === "unknown") {
+    if ("value" in selection) {
+      issues.push(`unknown_${field}_must_omit_value`);
+    }
+    return;
+  }
+
+  if (
+    typeof selection.value !== "string" ||
+    !allowedValues.includes(selection.value)
+  ) {
+    issues.push(`invalid_${field}_value`);
+  }
+};
+
+const validateVocabularyFixture = (value: unknown): readonly string[] => {
+  if (!isObjectRecord(value)) {
+    return ["fixture_must_be_object"];
+  }
+
+  const issues: string[] = [];
+  if ("taste" in value) {
+    issues.push("generic_taste_forbidden");
+  }
+
+  validateEnumField(value, "basicTaste", BASIC_TASTES, issues);
+  validateEnumField(value, "flavorNote", FLAVOR_NOTES, issues);
+  validateEnumField(value, "texture", TEXTURES, issues);
+  validateStatefulField(value, "heat", HEAT_LEVELS, issues);
+  validateStatefulField(value, "richness", RICHNESS_LEVELS, issues);
+  validateStatefulField(
+    value,
+    "heatAdjustability",
+    HEAT_ADJUSTABILITY_STATES,
+    issues,
+  );
+  validateEnumField(value, "ingredientRole", INGREDIENT_ROLES, issues);
+  validateEnumField(value, "evidenceBasis", EVIDENCE_BASES, issues);
+  validateEnumField(
+    value,
+    "restaurantResolutionState",
+    RESTAURANT_RESOLUTION_STATES,
+    issues,
+  );
+  validateEnumField(value, "menuSourceType", MENU_SOURCE_TYPES, issues);
+  validateEnumField(value, "menuScope", MENU_SCOPES, issues);
+  validateEnumField(value, "menuVersionState", MENU_VERSION_STATES, issues);
+  validateEnumField(value, "dishMatchState", DISH_MATCH_STATES, issues);
+  validateEnumField(value, "knowledgeOrigin", KNOWLEDGE_ORIGIN_KINDS, issues);
+  validateEnumField(
+    value,
+    "knowledgeReviewState",
+    KNOWLEDGE_REVIEW_STATES,
+    issues,
+  );
+
+  return issues;
+};
+
+unique(SENSORY_AXES, "SENSORY_AXES");
 unique(BASIC_TASTES, "BASIC_TASTES");
 unique(FLAVOR_NOTES, "FLAVOR_NOTES");
 unique(TEXTURES, "TEXTURES");
 unique(HEAT_LEVELS, "HEAT_LEVELS");
 unique(RICHNESS_LEVELS, "RICHNESS_LEVELS");
+unique(SENSORY_VALUE_STATES, "SENSORY_VALUE_STATES");
+unique(HEAT_ADJUSTABILITY_STATES, "HEAT_ADJUSTABILITY_STATES");
+unique(INGREDIENT_ROLES, "INGREDIENT_ROLES");
 unique(EVIDENCE_BASES, "EVIDENCE_BASES");
+unique(RESTAURANT_RESOLUTION_STATES, "RESTAURANT_RESOLUTION_STATES");
+unique(MENU_SOURCE_TYPES, "MENU_SOURCE_TYPES");
+unique(MENU_SCOPES, "MENU_SCOPES");
+unique(MENU_VERSION_STATES, "MENU_VERSION_STATES");
+unique(DISH_MATCH_STATES, "DISH_MATCH_STATES");
+unique(KNOWLEDGE_ORIGIN_KINDS, "KNOWLEDGE_ORIGIN_KINDS");
+unique(KNOWLEDGE_REVIEW_STATES, "KNOWLEDGE_REVIEW_STATES");
+
+assert.deepEqual(SENSORY_AXES, [
+  "basic_taste",
+  "flavor_note",
+  "texture",
+  "heat",
+  "richness",
+]);
+assert.deepEqual(BASIC_TASTES, [
+  "sweet",
+  "salty",
+  "sour",
+  "bitter",
+  "umami",
+]);
+assert.equal(BASIC_TASTES.includes("savory" as never), false);
+assert.deepEqual(BASIC_TASTE_ALIASES, {
+  savory: "umami",
+  savoury: "umami",
+});
+assert.deepEqual(FLAVOR_NOTES, [
+  "smoky",
+  "herbal",
+  "nutty",
+  "earthy",
+  "garlicky",
+  "buttery",
+  "cheesy",
+  "fruity",
+  "citrusy",
+  "fermented",
+]);
+assert.deepEqual(TEXTURES, [
+  "crispy",
+  "crunchy",
+  "creamy",
+  "tender",
+  "chewy",
+  "juicy",
+  "flaky",
+  "soft",
+  "firm",
+  "dense",
+  "airy",
+  "silky",
+  "sticky",
+  "springy",
+  "crumbly",
+  "moist",
+]);
+assertDescriptorDefinitions(
+  FLAVOR_NOTES,
+  FLAVOR_NOTE_DEFINITIONS,
+  "FLAVOR_NOTE_DEFINITIONS",
+);
+assertDescriptorDefinitions(
+  TEXTURES,
+  TEXTURE_DEFINITIONS,
+  "TEXTURE_DEFINITIONS",
+);
+assert.deepEqual(
+  Object.fromEntries(
+    FLAVOR_NOTES.map((value) => [
+      value,
+      FLAVOR_NOTE_DEFINITIONS[value].aliases,
+    ]),
+  ),
+  {
+    smoky: ["smoked", "smoke-like"],
+    herbal: ["herbaceous", "herb-like"],
+    nutty: ["nut-like", "roasted-nut-like"],
+    earthy: ["earth-like", "soil-like"],
+    garlicky: ["garlic-forward", "garlic-like"],
+    buttery: ["butter-like", "buttery-tasting"],
+    cheesy: ["cheese-like", "cheesy-tasting"],
+    fruity: ["fruit-forward", "fruit-like"],
+    citrusy: ["citrus-forward", "citrus-like"],
+    fermented: ["fermentative", "fermented-tasting"],
+  },
+);
+assert.deepEqual(
+  Object.fromEntries(
+    TEXTURES.map((value) => [value, TEXTURE_DEFINITIONS[value].aliases]),
+  ),
+  {
+    crispy: ["crisp", "crackly"],
+    crunchy: ["crunch", "hard-crisp"],
+    creamy: ["cream-like", "smooth-creamy"],
+    tender: ["easy-to-bite", "fork-tender"],
+    chewy: ["chewiness", "resilient-chew"],
+    juicy: ["juice-releasing", "succulent"],
+    flaky: ["layered-flaky", "flakes-apart"],
+    soft: ["soft-textured", "easily-deformed"],
+    firm: ["firm-textured", "holds-shape"],
+    dense: ["compact", "heavy-textured"],
+    airy: ["aerated", "light-and-airy"],
+    silky: ["silken", "silky-smooth"],
+    sticky: ["adhesive", "tacky"],
+    springy: ["bouncy", "elastic"],
+    crumbly: ["crumbles", "friable"],
+    moist: ["moist-textured", "damp"],
+  },
+);
 
 for (const taste of BASIC_TASTES) {
   assert(!FLAVOR_NOTES.includes(taste as never), `${taste} crosses sensory axes`);
 }
 
 assert.notDeepEqual(HEAT_LEVELS, RICHNESS_LEVELS);
+assert.equal(HEAT_LEVELS.includes("unknown" as never), false);
+assert.equal(RICHNESS_LEVELS.includes("unknown" as never), false);
+assert.deepEqual(SENSORY_VALUE_STATES, ["known", "unknown"]);
+assert.deepEqual(HEAT_ADJUSTABILITY_STATES, ["fixed", "user_selectable"]);
+assert.equal(
+  HEAT_LEVELS.some((value) => RICHNESS_LEVELS.includes(value as never)),
+  false,
+  "heat and richness values overlap",
+);
+assert.deepEqual(HEAT_LEVELS, [
+  "none",
+  "mild",
+  "medium",
+  "hot",
+  "very_hot",
+]);
+assert.deepEqual(RICHNESS_LEVELS, ["light", "moderate", "rich"]);
+assert.deepEqual(INGREDIENT_ROLES, [
+  "core",
+  "typical",
+  "optional",
+  "regional_variant",
+  "preparation_dependent",
+]);
 assert.deepEqual(EVIDENCE_BASES, [
   "source_stated",
   "inferred_from_source",
   "culinary_baseline",
   "unknown",
 ]);
+assert.deepEqual(RESTAURANT_RESOLUTION_STATES, [
+  "candidate",
+  "user_confirmed",
+  "externally_verified",
+  "rejected",
+  "conflicting",
+]);
+assert.deepEqual(MENU_SOURCE_TYPES, [
+  "uploaded_menu",
+  "official_website",
+  "official_pdf",
+  "ordering_page",
+  "web_search_discovery",
+]);
+assert.deepEqual(DISH_MATCH_STATES, [
+  "candidate",
+  "matched",
+  "rejected",
+  "unresolved",
+]);
+assert.equal(DISH_MATCH_STATES.includes("reviewed" as never), false);
+assert.deepEqual(KNOWLEDGE_ORIGIN_KINDS, [
+  "model_generated",
+  "human_authored",
+  "imported",
+]);
+assert.deepEqual(KNOWLEDGE_REVIEW_STATES, [
+  "unreviewed",
+  "reviewed",
+  "superseded",
+  "retired",
+]);
+assert.equal(
+  KNOWLEDGE_REVIEW_STATES.includes("model_generated" as never),
+  false,
+);
+assert.deepEqual(MENU_SCOPES, [
+  "default",
+  "all_day",
+  "breakfast",
+  "brunch",
+  "lunch",
+  "dinner",
+  "drinks",
+  "dessert",
+  "happy_hour",
+  "kids",
+  "late_night",
+  "seasonal",
+]);
+assert.deepEqual(MENU_VERSION_STATES, [
+  "draft",
+  "active",
+  "stale",
+  "superseded",
+  "retired",
+]);
+assert.match(
+  FLAVOR_NOTE_DEFINITIONS.nutty.definition,
+  /not evidence that nuts are present/,
+);
+for (const descriptor of ["buttery", "cheesy"] as const) {
+  assert.match(
+    FLAVOR_NOTE_DEFINITIONS[descriptor].definition,
+    /not evidence that dairy is present/,
+  );
+}
+assert.match(
+  TEXTURE_DEFINITIONS.creamy.definition,
+  /not evidence that dairy is present/,
+);
 
 assert.equal(CONTRACT_STATUS, "draft");
 for (const version of Object.values(CONTRACT_VERSIONS)) {
@@ -198,6 +541,10 @@ const sharedContracts = await readFile(
   resolve("docs/SHARED_CONTRACTS.md"),
   "utf8",
 );
+const sensoryVocabulary = await readFile(
+  resolve("docs/SENSORY_VOCABULARY.md"),
+  "utf8",
+);
 const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
@@ -283,12 +630,14 @@ assert.match(
 
 assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
+  "`docs/SENSORY_VOCABULARY.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
   "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
 ]);
 assertOrdered(readme, "README start-here guide order", [
   "[Shared contracts](docs/SHARED_CONTRACTS.md)",
+  "[Sensory vocabulary](docs/SENSORY_VOCABULARY.md)",
   "[Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)",
   "[Contract change queue](docs/CONTRACT_CHANGE_QUEUE.md)",
   "[Task master](docs/TASK_MASTER.md)",
@@ -450,6 +799,91 @@ assert.match(
   sharedContracts,
   /Restaurant photo bytes and opaque or short-lived Google photo\/provider[\s\S]*Google Place ID remains[\s\S]*external-identity exception\./,
 );
+assertOrdered(sensoryVocabulary, "sensory axes", [
+  "| Basic taste |",
+  "| Flavor note |",
+  "| Texture |",
+  "| Heat |",
+  "| Richness |",
+]);
+for (const sourceMarker of [
+  "ISO 5492:2008",
+  "ISO 11035:1994",
+  "ISO 13299:2016",
+  "ISO 11036:2020",
+  "ISO 4121:2003",
+  "nidcd.nih.gov/health/taste-disorders",
+  "pmc.ncbi.nlm.nih.gov/articles/PMC4667542/",
+]) {
+  assert.match(
+    sensoryVocabulary,
+    new RegExp(sourceMarker.replaceAll(".", "\\.")),
+  );
+}
+for (const contractMarker of [
+  "standards-informed",
+  "does not claim",
+  "There is no generic `taste` field",
+  "`savory` and `savoury` are accepted input aliases",
+  "not a heat or richness level",
+  "Heat adjustability is independent",
+  "Perceptual descriptors are not ingredient claims",
+  "`model_generated`, `human_authored`, or `imported`",
+]) {
+  assert(
+    sensoryVocabulary.includes(contractMarker),
+    `sensory vocabulary is missing ${contractMarker}`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-010 - Standards-informed sensory vocabulary boundaries[\s\S]*issue #6[\s\S]*\*\*Status:\*\* Accepted on merge/,
+);
+
+const validVocabularyFixture = JSON.parse(
+  await readFile(
+    resolve("packages/contracts/fixtures/vocabulary.valid.json"),
+    "utf8",
+  ),
+) as unknown;
+assert.deepEqual(
+  validateVocabularyFixture(validVocabularyFixture),
+  [],
+  "the complete valid vocabulary fixture must be accepted",
+);
+
+const invalidVocabularyFixture = JSON.parse(
+  await readFile(
+    resolve("packages/contracts/fixtures/vocabulary.invalid.json"),
+    "utf8",
+  ),
+) as unknown;
+const invalidVocabularyIssues = validateVocabularyFixture(
+  invalidVocabularyFixture,
+);
+for (const expectedIssue of [
+  "generic_taste_forbidden",
+  "invalid_basicTaste",
+  "invalid_flavorNote",
+  "invalid_texture",
+  "invalid_heat_value",
+  "unknown_richness_must_omit_value",
+  "unknown_heatAdjustability_must_omit_value",
+  "invalid_ingredientRole",
+  "invalid_evidenceBasis",
+  "invalid_restaurantResolutionState",
+  "invalid_menuSourceType",
+  "invalid_menuScope",
+  "invalid_menuVersionState",
+  "invalid_dishMatchState",
+  "invalid_knowledgeOrigin",
+  "invalid_knowledgeReviewState",
+]) {
+  assert(
+    invalidVocabularyIssues.includes(expectedIssue),
+    `the complete invalid vocabulary fixture must report ${expectedIssue}`,
+  );
+}
 assertOrdered(sharedContracts, "workstream handoffs", [
   "YTW may return only UI-safe candidates",
   "YTW sends structured extraction",
@@ -573,7 +1007,7 @@ assertTaskStatus(
   "### U1.1 Approve product, evidence, ownership, and trust invariants",
   "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "READY");
+assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "REVIEW");
 assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "BLOCKED");
 assertTaskStatus(
   taskMaster,
