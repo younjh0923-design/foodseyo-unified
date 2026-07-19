@@ -2,10 +2,9 @@
 
 ## Contract status
 
-This document specifies the approved U1.2 shared vocabulary. The U1.6
-compatibility candidate freezes it as `shared-vocabulary/1.0.0`. Feature code
-may consume it only after the exact final U1.6 PR HEAD receives all-owner
-approval, merges to `main`, and U1.6 is recorded `DONE`.
+This document specifies the approved U1.2 shared vocabulary. The completed U1.6
+compatibility gate froze it as `shared-vocabulary/1.0.0`. U2 feature code may
+consume it from that frozen baseline.
 
 The executable source is `@foodseyo/contracts`. Applications and feature
 packages must not create local aliases, enums, scales, or descriptor lists.

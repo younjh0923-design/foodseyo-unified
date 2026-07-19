@@ -183,16 +183,19 @@ Execution order:
 - **Branch:** `contracts/u1-6-compatibility-freeze`
 - **Contract queue issue:** #17
 - **Dependency:** U1.2, U1.3, U1.4, U1.5
-- **Status:** REVIEW
+- **Status:** DONE
 - **Scope:** verify vocabulary, DTOs, outcomes, environment registry, versions,
   package interfaces, fixtures, invalid cases, and ownership handoffs as one
   compatible system.
 - **Acceptance:** all three approve the exact final HEAD; selected contract and
   package versions are `1.0.0`; `pnpm verify` passes; the freeze is merged to
   `main`; only then may U2 feature branches begin.
-- **Proposal evidence:** Issue #17 received all-owner direction approval
-  against `main` at `e6307d3f2b7bb59680575a5cbb9c99862b8642be` and remains
-  open at `status:approved` until this contract PR merges.
+- **Completion evidence:** Issue #17 received all-owner direction approval
+  against `main` at `e6307d3f2b7bb59680575a5cbb9c99862b8642be`. YTW and
+  Juhyung approved exact PR #18 HEAD
+  `fe57602e0ded09c0899c5babf18d64e6d8d6e03e`; PR #18 merged to `main` as
+  `e01a67306e319f9aec4b050477eacfbca99ffb31`. Issue #17 then moved to
+  `status:merged` and closed.
 
 ## Milestone U2 - Parallel greenfield foundations
 
@@ -204,8 +207,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Youn
 - **Branch:** `data/pipeline-foundation`
 - **Dependency:** U1.6
-- **Status:** BLOCKED
-- **Blocked by:** U1.6
+- **Status:** READY
 - **Scope:** application service interfaces, canonical validator, deterministic
   merge-policy skeleton, fake repositories, transaction boundary.
 - **No:** Neon migration or connection, live database, provider call, UI.
@@ -217,8 +219,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `sources/acquisition-foundation`
 - **Dependency:** U1.6
-- **Status:** BLOCKED
-- **Blocked by:** U1.6
+- **Status:** READY
 - **Scope:** uploaded-menu adapter and interface-only adapters for official web,
   PDF, ordering page, and Web Search discovery; source classification and
   normalized `MenuSourceInput`.
@@ -232,8 +233,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `restaurant/resolution-foundation`
 - **Dependency:** U1.6
-- **Status:** BLOCKED
-- **Blocked by:** U1.6
+- **Status:** READY
 - **Scope:** server-side intake contract, restaurant candidate and confirmation
   service, fake Google Places adapter, confirmation evidence, and UI-safe
   candidate/progress/action/outcome data.
@@ -249,8 +249,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Juhyung
 - **Branch:** `ui/result-experience-foundation`
 - **Dependency:** U1.6
-- **Status:** BLOCKED
-- **Blocked by:** U1.6
+- **Status:** READY
 - **Scope:** mobile shell, photo/link input, upload review, restaurant
   candidate and confirmation presentation, progress and retry states, plus
   result screens driven by frozen fake application view models.
@@ -265,8 +264,7 @@ parallel against the frozen interfaces and deterministic fakes.
 
 - **Owner:** Youn
 - **Dependency:** U1.6
-- **Status:** BLOCKED
-- **Blocked by:** U1.6
+- **Status:** READY
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
@@ -522,6 +520,7 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-Review the exact final HEAD of **U1.6 - Approve and publish compatibility
-contract 1.0.0**. Do not start U2 feature code until all three owners approve
-that exact HEAD, it merges to `main`, and U1.6 is recorded `DONE`.
+Start U2.1, U2.2, U2.3, U2.4, and U2.5 from current `main` on their documented
+feature branches. U2.1 through U2.4 may proceed in parallel against the frozen
+contracts and deterministic fakes. Shared-contract changes still use the
+contract-change queue and their impact-based approval tier.

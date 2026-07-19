@@ -3,10 +3,9 @@
 ## Status and authority
 
 This document defines the approved U1.5 interface boundary. Issue #14 and PR
-#15 are merged and closed. The U1.6 compatibility candidate freezes the
-interface as `module-interfaces/1.0.0`. Feature code may consume it only after
-the exact final U1.6 PR HEAD receives all-owner approval, merges to `main`, and
-U1.6 is recorded `DONE`.
+#15 are merged and closed. The completed U1.6 compatibility gate froze the
+interface as `module-interfaces/1.0.0` after exact-HEAD all-owner approval. U2
+feature code may consume it from that frozen baseline.
 
 U1.5 adds no provider, database, UI, transport, deployment, or feature
 implementation. It wraps the existing U1.3 DTOs; it does not redefine them.
@@ -119,6 +118,5 @@ unsafe-observability, and internal-import cases by exact issue code and path.
 
 U1.5 does not choose provider SDKs, retry implementations, framework transport,
 database schema, migrations, repositories, ORM rows, UI components, deployment
-behavior, or exact production adapter construction. U1.6 is the active
-compatibility review gate; all U2 feature work remains blocked until it merges
-and is recorded `DONE`.
+behavior, or exact production adapter construction. Those choices remain owned
+by their U2 workstreams even though the U1.6 compatibility gate is complete.

@@ -746,7 +746,7 @@ for (const marker of [
   "The direct YTW-to-Juhyung lane",
   "deterministic call count",
   "Never import another package's `src/` path",
-  "all U2 feature work remains blocked",
+  "U1.6 compatibility gate is complete",
 ]) {
   assert(
     moduleInterfaces.includes(marker),
@@ -767,7 +767,7 @@ for (const marker of [
 }
 assert.match(
   sharedContracts,
-  /`BOUNDARY_DTOS\.md`[\s\S]*`boundary-dtos\/1\.0\.0`[\s\S]*unavailable to feature code/,
+  /`BOUNDARY_DTOS\.md`[\s\S]*`boundary-dtos\/1\.0\.0`[\s\S]*U2 feature code may consume/,
 );
 assert.match(
   decisionLog,
@@ -779,7 +779,7 @@ assert.match(
 );
 assert.match(
   decisionLog,
-  /## U-014 - U1 compatibility contract 1\.0\.0 freeze[\s\S]*13 selected shared contract tokens[\s\S]*eight[\s\S]*dish-match\/0\.1\.0[\s\S]*dish-profile\/0\.1\.0[\s\S]*Issue #17[\s\S]*e6307d3f2b7bb59680575a5cbb9c99862b8642be[\s\S]*\*\*Status:\*\* Review/,
+  /## U-014 - U1 compatibility contract 1\.0\.0 freeze[\s\S]*13 selected shared contract tokens[\s\S]*eight[\s\S]*dish-match\/0\.1\.0[\s\S]*dish-profile\/0\.1\.0[\s\S]*Issue #17[\s\S]*e6307d3f2b7bb59680575a5cbb9c99862b8642be[\s\S]*fe57602e0ded09c0899c5babf18d64e6d8d6e03e[\s\S]*e01a67306e319f9aec4b050477eacfbca99ffb31[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
 );
 assert.match(
   contractChangeQueue,
@@ -1186,14 +1186,17 @@ assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "DONE");
 assertTaskStatus(
   taskMaster,
   "### U1.6 Approve and publish compatibility contract 1.0.0",
-  "REVIEW",
+  "DONE",
 );
-assertTaskStatus(
-  taskMaster,
+for (const heading of [
+  "### U2.1 Data and pipeline foundation",
+  "### U2.2 Source acquisition foundation",
+  "### U2.3 Restaurant-resolution foundation",
   "### U2.4 Web and result-experience foundation",
-  "BLOCKED",
-);
-assertTaskStatus(taskMaster, "### U2.5 Continuous integration", "BLOCKED");
+  "### U2.5 Continuous integration",
+]) {
+  assertTaskStatus(taskMaster, heading, "READY");
+}
 const sourceFoundation = markdownTaskSection(
   taskMaster,
   "### U2.2 Source acquisition foundation",
