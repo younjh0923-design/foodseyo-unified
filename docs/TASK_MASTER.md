@@ -259,6 +259,14 @@ parallel against the frozen interfaces and deterministic fakes.
   confirmation, official-source progress, fallback progress, safe errors,
   source/general/unknown presentation, input preservation, and no horizontal
   overflow.
+- **Current slice:** framework-neutral local input preservation, frozen-contract
+  presentation projections, evidence/unknown labeling, safe outcome/error
+  handling, accessibility requirements, and deterministic fake-port tests are
+  implemented on `ui/result-experience-foundation`.
+- **Current blockers:** rendered components and browser QA wait for platform
+  contract Issue #20; server-bound photo/link intake plus official-source and
+  Web Search progress wait for cross-workstream boundary Issue #21. Proposed
+  shapes are not consumed before their contract PRs merge.
 
 ### U2.5 Continuous integration
 
