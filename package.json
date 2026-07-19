@@ -13,7 +13,7 @@
     "validate:boundary-dtos": "tsx scripts/validate-boundary-dtos.ts",
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
-    "validate:source-acquisition": "tsx scripts/validate-source-acquisition.ts",
+    "validate:source-acquisition": "pnpm --filter @foodseyo/source-acquisition validate:foundation",
     "validate:security": "tsx scripts/validate-repository-security.ts",
     "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:source-acquisition && pnpm validate:security"
   },

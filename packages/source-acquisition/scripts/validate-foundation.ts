@@ -10,7 +10,7 @@ import {
   type PortInvocationContext,
   type RestaurantResolution,
   type TransientMenuContent,
-} from "../packages/contracts/src/index.js";
+} from "@foodseyo/contracts";
 import {
   FoundationMenuSourceAcquisitionPort,
   OfficialPdfDiscoveryAdapter,
@@ -23,7 +23,7 @@ import {
   type TransientContentIdentity,
   type TransientContentIdentityPort,
   type TransientDiscoveredMenuSource,
-} from "../packages/source-acquisition/src/index.js";
+} from "../src/index.js";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -49,11 +49,11 @@ const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const boundaryFixtures = JSON.parse(
-  await readFile("packages/contracts/fixtures/boundary-dtos.valid.json", "utf8"),
+  await readFile("../contracts/fixtures/boundary-dtos.valid.json", "utf8"),
 ) as unknown;
 const acquisitionFixtures = JSON.parse(
   await readFile(
-    "packages/source-acquisition/fixtures/acquisition-foundation.json",
+    "fixtures/acquisition-foundation.json",
     "utf8",
   ),
 ) as unknown;
