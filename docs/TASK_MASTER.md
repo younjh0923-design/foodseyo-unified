@@ -233,7 +233,9 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `restaurant/resolution-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** BLOCKED
+- **Blocked by:** proposed contract-change Issue #21 for sensitive photo/link
+  intake and UI-safe workflow progress. No proposed shape is consumed.
 - **Scope:** server-side intake contract, restaurant candidate and confirmation
   service, fake Google Places adapter, confirmation evidence, and UI-safe
   candidate/progress/action/outcome data.
@@ -243,6 +245,9 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Acceptance:** deterministic fixtures cover candidate, confirmed,
   conflicting, rejected, location-unavailable, and menu-only fallback cases;
   no UI-safe DTO contains provider internals or unvalidated menu meaning.
+- **Evidence:** frozen-port resolution, confirmation evidence, strict fake
+  Places normalization, typed outcomes, and network-free fixtures are ready in
+  `packages/restaurant-resolution`. Raw intake and progress remain blocked.
 
 ### U2.4 Web and result-experience foundation
 

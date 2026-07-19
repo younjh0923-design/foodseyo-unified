@@ -1,0 +1,65 @@
+{
+  "providerRecords": {
+    "alpha": {
+      "requestCandidateId": "11111111-1111-4111-8111-111111111111",
+      "placeId": "fixture_place_alpha",
+      "primaryText": "Fixture Alpha",
+      "formattedAddress": "10 Alpha Avenue, New York, NY",
+      "shortLocation": "Alpha Avenue",
+      "latitude": 40.744,
+      "longitude": -73.948,
+      "signals": ["name", "address", "location", "visual_text"],
+      "providerRank": 1
+    },
+    "beta": {
+      "requestCandidateId": "22222222-2222-4222-8222-222222222222",
+      "placeId": "fixture_place_beta",
+      "primaryText": "Fixture Alpha Downtown",
+      "formattedAddress": "20 Beta Street, New York, NY",
+      "shortLocation": "Beta Street",
+      "latitude": 40.72,
+      "longitude": -74.002,
+      "signals": ["name", "location"],
+      "providerRank": 2
+    },
+    "withoutLocation": {
+      "requestCandidateId": "33333333-3333-4333-8333-333333333333",
+      "placeId": "fixture_place_no_location",
+      "primaryText": "Fixture No Location",
+      "formattedAddress": "30 Context Road, New York, NY",
+      "shortLocation": "Context Road",
+      "latitude": null,
+      "longitude": null,
+      "signals": ["name", "address"],
+      "providerRank": 1
+    },
+    "branchSemanticLeak": {
+      "requestCandidateId": "44444444-4444-4444-8444-444444444444",
+      "placeId": "fixture_place_other_branch",
+      "primaryText": "Fixture Other Branch",
+      "formattedAddress": "40 Other Branch Road, New York, NY",
+      "shortLocation": "Other Branch Road",
+      "latitude": 40.71,
+      "longitude": -74.01,
+      "signals": ["name", "address"],
+      "providerRank": 1,
+      "menuVersionId": "55555555-5555-4555-8555-555555555555",
+      "price": { "amountMinor": 1000, "currency": "USD" },
+      "sourceEvidence": [],
+      "providerPayload": { "internal": true },
+      "unvalidatedMenuMeaning": true
+    }
+  },
+  "cases": [
+    { "case": "candidate", "records": ["alpha"], "expected": "candidate" },
+    { "case": "user_confirmation", "records": ["alpha"], "expected": "user_confirmed" },
+    { "case": "external_verification", "records": ["alpha"], "expected": "externally_verified" },
+    { "case": "conflicting", "records": ["alpha", "beta"], "expected": "conflicting" },
+    { "case": "rejected", "records": ["alpha", "beta"], "expected": "rejected" },
+    { "case": "location_unavailable", "records": ["withoutLocation"], "expected": "candidate" },
+    { "case": "insufficient_clues", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
+    { "case": "no_candidates", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
+    { "case": "menu_only_fallback", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
+    { "case": "cross_branch_semantic_leak", "records": ["branchSemanticLeak"], "expected": "INVALID_UPSTREAM_RESULT" }
+  ]
+}

@@ -1191,12 +1191,16 @@ assertTaskStatus(
 for (const heading of [
   "### U2.1 Data and pipeline foundation",
   "### U2.2 Source acquisition foundation",
-  "### U2.3 Restaurant-resolution foundation",
   "### U2.4 Web and result-experience foundation",
   "### U2.5 Continuous integration",
 ]) {
   assertTaskStatus(taskMaster, heading, "READY");
 }
+assertTaskStatus(
+  taskMaster,
+  "### U2.3 Restaurant-resolution foundation",
+  "BLOCKED",
+);
 const sourceFoundation = markdownTaskSection(
   taskMaster,
   "### U2.2 Source acquisition foundation",
