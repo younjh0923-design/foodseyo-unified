@@ -19,8 +19,9 @@ release checkpoints.
 This package does not accept unvalidated provider DTOs, expose ORM types or
 database rows to the UI, or implement provider and presentation behavior.
 
-Implementation starts only after U1.6 and requires a Development database
-checkpoint.
+The package manifest is frozen at `1.0.0`. Real implementation starts only
+after U1.6 merges to `main` and is recorded `DONE`, and it requires a
+Development database checkpoint.
 
 U1.5 public surface: `AnalysisPublicationPort` and
 `FakeAnalysisPublicationPort`. This package exists as the sole publication

@@ -16,5 +16,7 @@ eligible-publication guard are exported from
 these ports without redefining the U1.3 DTOs.
 
 The package does not contain provider adapters, feature behavior, database
-rows, migrations, UI models with provider internals, or secrets. All contracts
-remain `0.1.0`/`draft` and unavailable to feature code until U1.6.
+rows, migrations, UI models with provider internals, or secrets. The selected
+contracts and this package manifest are `1.0.0`/`frozen`; feature consumption
+remains blocked until the exact final U1.6 PR HEAD receives all-owner approval,
+merges to `main`, and U1.6 is recorded `DONE`.

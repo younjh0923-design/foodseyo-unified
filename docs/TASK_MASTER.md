@@ -72,9 +72,10 @@ until it is `DONE`.
 
 ## Milestone U1 - Freeze the team compatibility contract
 
-U1 lands through small, ordered, contract-only PRs. Contracts remain
-`0.1.0`/`draft` throughout U1. Feature branches begin only after U1.6 promotes
-the selected contracts to `1.0.0` with all-owner approval.
+U1 lands through small, ordered, contract-only PRs. U1.1 through U1.5 remain
+`0.1.0`/`draft`; U1.6 promotes the selected compatibility unit to
+`1.0.0`/`frozen`. Feature branches begin only after all-owner exact-HEAD
+approval, merge to `main`, and recorded U1.6 completion.
 
 Execution order:
 
@@ -179,14 +180,19 @@ Execution order:
 ### U1.6 Approve and publish compatibility contract 1.0.0
 
 - **Owner:** all three
+- **Branch:** `contracts/u1-6-compatibility-freeze`
+- **Contract queue issue:** #17
 - **Dependency:** U1.2, U1.3, U1.4, U1.5
-- **Status:** READY
+- **Status:** REVIEW
 - **Scope:** verify vocabulary, DTOs, outcomes, environment registry, versions,
   package interfaces, fixtures, invalid cases, and ownership handoffs as one
   compatible system.
 - **Acceptance:** all three approve the exact final HEAD; selected contract and
   package versions are `1.0.0`; `pnpm verify` passes; the freeze is merged to
   `main`; only then may U2 feature branches begin.
+- **Proposal evidence:** Issue #17 received all-owner direction approval
+  against `main` at `e6307d3f2b7bb59680575a5cbb9c99862b8642be` and remains
+  open at `status:approved` until this contract PR merges.
 
 ## Milestone U2 - Parallel greenfield foundations
 
@@ -516,8 +522,6 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U1.1 through U1.5 are complete. Begin **U1.6 - Approve and publish
-compatibility contract 1.0.0** as a contract-only compatibility audit and
-version promotion. Do not start U2 feature code until U1.6 is `DONE`, the exact
-final HEAD has all-owner approval, and the selected contract versions are
-promoted from `0.1.0`/`draft` to `1.0.0` on `main`.
+Review the exact final HEAD of **U1.6 - Approve and publish compatibility
+contract 1.0.0**. Do not start U2 feature code until all three owners approve
+that exact HEAD, it merges to `main`, and U1.6 is recorded `DONE`.

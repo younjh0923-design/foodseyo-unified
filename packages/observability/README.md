@@ -9,7 +9,8 @@ All workstreams emit only fields approved by this package. It does not accept
 raw source URLs, filenames, menu text, provider responses, canonical analyses,
 credentials, or database values.
 
-Implementation starts only after U1.6.
+The package manifest is frozen at `1.0.0`. Real implementation starts only
+after U1.6 merges to `main` and is recorded `DONE`.
 
 U1.5 public surface: `SafeObservabilityPort` and
 `FakeSafeObservabilityPort`. This shared sink is separate so every workstream

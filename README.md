@@ -67,12 +67,13 @@ repository.
 11. [Integration protocol](docs/INTEGRATION_PROTOCOL.md)
 12. [Legacy reference map](docs/LEGACY_REFERENCE_MAP.md)
 
-## First gate
+## Compatibility gate
 
-All three team members must approve the `@foodseyo/contracts` vocabulary,
-environment registry, version registry, role handoffs, and module boundaries
-through U1.6 before feature implementation begins. Until that approval,
-contract versions remain `0.1.0`/`draft`.
+The U1.6 compatibility candidate promotes the selected shared contracts and
+eight package manifests to `1.0.0`/`frozen`. Feature implementation remains
+blocked until all three owners approve the exact final U1.6 PR HEAD, that HEAD
+merges to `main`, and the U1.6 completion state is recorded. Only then may the
+three U2 workstreams branch from the frozen `main`.
 
 ## Local validation
 

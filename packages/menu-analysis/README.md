@@ -14,7 +14,8 @@ canonical truth, and explanation receives validated canonical data only. This
 package does not expose provider DTOs to the UI, persist database rows, invent
 local shared fields, or make a real provider call in automated tests.
 
-Implementation starts only after U1.6.
+The package manifest is frozen at `1.0.0`. Real implementation starts only
+after U1.6 merges to `main` and is recorded `DONE`.
 
 U1.5 keeps extraction, canonical validation, constrained explanation, and
 application orchestration in this single package because they form one ordered

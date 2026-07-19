@@ -2,9 +2,10 @@
 
 ## Contract status
 
-This document specifies U1.4 metadata for the already approved environment
-names. Its version is `environment-registry/0.1.0`, and it remains `draft`
-until U1.6 publishes the selected compatibility contracts as `1.0.0`.
+This document specifies U1.4 metadata for the approved environment names. The
+U1.6 compatibility candidate freezes it as `environment-registry/1.0.0`.
+Feature code may consume it only after the exact final U1.6 PR HEAD receives
+all-owner approval, merges to `main`, and U1.6 is recorded `DONE`.
 
 The executable source is `ENVIRONMENT_REGISTRY` in `@foodseyo/contracts`. The
 registry contains no environment values, credentials, URLs, model values, or
@@ -71,7 +72,7 @@ submission requirement optional.
 - application runtime cannot read the operator registry;
 - exact OpenAI model values remain pending their authorized configuration
   task;
-- framework-specific loading and startup validation remain U1.5/U2 work.
+- framework-specific loading and startup validation remain U2 work.
 
 Adding or changing a name, owner, class, policy, requirement, validation rule,
 or default is a shared environment contract change and follows
