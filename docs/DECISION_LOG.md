@@ -99,6 +99,28 @@
 - **Status:** Accepted
 - **Date:** 2026-07-18
 
+## U-011 - Value-free environment and feature-flag registry
+
+- **Decision:** Every approved environment name has one accountable owner,
+  secret classification, server-runtime or operator-only boundary,
+  Development/Preview/Production/test policy, requirement condition, and safe
+  validation-rule identifier. The registry never stores a value.
+- **Security:** `DATABASE_URL` is an environment-scoped pooled runtime
+  credential. `DATABASE_MIGRATION_URL` is direct and operator-only. Provider
+  and database secrets are forbidden in network-free tests. No public browser
+  environment variable is approved, and all values are excluded from logs.
+- **Feature flags:** Feature flags are optional and fail closed. Only exact
+  lowercase `true` enables a feature; absent or malformed input is disabled.
+- **Scope:** Exact model values and framework-specific environment-loading
+  mechanics remain outside U1.4. No provider call, database connection,
+  migration, deployment, or feature behavior is authorized.
+- **Version impact:** The registry receives `environment-registry/0.1.0`; all
+  contracts remain `0.1.0`/`draft` until U1.6.
+- **Proposal evidence:** all three owners approved issue #7. Acceptance
+  requires all-owner review of the exact U1.4 contract PR head and its merge.
+- **Status:** Accepted on merge of the reviewed U1.4 contract PR
+- **Date:** 2026-07-18
+
 ## U-007 - Manual PR enforcement on the current private plan
 
 - **Decision:** Use short-lived branches and recorded pull-request reviews as

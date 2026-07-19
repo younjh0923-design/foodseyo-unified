@@ -66,6 +66,8 @@ a menu version and Places is not modeled as a full menu-item provider.
 ### Environment variable names
 
 Environment variables are split by trust boundary.
+`ENVIRONMENT_REGISTRY.md` and `ENVIRONMENT_REGISTRY` define the value-free
+metadata for every approved name.
 
 **Application runtime**
 
@@ -93,6 +95,12 @@ application runtime, Vercel build variables, logs, docs, or test fixtures.
 There are no approved `SUPABASE_*` variables or legacy OpenAI model aliases.
 Imported code must use the names above rather than adding compatibility
 duplicates.
+
+Feature flags are optional operational controls and fail closed. Only the exact
+lowercase value `true` enables a feature; missing, malformed, or differently
+cased values evaluate to disabled. Network-free tests forbid database and
+provider secrets and do not require model values. Exact model values remain
+outside U1.4.
 
 ### Version variables
 
