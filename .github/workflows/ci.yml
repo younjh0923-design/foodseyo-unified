@@ -1,0 +1,71 @@
+{
+  "name": "CI",
+  "on": {
+    "pull_request": {
+      "branches": [
+        "main"
+      ]
+    }
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "ci-${{ github.workflow }}-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "validation": {
+      "name": "Repository validation",
+      "runs-on": "ubuntu-latest",
+      "timeout-minutes": 20,
+      "steps": [
+        {
+          "name": "Check out repository",
+          "uses": "actions/checkout@v4",
+          "with": {
+            "fetch-depth": 0,
+            "persist-credentials": false
+          }
+        },
+        {
+          "name": "Set up approved Node.js runtime",
+          "uses": "actions/setup-node@v4",
+          "with": {
+            "node-version": "20.19.0"
+          }
+        },
+        {
+          "name": "Enable approved pnpm version",
+          "run": "corepack enable\npnpm --version"
+        },
+        {
+          "name": "Install frozen dependencies",
+          "run": "pnpm install --frozen-lockfile"
+        },
+        {
+          "name": "Run network-free repository verification",
+          "env": {
+            "FOODSEYO_RUNTIME_ENV": "test",
+            "DATABASE_URL": "",
+            "DATABASE_MIGRATION_URL": "",
+            "OPENAI_API_KEY": "",
+            "OPENAI_MENU_EXTRACTION_MODEL": "",
+            "OPENAI_WEB_SEARCH_MODEL": "",
+            "OPENAI_EXPLANATION_MODEL": "",
+            "GOOGLE_PLACES_API_KEY": "",
+            "FEATURE_RESTAURANT_RESOLUTION": "false",
+            "FEATURE_WEB_SEARCH_DISCOVERY": "false",
+            "FEATURE_DISH_KNOWLEDGE_REUSE": "false",
+            "NODE_OPTIONS": "--import=${{ github.workspace }}/scripts/deny-network.cjs"
+          },
+          "run": "pnpm verify"
+        },
+        {
+          "name": "Check diff and generated-file hygiene",
+          "run": "git diff --check \"${{ github.event.pull_request.base.sha }}...HEAD\"\ngit diff --exit-code"
+        }
+      ]
+    }
+  }
+}

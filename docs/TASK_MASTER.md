@@ -263,12 +263,18 @@ parallel against the frozen interfaces and deterministic fakes.
 ### U2.5 Continuous integration
 
 - **Owner:** Youn
+- **Branch:** `ci/u2-validation-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** REVIEW
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
   tests.
+- **Review evidence:** one least-privilege pull-request workflow reuses
+  `pnpm verify`; workspace, package-boundary, cycle, duplicate-contract,
+  fixture, security, workflow, and network-denial checks are executable.
+  Lint and Production build remain explicitly deferred because the repository
+  has no approved command for either on the U1.6 baseline.
 
 ## Milestone S1 - Submission vertical slice
 

@@ -13,8 +13,14 @@
     "validate:boundary-dtos": "tsx scripts/validate-boundary-dtos.ts",
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
+    "test:unit": "pnpm validate:contracts && pnpm validate:boundary-dtos",
+    "test:integration": "pnpm validate:module-interfaces",
+    "test:workspace": "pnpm --recursive --if-present test",
+    "test": "pnpm test:unit && pnpm test:integration && pnpm test:workspace",
+    "validate:ci": "tsx scripts/validate-ci-foundation.ts",
+    "validate:network-boundary": "node scripts/validate-network-boundary.mjs",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:security"
+    "verify": "pnpm typecheck && pnpm test && pnpm validate:security && pnpm validate:ci && pnpm validate:network-boundary"
   },
   "devDependencies": {
     "tsx": "4.20.6",

@@ -15,22 +15,50 @@ const excludedDirectories = new Set([
 
 const textExtensions = new Set([
   "",
+  ".cjs",
+  ".css",
+  ".cts",
   ".example",
   ".gitignore",
+  ".html",
+  ".jsx",
   ".json",
   ".md",
   ".mjs",
+  ".mts",
+  ".sh",
   ".ts",
+  ".tsx",
+  ".txt",
   ".yaml",
   ".yml",
 ]);
 
 const prohibitedPatterns = [
-  /sk-[A-Za-z0-9_-]{20,}/g,
-  /gh[pousr]_[A-Za-z0-9]{20,}/g,
-  /AIza[0-9A-Za-z_-]{35}/g,
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----/g,
-  /postgres(?:ql)?:\/\/[^:\s]+:[^@\s]+@/gi,
+  {
+    name: "OpenAI-style API key",
+    pattern: /sk-[A-Za-z0-9_-]{20,}/g,
+  },
+  {
+    name: "GitHub token",
+    pattern: /gh[pousr]_[A-Za-z0-9]{20,}/g,
+  },
+  {
+    name: "Google API key",
+    pattern: /AIza[0-9A-Za-z_-]{35}/g,
+  },
+  {
+    name: "AWS access key",
+    pattern: /AKIA[0-9A-Z]{16}/g,
+  },
+  {
+    name: "private key",
+    pattern: /-----BEGIN [A-Z ]*PRIVATE KEY-----/g,
+  },
+  {
+    name: "credential-bearing PostgreSQL URL",
+    pattern: /postgres(?:ql)?:\/\/[^:\s]+:[^@\s]+@/gi,
+  },
 ] as const;
 
 const allowedEnvironmentFiles = new Set([
@@ -39,6 +67,40 @@ const allowedEnvironmentFiles = new Set([
 ]);
 
 const files: string[] = [];
+
+const matchingPatternNames = (content: string): readonly string[] => {
+  const matches: string[] = [];
+  for (const { name, pattern } of prohibitedPatterns) {
+    pattern.lastIndex = 0;
+    if (pattern.test(content)) {
+      matches.push(name);
+    }
+  }
+  return matches;
+};
+
+const syntheticSecretSamples = [
+  ["sk", "A".repeat(24)].join("-"),
+  `ghp_${"B".repeat(24)}`,
+  `AIza${"C".repeat(35)}`,
+  `AKIA${"D".repeat(16)}`,
+  ["-----BEGIN", "SYNTHETIC PRIVATE KEY-----"].join(" "),
+  ["postgresql://fixture-user:", "fixture-password", "@localhost/fixture"].join(
+    "",
+  ),
+] as const;
+
+for (const sample of syntheticSecretSamples) {
+  assert(
+    matchingPatternNames(sample).length > 0,
+    "representative synthetic secret pattern was not rejected",
+  );
+}
+assert.deepEqual(
+  matchingPatternNames("fixture text without a credential"),
+  [],
+  "benign fixture text must not be treated as a credential",
+);
 
 const walk = async (directory: string): Promise<void> => {
   for (const entry of await readdir(directory)) {
@@ -72,13 +134,14 @@ for (const file of files) {
   }
 
   const content = await readFile(file, "utf8");
-  for (const pattern of prohibitedPatterns) {
-    pattern.lastIndex = 0;
-    if (pattern.test(content)) {
-      violations.push(`${path}: prohibited secret or credential pattern`);
-    }
+  for (const patternName of matchingPatternNames(content)) {
+    violations.push(
+      `${path}: prohibited secret or credential pattern (${patternName})`,
+    );
   }
 }
 
 assert.deepEqual(violations, [], violations.join("\n"));
-console.log("Foodseyo repository security validation passed.");
+console.log(
+  "Foodseyo repository security validation and synthetic rejection checks passed.",
+);
