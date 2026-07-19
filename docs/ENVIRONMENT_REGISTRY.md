@@ -3,9 +3,9 @@
 ## Contract status
 
 This document specifies U1.4 metadata for the approved environment names. The
-U1.6 compatibility candidate freezes it as `environment-registry/1.0.0`.
-Feature code may consume it only after the exact final U1.6 PR HEAD receives
-all-owner approval, merges to `main`, and U1.6 is recorded `DONE`.
+completed U1.6 compatibility gate froze it as
+`environment-registry/1.0.0`. U2 feature code may consume it from that frozen
+baseline.
 
 The executable source is `ENVIRONMENT_REGISTRY` in `@foodseyo/contracts`. The
 registry contains no environment values, credentials, URLs, model values, or

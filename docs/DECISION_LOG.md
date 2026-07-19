@@ -304,7 +304,10 @@
   public error, environment name, interface behavior, provider configuration,
   persistence shape, framework choice, or model value.
 - **Approval evidence:** Issue #17 received all-owner proposal approval against
-  `main` at `e6307d3f2b7bb59680575a5cbb9c99862b8642be`. Exact final PR HEAD
-  approval and merge evidence remain pending.
-- **Status:** Review
+  `main` at `e6307d3f2b7bb59680575a5cbb9c99862b8642be`. YTW and Juhyung
+  approved exact PR #18 HEAD
+  `fe57602e0ded09c0899c5babf18d64e6d8d6e03e`; PR #18 merged to `main` as
+  `e01a67306e319f9aec4b050477eacfbca99ffb31`. Issue #17 then moved to
+  `status:merged` and closed.
+- **Status:** Accepted
 - **Date:** 2026-07-19

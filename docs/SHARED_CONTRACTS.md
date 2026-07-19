@@ -6,10 +6,12 @@ Three people can work independently only when shared words mean the same thing.
 The first source of truth is `@foodseyo/contracts`. Applications and feature
 packages import from it; they do not create local copies.
 
-The U1.6 compatibility candidate promotes the selected contracts to `1.0.0`
-and `frozen`. Feature code may consume them only after all three owners approve
-the exact final U1.6 PR HEAD, that HEAD merges to `main`, and U1.6 is recorded
-`DONE`.
+U1.6 promoted the selected contracts to `1.0.0` and `frozen`. PR #18 received
+all-owner approval at exact HEAD
+`fe57602e0ded09c0899c5babf18d64e6d8d6e03e` and merged to `main` as
+`e01a67306e319f9aec4b050477eacfbca99ffb31`. U2 feature code may consume these
+frozen contracts; later shared changes still require the contract-change
+process.
 
 Platform choices are frozen separately in `TECH_STACK.md`. The unified
 application uses Vercel with Neon Serverless Postgres. Supabase names, SDKs,
@@ -29,8 +31,8 @@ contract around the existing U1.3 DTOs.
 Owning feature packages export fake classes through their package roots and
 depend only on `@foodseyo/contracts` during U1.5. They do not redefine DTOs,
 import another package's internal source, or implement providers, database
-access, UI, transport, or deployment. The frozen module-interface contract
-remains unavailable to feature code until U1.6 merges and is recorded `DONE`.
+access, UI, transport, or deployment. The frozen module-interface contract is
+available to U2 feature packages from the completed U1.6 baseline.
 
 ### Vocabulary
 
@@ -79,8 +81,8 @@ The minimum contract is not the complete post-submission Dish knowledge model.
 Alias graphs, broad knowledge accumulation, authoring and review workflows, and
 the complete versioned claim lifecycle remain P3 scope. The candidate U1.3
 fields, runtime schemas, examples, invalid cases, and deferred choices are
-defined in `BOUNDARY_DTOS.md`. Feature code remains blocked until U1.6 merges
-and is recorded `DONE`, and it must not infer an unapproved baseline source.
+defined in `BOUNDARY_DTOS.md`. U2 feature code may consume this frozen contract,
+but it must not infer an unapproved baseline source.
 
 ### Submission input and acquisition sequence
 
@@ -201,9 +203,8 @@ every workstream.
 
 The approved DTO names and fields are frozen in
 `BOUNDARY_DTOS.md` and `@foodseyo/contracts` at
-`boundary-dtos/1.0.0`. They remain unavailable to feature code until U1.6
-merges and is recorded `DONE`. No package may invent a temporary local handoff
-shape.
+`boundary-dtos/1.0.0`. U2 feature code may consume them from the completed U1.6
+baseline. No package may invent a temporary local handoff shape.
 
 ## Package boundaries
 

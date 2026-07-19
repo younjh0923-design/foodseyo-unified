@@ -17,6 +17,6 @@ these ports without redefining the U1.3 DTOs.
 
 The package does not contain provider adapters, feature behavior, database
 rows, migrations, UI models with provider internals, or secrets. The selected
-contracts and this package manifest are `1.0.0`/`frozen`; feature consumption
-remains blocked until the exact final U1.6 PR HEAD receives all-owner approval,
-merges to `main`, and U1.6 is recorded `DONE`.
+contracts and this package manifest are `1.0.0`/`frozen`; U2 feature packages
+may consume them from the completed U1.6 baseline. Later feature consumption
+must preserve these frozen boundaries.

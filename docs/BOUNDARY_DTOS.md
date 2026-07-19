@@ -3,10 +3,9 @@
 ## Status and authority
 
 This document describes the approved U1.3 boundary contract. Its executable
-source is `packages/contracts/src/boundary-dtos.ts`, and the U1.6 compatibility
-candidate freezes it as `boundary-dtos/1.0.0`. Feature code may consume it only
-after the exact final U1.6 PR HEAD receives all-owner approval, merges to
-`main`, and U1.6 is recorded `DONE`.
+source is `packages/contracts/src/boundary-dtos.ts`. U1.6 froze it as
+`boundary-dtos/1.0.0` after exact-HEAD all-owner approval; U2 feature code may
+consume it from the completed U1.6 baseline.
 
 The runtime schemas and paired TypeScript types are authoritative. The JSON
 fixtures and `scripts/validate-boundary-dtos.ts` lock valid, invalid, relational,

@@ -69,11 +69,11 @@ repository.
 
 ## Compatibility gate
 
-The U1.6 compatibility candidate promotes the selected shared contracts and
-eight package manifests to `1.0.0`/`frozen`. Feature implementation remains
-blocked until all three owners approve the exact final U1.6 PR HEAD, that HEAD
-merges to `main`, and the U1.6 completion state is recorded. Only then may the
-three U2 workstreams branch from the frozen `main`.
+U1.6 is complete. PR #18 promoted the selected shared contracts and eight
+package manifests to `1.0.0`/`frozen` and merged to `main` as
+`e01a67306e319f9aec4b050477eacfbca99ffb31`. U2 feature branches may now begin
+in parallel from that frozen compatibility baseline. Later shared-contract
+changes still require the contract-change process.
 
 ## Local validation
 
