@@ -21,3 +21,10 @@ database rows to the UI, or implement provider and presentation behavior.
 
 Implementation starts only after U1.6 and requires a Development database
 checkpoint.
+
+U1.5 public surface: `AnalysisPublicationPort` and
+`FakeAnalysisPublicationPort`. This package exists as the sole publication
+side-effect boundary; it accepts only publication-eligible canonical analysis
+and prevents database rows or ORM types from coupling other workstreams. No
+database implementation is present in U1.5; the exported class is a
+deterministic fake only.

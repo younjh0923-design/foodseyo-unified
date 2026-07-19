@@ -1,0 +1,142 @@
+[
+  {
+    "case": "non_positive_timeout",
+    "input": {
+      "timeoutMs": 0
+    },
+    "expectedIssue": {
+      "code": "invalid_invocation_timeout",
+      "path": ["invocationContext", "timeoutMs"]
+    }
+  },
+  {
+    "case": "analysis_only_publication",
+    "input": {
+      "publicationState": "analysis_only"
+    },
+    "expectedIssue": {
+      "code": "publication_not_eligible",
+      "path": ["analysis", "publicationState"]
+    }
+  },
+  {
+    "case": "unsafe_observability_field",
+    "input": {
+      "menuText": "sensitive fixture marker"
+    },
+    "expectedIssue": {
+      "code": "unsafe_observability_field",
+      "path": ["observabilityEvent", "menuText"]
+    }
+  },
+  {
+    "case": "internal_package_import",
+    "input": {
+      "specifier": "@foodseyo/database/src/index.ts"
+    },
+    "expectedIssue": {
+      "code": "internal_package_import",
+      "path": ["specifier"]
+    }
+  },
+  {
+    "case": "aborted_success_plan",
+    "input": {
+      "status": "success"
+    },
+    "expectedIssue": {
+      "code": "invalid_aborted_fake_result",
+      "path": ["plan", "abortedResult", "status"]
+    }
+  },
+  {
+    "case": "timed_out_success_plan",
+    "input": {
+      "status": "success"
+    },
+    "expectedIssue": {
+      "code": "invalid_timed_out_fake_result",
+      "path": ["plan", "timedOutResult", "status"]
+    }
+  },
+  {
+    "case": "timed_out_non_timeout_error",
+    "input": {
+      "code": "UPSTREAM_UNAVAILABLE"
+    },
+    "expectedIssue": {
+      "code": "invalid_timed_out_fake_error",
+      "path": ["plan", "timedOutResult", "error", "error", "code"]
+    }
+  },
+  {
+    "case": "workflow_explanation_analysis_mismatch",
+    "input": {
+      "analysisId": "abababab-abab-4bab-8bab-abababababab"
+    },
+    "expectedIssue": {
+      "code": "explanation_analysis_mismatch",
+      "path": ["plan", "defaultResult", "value", "explanation", "analysisId"]
+    }
+  },
+  {
+    "case": "workflow_explanation_menu_item_missing",
+    "input": {
+      "menuItemId": "abababab-abab-4bab-8bab-abababababab"
+    },
+    "expectedIssue": {
+      "code": "explanation_menu_item_not_found",
+      "path": ["plan", "defaultResult", "value", "explanation", "blocks", 1, "menuItemId"]
+    }
+  },
+  {
+    "case": "workflow_analysis_only_with_publication",
+    "input": {
+      "publicationState": "analysis_only"
+    },
+    "expectedIssue": {
+      "code": "publication_not_eligible",
+      "path": ["plan", "defaultResult", "value", "publication"]
+    }
+  },
+  {
+    "case": "workflow_publication_analysis_mismatch",
+    "input": {
+      "analysisId": "abababab-abab-4bab-8bab-abababababab"
+    },
+    "expectedIssue": {
+      "code": "publication_analysis_mismatch",
+      "path": ["plan", "defaultResult", "value", "publication", "analysisId"]
+    }
+  },
+  {
+    "case": "workflow_publication_menu_version_mismatch",
+    "input": {
+      "menuVersionId": "abababab-abab-4bab-8bab-abababababab"
+    },
+    "expectedIssue": {
+      "code": "publication_menu_version_mismatch",
+      "path": ["plan", "defaultResult", "value", "publication", "menuVersionId"]
+    }
+  },
+  {
+    "case": "publication_port_receipt_analysis_mismatch",
+    "input": {
+      "analysisId": "abababab-abab-4bab-8bab-abababababab"
+    },
+    "expectedIssue": {
+      "code": "publication_analysis_mismatch",
+      "path": ["publication", "analysisId"]
+    }
+  },
+  {
+    "case": "publication_port_receipt_menu_version_mismatch",
+    "input": {
+      "menuVersionId": "abababab-abab-4bab-8bab-abababababab"
+    },
+    "expectedIssue": {
+      "code": "publication_menu_version_mismatch",
+      "path": ["publication", "menuVersionId"]
+    }
+  }
+]

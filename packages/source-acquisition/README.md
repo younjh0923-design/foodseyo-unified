@@ -12,3 +12,8 @@ define culinary truth, persist canonical data, expose raw source URLs in logs
 or public errors, or make a real provider call in automated tests.
 
 Implementation starts only after U1.6.
+
+U1.5 public surface: `MenuSourceAcquisitionPort` and
+`FakeMenuSourceAcquisitionPort`. This package isolates source discovery,
+retrieval, and provenance from restaurant ranking and compact extraction. Its
+U1.5 class is a deterministic fake only.

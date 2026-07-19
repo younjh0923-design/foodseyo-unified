@@ -13,6 +13,7 @@ export const CONTRACT_VERSIONS = {
   exactCacheKey: "exact-cache-key/0.1.0",
   environmentRegistry: "environment-registry/0.1.0",
   boundaryDtos: "boundary-dtos/0.1.0",
+  moduleInterfaces: "module-interfaces/0.1.0",
 } as const;
 
 export type ContractName = keyof typeof CONTRACT_VERSIONS;

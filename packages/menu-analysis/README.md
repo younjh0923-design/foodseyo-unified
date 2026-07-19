@@ -15,3 +15,9 @@ package does not expose provider DTOs to the UI, persist database rows, invent
 local shared fields, or make a real provider call in automated tests.
 
 Implementation starts only after U1.6.
+
+U1.5 keeps extraction, canonical validation, constrained explanation, and
+application orchestration in this single package because they form one ordered
+analysis trust sequence rather than four independently deployable features.
+It exposes the four approved ports and matching deterministic fakes; it adds
+no provider, transport, UI, persistence, or retry implementation.

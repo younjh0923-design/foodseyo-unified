@@ -7,11 +7,12 @@ Read these files before making changes:
 3. `docs/SHARED_CONTRACTS.md`
 4. `docs/SENSORY_VOCABULARY.md`
 5. `docs/BOUNDARY_DTOS.md`
-6. `docs/CONTRACT_CHANGE_GUIDE.md`
-7. `docs/CONTRACT_CHANGE_QUEUE.md`
-8. `docs/TASK_MASTER.md`
-9. `docs/TEAM_OWNERSHIP.md`
-10. `docs/INTEGRATION_PROTOCOL.md`
+6. `docs/MODULE_INTERFACES.md`
+7. `docs/CONTRACT_CHANGE_GUIDE.md`
+8. `docs/CONTRACT_CHANGE_QUEUE.md`
+9. `docs/TASK_MASTER.md`
+10. `docs/TEAM_OWNERSHIP.md`
+11. `docs/INTEGRATION_PROTOCOL.md`
 
 ## Product boundary
 

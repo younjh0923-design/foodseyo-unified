@@ -10,3 +10,9 @@ raw source URLs, filenames, menu text, provider responses, canonical analyses,
 credentials, or database values.
 
 Implementation starts only after U1.6.
+
+U1.5 public surface: `SafeObservabilityPort` and
+`FakeSafeObservabilityPort`. This shared sink is separate so every workstream
+uses one privacy-safe metadata boundary without depending on provider,
+analysis, database, or UI implementation. Only the deterministic recorder fake
+is implemented.

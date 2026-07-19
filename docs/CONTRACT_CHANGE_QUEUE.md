@@ -13,6 +13,11 @@ Registration is not approval. Approval is not implementation. A queued proposal
 does not change the active contract, unblock a task dependency, or authorize a
 feature branch to consume the proposed shape.
 
+Keep an approved proposal open with `status:approved` while its contract PR is
+under review. Only after that PR merges may the issue move to `status:merged`
+and close. `status:implemented` records later dependent implementation; neither
+proposal approval nor closing an issue makes a draft contract consumable.
+
 ## GitHub labels
 
 Every contract-change issue uses:

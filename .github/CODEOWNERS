@@ -2,7 +2,9 @@
 
 /packages/contracts/ @younjh0923-design @juhyungbaek0621 @ytw010629
 /packages/database/ @younjh0923-design
+/packages/dish-knowledge/ @younjh0923-design
 /packages/merge-policy/ @younjh0923-design
+/packages/observability/ @younjh0923-design
 /packages/source-acquisition/ @ytw010629 @younjh0923-design
 /packages/menu-analysis/ @ytw010629 @younjh0923-design @juhyungbaek0621
 /packages/restaurant-resolution/ @ytw010629
