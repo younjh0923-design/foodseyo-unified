@@ -233,8 +233,40 @@ assert.deepEqual(BASIC_TASTES, [
   "umami",
 ]);
 assert.equal(BASIC_TASTES.includes("savory" as never), false);
-assert.equal(BASIC_TASTE_ALIASES.savory, "umami");
-assert.equal(BASIC_TASTE_ALIASES.savoury, "umami");
+assert.deepEqual(BASIC_TASTE_ALIASES, {
+  savory: "umami",
+  savoury: "umami",
+});
+assert.deepEqual(FLAVOR_NOTES, [
+  "smoky",
+  "herbal",
+  "nutty",
+  "earthy",
+  "garlicky",
+  "buttery",
+  "cheesy",
+  "fruity",
+  "citrusy",
+  "fermented",
+]);
+assert.deepEqual(TEXTURES, [
+  "crispy",
+  "crunchy",
+  "creamy",
+  "tender",
+  "chewy",
+  "juicy",
+  "flaky",
+  "soft",
+  "firm",
+  "dense",
+  "airy",
+  "silky",
+  "sticky",
+  "springy",
+  "crumbly",
+  "moist",
+]);
 assertDescriptorDefinitions(
   FLAVOR_NOTES,
   FLAVOR_NOTE_DEFINITIONS,
@@ -244,6 +276,49 @@ assertDescriptorDefinitions(
   TEXTURES,
   TEXTURE_DEFINITIONS,
   "TEXTURE_DEFINITIONS",
+);
+assert.deepEqual(
+  Object.fromEntries(
+    FLAVOR_NOTES.map((value) => [
+      value,
+      FLAVOR_NOTE_DEFINITIONS[value].aliases,
+    ]),
+  ),
+  {
+    smoky: ["smoked", "smoke-like"],
+    herbal: ["herbaceous", "herb-like"],
+    nutty: ["nut-like", "roasted-nut-like"],
+    earthy: ["earth-like", "soil-like"],
+    garlicky: ["garlic-forward", "garlic-like"],
+    buttery: ["butter-like", "buttery-tasting"],
+    cheesy: ["cheese-like", "cheesy-tasting"],
+    fruity: ["fruit-forward", "fruit-like"],
+    citrusy: ["citrus-forward", "citrus-like"],
+    fermented: ["fermentative", "fermented-tasting"],
+  },
+);
+assert.deepEqual(
+  Object.fromEntries(
+    TEXTURES.map((value) => [value, TEXTURE_DEFINITIONS[value].aliases]),
+  ),
+  {
+    crispy: ["crisp", "crackly"],
+    crunchy: ["crunch", "hard-crisp"],
+    creamy: ["cream-like", "smooth-creamy"],
+    tender: ["easy-to-bite", "fork-tender"],
+    chewy: ["chewiness", "resilient-chew"],
+    juicy: ["juice-releasing", "succulent"],
+    flaky: ["layered-flaky", "flakes-apart"],
+    soft: ["soft-textured", "easily-deformed"],
+    firm: ["firm-textured", "holds-shape"],
+    dense: ["compact", "heavy-textured"],
+    airy: ["aerated", "light-and-airy"],
+    silky: ["silken", "silky-smooth"],
+    sticky: ["adhesive", "tacky"],
+    springy: ["bouncy", "elastic"],
+    crumbly: ["crumbles", "friable"],
+    moist: ["moist-textured", "damp"],
+  },
 );
 
 for (const taste of BASIC_TASTES) {
