@@ -140,9 +140,14 @@ Dish identity matches the confirmed match, and no current-menu claim exists.
 The effective profile records the merge-policy version, Dish-knowledge
 version, exact input claims, and derivation time.
 
-For multi-valued fields, the chosen evidence tier owns the complete field.
-Foodseyo does not treat an omitted value inside an already present list as
-permission to append a lower-priority baseline value.
+Every `known` field must cite the complete ordered set of eligible claims at
+the selected highest-precedence tier. Its basis, typed value, and provenance
+are derived from and must exactly match those claims. Scalar claims at the
+same selected tier must agree; otherwise canonical validation reports a
+conflict instead of choosing one silently. Multi-valued and ingredient fields
+use the deterministic, de-duplicated union of that complete selected claim
+set. Foodseyo does not treat an omitted value inside an already present list
+as permission to append a lower-priority baseline value.
 
 ## Publication boundary
 
@@ -153,12 +158,21 @@ permission to append a lower-priority baseline value.
 - `analysis_only`: the restaurant is unconfirmed and no
   `RestaurantMenuVersion` may be included.
 
+U1.3 carries one canonical `SafeSourceReference` per analysis. An eligible
+`RestaurantMenuVersion.sourceRefs` list must therefore contain exactly that
+source reference. Every menu-source evidence entry on a `MenuItem`,
+`DishCandidate`, `MenuItemDishMatch`, or `MenuItemClaim` must resolve inside
+the same allowed source set. Adding multi-source canonical analysis requires a
+separate reviewed contract change rather than accepting an unrelated source
+reference.
+
 Canonical validation checks unique identities and positions, relationship
 references, menu-version restaurant ownership, match identity, claim
 ownership, reviewed-baseline eligibility, field/claim kind agreement, evidence
-precedence, and versioned derivation inputs. It rejects an inferred value when
-source-stated evidence exists and rejects `unknown` when eligible current-menu
-or reviewed-baseline evidence exists.
+precedence, selected-claim completeness, exact derived value and provenance,
+source-set membership, and versioned derivation inputs. It rejects an inferred
+value when source-stated evidence exists and rejects `unknown` when eligible
+current-menu or reviewed-baseline evidence exists.
 
 ## Outcomes and public errors
 
@@ -194,8 +208,11 @@ public envelope.
 
 The valid fixture proves:
 
-- two restaurant menu items share one Dish while retaining separate prices and
-  source evidence;
+- two MenuItems from different Restaurant branches and different menu versions
+  share one general Dish while retaining separate prices, menu sources, heat,
+  ingredients, and restaurant-menu identities;
+- every eligible same-tier claim is retained in the effective value,
+  provenance, field claim IDs, and profile input claim IDs;
 - an unresolved item retains multiple candidates without auto-confirmation;
 - a combo item retains multiple justified matched Dishes;
 - source-stated heat overrides a contradictory reviewed baseline;
@@ -208,7 +225,11 @@ restaurant-specific fields on Dish, unreviewed baseline use, baseline override,
 inference overriding a source statement, ignored available evidence, duplicate
 identities, menu-version restaurant mismatch, unknown-with-value, unrestricted
 JSON/EAV claims, unversioned effective profiles, unconfirmed menu publication,
-and unsafe public-error copy.
+unsafe public-error copy, invented effective values or provenance, omitted
+same-tier claims, sources outside the analysis/menu-version source set, and
+cross-branch menu-version or menu-evidence reuse. Every invalid fixture declares
+the stable issue code and path that must be produced, so an incidental failure
+cannot hide a missing semantic guard.
 
 ## Deferred implementation choices
 

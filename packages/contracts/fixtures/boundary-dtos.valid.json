@@ -447,6 +447,23 @@
         "recordedAt": "2026-07-18T20:03:00.000Z"
       },
       {
+        "claimId": "45454545-4545-4545-8545-454545454545",
+        "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        "claim": {
+          "kind": "heat",
+          "value": "mild"
+        },
+        "basis": "source_stated",
+        "provenance": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "sourceIndexes": [0]
+          }
+        ],
+        "recordedAt": "2026-07-18T20:03:00.000Z"
+      },
+      {
         "claimId": "77777777-7777-4777-8777-777777777777",
         "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
         "claim": {
@@ -540,6 +557,7 @@
         "dishKnowledgeVersion": "dish-knowledge/0.1.0",
         "inputClaimIds": [
           "44444444-4444-4444-8444-444444444444",
+          "45454545-4545-4545-8545-454545454545",
           "66666666-6666-4666-8666-666666666666",
           "77777777-7777-4777-8777-777777777777"
         ],
@@ -566,12 +584,20 @@
             "state": "known",
             "value": "mild",
             "basis": "source_stated",
-            "claimIds": ["44444444-4444-4444-8444-444444444444"],
+            "claimIds": [
+              "44444444-4444-4444-8444-444444444444",
+              "45454545-4545-4545-8545-454545454545"
+            ],
             "provenance": [
               {
                 "kind": "menu_source",
                 "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
                 "sourceIndexes": [1]
+              },
+              {
+                "kind": "menu_source",
+                "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "sourceIndexes": [0]
               }
             ]
           },
@@ -625,9 +651,9 @@
         "mergePolicyVersion": "merge-policy/0.1.0",
         "dishKnowledgeVersion": "dish-knowledge/0.1.0",
         "inputClaimIds": [
+          "88888888-8888-4888-8888-888888888888",
           "55555555-5555-4555-8555-555555555555",
-          "66666666-6666-4666-8666-666666666666",
-          "88888888-8888-4888-8888-888888888888"
+          "66666666-6666-4666-8666-666666666666"
         ],
         "fields": {
           "basicTastes": {
@@ -699,6 +725,241 @@
     ],
     "warningCodes": [],
     "validatedAt": "2026-07-18T20:05:00.000Z"
+  },
+  "canonicalMenuAnalysisSecondRestaurant": {
+    "contractVersion": "boundary-dtos/0.1.0",
+    "analysisId": "abababab-abab-4bab-8bab-abababababab",
+    "source": {
+      "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+      "sourceType": "official_website",
+      "sourceFingerprint": "sha256:fixture-menu-source-branch-b",
+      "collectedAt": "2026-07-18T21:01:00.000Z"
+    },
+    "restaurantResolution": {
+      "contractVersion": "restaurant-resolution/0.1.0",
+      "state": "user_confirmed",
+      "candidates": [
+        {
+          "contractVersion": "restaurant-resolution/0.1.0",
+          "candidateId": "acacacac-acac-4aca-8aca-acacacacacac",
+          "googlePlaceId": "fixture_google_place_002",
+          "displayName": "Fixture Restaurant Branch B",
+          "fullAddress": "2 Fixture Avenue",
+          "shortAddress": "Second Fixture Avenue",
+          "location": {
+            "latitude": 40.7138,
+            "longitude": -74.007
+          },
+          "matchSignals": ["name", "address", "user_link"],
+          "rank": 1
+        }
+      ],
+      "selectedCandidateId": "acacacac-acac-4aca-8aca-acacacacacac",
+      "restaurantId": "adadadad-adad-4dad-8dad-adadadadadad",
+      "confirmationEvidence": {
+        "kind": "user_action",
+        "actionRef": "action:fixture-branch-b",
+        "recordedAt": "2026-07-18T21:00:00.000Z"
+      },
+      "requiresUserConfirmation": false,
+      "canContinueMenuOnly": true,
+      "resolvedAt": "2026-07-18T21:00:00.000Z"
+    },
+    "publicationState": "eligible",
+    "menuVersion": {
+      "menuVersionId": "afafafaf-afaf-4faf-8faf-afafafafafaf",
+      "restaurantId": "adadadad-adad-4dad-8dad-adadadadadad",
+      "menuScope": "dinner",
+      "state": "active",
+      "versionOrdinal": 1,
+      "sourceRefs": ["aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae"],
+      "collectedAt": "2026-07-18T21:01:00.000Z",
+      "validFrom": "2026-07-18T21:01:00.000Z",
+      "validUntil": null,
+      "supersedesMenuVersionId": null
+    },
+    "menuItems": [
+      {
+        "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
+        "menuVersionId": "afafafaf-afaf-4faf-8faf-afafafafafaf",
+        "sectionIndex": 0,
+        "itemIndex": 0,
+        "name": "Branch B Fixture Noodle Bowl",
+        "description": "A distinct restaurant-specific listing.",
+        "price": {
+          "amountMinor": 1850,
+          "currency": "USD"
+        },
+        "optionTexts": [],
+        "sourceEvidence": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+            "sourceIndexes": [0]
+          }
+        ]
+      }
+    ],
+    "dishCandidates": [
+      {
+        "contractVersion": "dish-knowledge/0.1.0",
+        "candidateId": "b1b1b1b1-b1b1-41b1-81b1-b1b1b1b1b1b1",
+        "dishId": "22222222-2222-4222-8222-222222222222",
+        "displayName": "Noodle bowl",
+        "normalizedName": "noodle bowl",
+        "aliases": [],
+        "sourceEvidence": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+            "sourceIndexes": [0]
+          }
+        ]
+      }
+    ],
+    "dishMatches": [
+      {
+        "matchId": "b2b2b2b2-b2b2-42b2-82b2-b2b2b2b2b2b2",
+        "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
+        "dishCandidateId": "b1b1b1b1-b1b1-41b1-81b1-b1b1b1b1b1b1",
+        "dishId": "22222222-2222-4222-8222-222222222222",
+        "state": "matched",
+        "decision": {
+          "kind": "deterministic_rule",
+          "reviewerRef": null,
+          "ruleVersion": "dish-match/0.1.0",
+          "decidedAt": "2026-07-18T21:03:00.000Z"
+        },
+        "sourceEvidence": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+            "sourceIndexes": [0]
+          }
+        ]
+      }
+    ],
+    "menuItemClaims": [
+      {
+        "claimId": "b3b3b3b3-b3b3-43b3-83b3-b3b3b3b3b3b3",
+        "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
+        "claim": {
+          "kind": "heat",
+          "value": "very_hot"
+        },
+        "basis": "source_stated",
+        "provenance": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+            "sourceIndexes": [0]
+          }
+        ],
+        "recordedAt": "2026-07-18T21:03:00.000Z"
+      },
+      {
+        "claimId": "b4b4b4b4-b4b4-44b4-84b4-b4b4b4b4b4b4",
+        "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
+        "claim": {
+          "kind": "ingredient",
+          "ingredientRef": null,
+          "ingredientName": "fixture pepper",
+          "role": "core"
+        },
+        "basis": "source_stated",
+        "provenance": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+            "sourceIndexes": [0]
+          }
+        ],
+        "recordedAt": "2026-07-18T21:03:00.000Z"
+      }
+    ],
+    "dishClaims": [],
+    "effectiveProfiles": [
+      {
+        "contractVersion": "boundary-dtos/0.1.0",
+        "kind": "derived",
+        "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
+        "dishId": "22222222-2222-4222-8222-222222222222",
+        "matchId": "b2b2b2b2-b2b2-42b2-82b2-b2b2b2b2b2b2",
+        "mergePolicyVersion": "merge-policy/0.1.0",
+        "dishKnowledgeVersion": "dish-knowledge/0.1.0",
+        "inputClaimIds": [
+          "b3b3b3b3-b3b3-43b3-83b3-b3b3b3b3b3b3",
+          "b4b4b4b4-b4b4-44b4-84b4-b4b4b4b4b4b4"
+        ],
+        "fields": {
+          "basicTastes": {
+            "state": "unknown",
+            "basis": "unknown",
+            "claimIds": [],
+            "provenance": []
+          },
+          "flavorNotes": {
+            "state": "unknown",
+            "basis": "unknown",
+            "claimIds": [],
+            "provenance": []
+          },
+          "textures": {
+            "state": "unknown",
+            "basis": "unknown",
+            "claimIds": [],
+            "provenance": []
+          },
+          "heat": {
+            "state": "known",
+            "value": "very_hot",
+            "basis": "source_stated",
+            "claimIds": ["b3b3b3b3-b3b3-43b3-83b3-b3b3b3b3b3b3"],
+            "provenance": [
+              {
+                "kind": "menu_source",
+                "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+                "sourceIndexes": [0]
+              }
+            ]
+          },
+          "richness": {
+            "state": "unknown",
+            "basis": "unknown",
+            "claimIds": [],
+            "provenance": []
+          },
+          "heatAdjustability": {
+            "state": "unknown",
+            "basis": "unknown",
+            "claimIds": [],
+            "provenance": []
+          },
+          "ingredients": {
+            "state": "known",
+            "value": [
+              {
+                "ingredientRef": null,
+                "ingredientName": "fixture pepper",
+                "role": "core"
+              }
+            ],
+            "basis": "source_stated",
+            "claimIds": ["b4b4b4b4-b4b4-44b4-84b4-b4b4b4b4b4b4"],
+            "provenance": [
+              {
+                "kind": "menu_source",
+                "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
+                "sourceIndexes": [0]
+              }
+            ]
+          }
+        },
+        "derivedAt": "2026-07-18T21:04:00.000Z"
+      }
+    ],
+    "warningCodes": [],
+    "validatedAt": "2026-07-18T21:05:00.000Z"
   },
   "dishCandidate": {
     "contractVersion": "dish-knowledge/0.1.0",

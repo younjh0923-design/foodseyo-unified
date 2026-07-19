@@ -25,11 +25,16 @@ type Mutation = {
   readonly path: readonly (string | number)[];
   readonly value?: unknown;
 };
+type ExpectedIssue = {
+  readonly code: string;
+  readonly path: readonly (string | number)[];
+};
 type InvalidFixtureCase = {
   readonly case: string;
   readonly schema: BoundaryDtoSchemaName;
   readonly fixture: string;
   readonly mutations: readonly Mutation[];
+  readonly expectedIssues: readonly ExpectedIssue[];
 };
 
 const isRecord = (value: unknown): value is JsonObject =>
@@ -146,6 +151,7 @@ const validFixtureToSchema = {
   menuSourceInput: "MenuSourceInput",
   compactMenuExtraction: "CompactMenuExtraction",
   canonicalMenuAnalysis: "CanonicalMenuAnalysis",
+  canonicalMenuAnalysisSecondRestaurant: "CanonicalMenuAnalysis",
   dishCandidate: "DishCandidate",
   effectiveDishProfile: "EffectiveDishProfile",
   publicOutcome: "PublicOutcome",
@@ -168,9 +174,11 @@ const canonical = validFixture.canonicalMenuAnalysis;
 assert(isRecord(canonical));
 assert(Array.isArray(canonical.menuItems));
 assert(Array.isArray(canonical.dishMatches));
+assert(Array.isArray(canonical.menuItemClaims));
 assert(Array.isArray(canonical.effectiveProfiles));
 const menuItems = canonical.menuItems.filter(isRecord);
 const matches = canonical.dishMatches.filter(isRecord);
+const firstClaims = canonical.menuItemClaims.filter(isRecord);
 const profiles = canonical.effectiveProfiles.filter(isRecord);
 
 assert.equal(
@@ -226,6 +234,114 @@ assert.equal(
   CONTRACT_VERSIONS.dishKnowledge,
 );
 
+const secondCanonical = validFixture.canonicalMenuAnalysisSecondRestaurant;
+assert(isRecord(secondCanonical));
+assert(isRecord(canonical.restaurantResolution));
+assert(isRecord(secondCanonical.restaurantResolution));
+assert(isRecord(canonical.menuVersion));
+assert(isRecord(secondCanonical.menuVersion));
+assert(Array.isArray(secondCanonical.menuItems));
+assert(Array.isArray(secondCanonical.dishMatches));
+assert(Array.isArray(secondCanonical.menuItemClaims));
+const secondMenuItems = secondCanonical.menuItems.filter(isRecord);
+const secondMatches = secondCanonical.dishMatches.filter(isRecord);
+const secondClaims = secondCanonical.menuItemClaims.filter(isRecord);
+
+assert.notEqual(
+  canonical.restaurantResolution.restaurantId,
+  secondCanonical.restaurantResolution.restaurantId,
+  "cross-restaurant fixture must use distinct restaurant branches",
+);
+assert.notEqual(
+  canonical.menuVersion.menuVersionId,
+  secondCanonical.menuVersion.menuVersionId,
+  "cross-restaurant fixture must use distinct menu versions",
+);
+assert.notEqual(
+  canonical.source && isRecord(canonical.source)
+    ? canonical.source.sourceRef
+    : null,
+  secondCanonical.source && isRecord(secondCanonical.source)
+    ? secondCanonical.source.sourceRef
+    : null,
+  "cross-restaurant fixture must use distinct menu sources",
+);
+assert.notEqual(
+  menuItems[0]?.menuItemId,
+  secondMenuItems[0]?.menuItemId,
+  "cross-restaurant fixture must use distinct restaurant menu items",
+);
+assert.notDeepEqual(
+  menuItems[0]?.price,
+  secondMenuItems[0]?.price,
+  "restaurant-specific prices must remain separate",
+);
+assert.equal(
+  matches[0]?.dishId,
+  secondMatches[0]?.dishId,
+  "distinct restaurant menu items must be able to share one general Dish",
+);
+assert.equal(
+  firstClaims.some(
+    (claim) =>
+      isRecord(claim.claim) &&
+      claim.claim.kind === "heat" &&
+      claim.claim.value === "mild",
+  ),
+  true,
+  "first restaurant must retain its own heat claim",
+);
+assert.equal(
+  firstClaims.some(
+    (claim) =>
+      isRecord(claim.claim) &&
+      claim.claim.kind === "ingredient" &&
+      claim.claim.ingredientName === "fixture herb",
+  ),
+  true,
+  "first restaurant must retain its own ingredient claim",
+);
+assert.equal(
+  secondClaims.some(
+    (claim) =>
+      isRecord(claim.claim) &&
+      claim.claim.kind === "heat" &&
+      claim.claim.value === "very_hot",
+  ),
+  true,
+  "second restaurant must retain its own heat claim",
+);
+assert.equal(
+  secondClaims.some(
+    (claim) =>
+      isRecord(claim.claim) &&
+      claim.claim.kind === "ingredient" &&
+      claim.claim.ingredientName === "fixture pepper",
+  ),
+  true,
+  "second restaurant must retain its own ingredient claim",
+);
+assert.equal(
+  firstClaims.some(
+    (claim) =>
+      isRecord(claim.claim) &&
+      claim.claim.kind === "heat" &&
+      claim.claim.value === "very_hot",
+  ),
+  false,
+  "second restaurant heat must not leak into the first branch",
+);
+assert.equal(
+  secondClaims.some(
+    (claim) =>
+      isRecord(claim.claim) &&
+      claim.claim.kind === "ingredient" &&
+      claim.claim.ingredientName === "fixture herb",
+  ),
+  false,
+  "first restaurant ingredient must not leak into the second branch",
+);
+
 const invalidFixture = await readJson(
   "packages/contracts/fixtures/boundary-dtos.invalid.json",
 );
@@ -274,6 +390,11 @@ for (const rawCase of invalidFixture) {
   const invalidCase = rawCase as unknown as InvalidFixtureCase;
   assert(invalidCase.schema in BOUNDARY_DTO_SCHEMAS);
   assert(invalidCase.fixture in validFixture);
+  assert(
+    Array.isArray(invalidCase.expectedIssues) &&
+      invalidCase.expectedIssues.length > 0,
+    `${invalidCase.case} must declare stable expected issue code/path pairs`,
+  );
   const invalidValue = mutateFixture(
     validFixture[invalidCase.fixture],
     invalidCase.mutations,
@@ -286,6 +407,23 @@ for (const rawCase of invalidFixture) {
     false,
     `${invalidCase.case} unexpectedly passed ${invalidCase.schema}`,
   );
+  assert.equal(result.success, false);
+  const issueKeys = new Set(
+    result.issues.map(
+      (issue) => `${issue.code}:${JSON.stringify(issue.path)}`,
+    ),
+  );
+  for (const expectedIssue of invalidCase.expectedIssues) {
+    const expectedKey = `${expectedIssue.code}:${JSON.stringify(
+      expectedIssue.path,
+    )}`;
+    assert(
+      issueKeys.has(expectedKey),
+      `${invalidCase.case} missed expected issue ${expectedKey}; received ${JSON.stringify(
+        result.issues,
+      )}`,
+    );
+  }
 }
 
 console.log("Foodseyo U1.3 boundary DTO validation passed.");

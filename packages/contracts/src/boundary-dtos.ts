@@ -2144,6 +2144,164 @@ const claimFieldName = (claim: unknown): keyof EffectiveDishProfile["fields"] | 
   }
 };
 
+const EFFECTIVE_FIELD_NAMES = [
+  "basicTastes",
+  "flavorNotes",
+  "textures",
+  "heat",
+  "richness",
+  "heatAdjustability",
+  "ingredients",
+] as const satisfies readonly (keyof EffectiveDishProfile["fields"])[];
+
+const contractValuesEqual = (left: unknown, right: unknown): boolean => {
+  if (Object.is(left, right)) {
+    return true;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((item, index) => contractValuesEqual(item, right[index]))
+    );
+  }
+  if (isContractRecord(left) || isContractRecord(right)) {
+    if (!isContractRecord(left) || !isContractRecord(right)) {
+      return false;
+    }
+    const leftKeys = Object.keys(left).sort();
+    const rightKeys = Object.keys(right).sort();
+    return (
+      contractValuesEqual(leftKeys, rightKeys) &&
+      leftKeys.every((key) => contractValuesEqual(left[key], right[key]))
+    );
+  }
+  return false;
+};
+
+const appendUniqueContractValue = (values: unknown[], candidate: unknown) => {
+  if (!values.some((value) => contractValuesEqual(value, candidate))) {
+    values.push(candidate);
+  }
+};
+
+const claimEffectiveValue = (
+  fieldName: keyof EffectiveDishProfile["fields"],
+  claimRecord: Readonly<Record<string, unknown>>,
+): unknown => {
+  const claim = isContractRecord(claimRecord.claim)
+    ? claimRecord.claim
+    : null;
+  if (!claim || claimFieldName(claim) !== fieldName) {
+    return undefined;
+  }
+  if (
+    fieldName === "basicTastes" ||
+    fieldName === "flavorNotes" ||
+    fieldName === "textures"
+  ) {
+    return claim.values;
+  }
+  if (fieldName === "ingredients") {
+    return {
+      ingredientRef: claim.ingredientRef,
+      ingredientName: claim.ingredientName,
+      role: claim.role,
+    };
+  }
+  return claim.value;
+};
+
+const expectedEffectiveValue = (
+  fieldName: keyof EffectiveDishProfile["fields"],
+  claims: readonly Readonly<Record<string, unknown>>[],
+  issues: ContractValidationIssue[],
+  path: readonly ContractPathSegment[],
+): unknown => {
+  if (
+    fieldName === "basicTastes" ||
+    fieldName === "flavorNotes" ||
+    fieldName === "textures"
+  ) {
+    const values: unknown[] = [];
+    for (const claim of claims) {
+      const claimValue = claimEffectiveValue(fieldName, claim);
+      if (Array.isArray(claimValue)) {
+        claimValue.forEach((value) => appendUniqueContractValue(values, value));
+      }
+    }
+    return values;
+  }
+  if (fieldName === "ingredients") {
+    const values: unknown[] = [];
+    claims.forEach((claim) => {
+      const claimValue = claimEffectiveValue(fieldName, claim);
+      if (claimValue !== undefined) {
+        appendUniqueContractValue(values, claimValue);
+      }
+    });
+    return values;
+  }
+  const values = claims
+    .map((claim) => claimEffectiveValue(fieldName, claim))
+    .filter((value) => value !== undefined);
+  const firstValue = values[0];
+  if (
+    firstValue !== undefined &&
+    values.some((value) => !contractValuesEqual(value, firstValue))
+  ) {
+    addContractIssue(issues, "effective_field_claim_value_conflict", path);
+  }
+  return firstValue;
+};
+
+const expectedEffectiveProvenance = (
+  claims: readonly Readonly<Record<string, unknown>>[],
+): unknown[] => {
+  const provenance: unknown[] = [];
+  for (const claim of claims) {
+    if (Array.isArray(claim.provenance)) {
+      claim.provenance.forEach((entry) => {
+        appendUniqueContractValue(provenance, entry);
+      });
+    }
+  }
+  return provenance;
+};
+
+const validateAllowedMenuEvidence = (
+  records: readonly Readonly<Record<string, unknown>>[],
+  collectionName: string,
+  evidenceField: "sourceEvidence" | "provenance",
+  allowedSourceRefs: ReadonlySet<string>,
+  issues: ContractValidationIssue[],
+  path: readonly ContractPathSegment[],
+) => {
+  records.forEach((record, recordIndex) => {
+    const evidenceRecords = record[evidenceField];
+    if (!Array.isArray(evidenceRecords)) {
+      return;
+    }
+    evidenceRecords.forEach((evidence, evidenceIndex) => {
+      if (
+        isContractRecord(evidence) &&
+        typeof evidence.sourceRef === "string" &&
+        !allowedSourceRefs.has(evidence.sourceRef)
+      ) {
+        addContractIssue(issues, "menu_evidence_source_not_allowed", [
+          ...path,
+          collectionName,
+          recordIndex,
+          evidenceField,
+          evidenceIndex,
+          "sourceRef",
+        ]);
+      }
+    });
+  });
+};
+
 const validateCanonicalRelationships = (
   value: Readonly<Record<string, unknown>>,
   issues: ContractValidationIssue[],
@@ -2204,6 +2362,14 @@ const validateCanonicalRelationships = (
     dishClaims.map((claim) => [claim.claimId, claim]),
   );
   const allClaimsById = new Map([...menuClaimsById, ...dishClaimsById]);
+  const analysisSourceRef =
+    isContractRecord(value.source) && typeof value.source.sourceRef === "string"
+      ? value.source.sourceRef
+      : null;
+  const allowedSourceRefs = new Set<string>();
+  if (analysisSourceRef) {
+    allowedSourceRefs.add(analysisSourceRef);
+  }
 
   validateUniqueRecordField(menuItems, "menuItemId", issues, [
     ...path,
@@ -2262,6 +2428,50 @@ const validateCanonicalRelationships = (
       ]);
     }
   }
+  if (
+    menuVersion &&
+    analysisSourceRef &&
+    !contractValuesEqual(menuVersion.sourceRefs, [analysisSourceRef])
+  ) {
+    addContractIssue(issues, "menu_version_source_refs_mismatch", [
+      ...path,
+      "menuVersion",
+      "sourceRefs",
+    ]);
+  }
+
+  validateAllowedMenuEvidence(
+    menuItems,
+    "menuItems",
+    "sourceEvidence",
+    allowedSourceRefs,
+    issues,
+    path,
+  );
+  validateAllowedMenuEvidence(
+    dishCandidates,
+    "dishCandidates",
+    "sourceEvidence",
+    allowedSourceRefs,
+    issues,
+    path,
+  );
+  validateAllowedMenuEvidence(
+    matches,
+    "dishMatches",
+    "sourceEvidence",
+    allowedSourceRefs,
+    issues,
+    path,
+  );
+  validateAllowedMenuEvidence(
+    menuClaims,
+    "menuItemClaims",
+    "provenance",
+    allowedSourceRefs,
+    issues,
+    path,
+  );
 
   for (const [index, item] of menuItems.entries()) {
     const expectedMenuVersionId = menuVersion?.menuVersionId ?? null;
@@ -2336,6 +2546,7 @@ const validateCanonicalRelationships = (
       ? profile.inputClaimIds.filter((item): item is string => typeof item === "string")
       : [];
     const referencedFieldClaimIds = new Set<string>();
+    const expectedInputClaimIds: string[] = [];
     for (const [claimIndex, claimId] of inputClaimIds.entries()) {
       if (!allClaimsById.has(claimId)) {
         addContractIssue(issues, "effective_profile_references_missing_claim", [
@@ -2350,7 +2561,8 @@ const validateCanonicalRelationships = (
     if (!isContractRecord(profile.fields)) {
       continue;
     }
-    for (const [fieldName, field] of Object.entries(profile.fields)) {
+    for (const fieldName of EFFECTIVE_FIELD_NAMES) {
+      const field = profile.fields[fieldName];
       if (!isContractRecord(field)) {
         continue;
       }
@@ -2367,6 +2579,30 @@ const validateCanonicalRelationships = (
           isContractRecord(claim.claim) &&
           claimFieldName(claim.claim) === fieldName,
       );
+      const sourceStatedClaims = menuFieldClaims.filter(
+        (claim) => claim.basis === "source_stated",
+      );
+      const inferredClaims = menuFieldClaims.filter(
+        (claim) => claim.basis === "inferred_from_source",
+      );
+      const selectedClaims =
+        sourceStatedClaims.length > 0
+          ? sourceStatedClaims
+          : inferredClaims.length > 0
+            ? inferredClaims
+            : reviewedDishFieldClaims;
+      const expectedBasis =
+        sourceStatedClaims.length > 0
+          ? "source_stated"
+          : inferredClaims.length > 0
+            ? "inferred_from_source"
+            : reviewedDishFieldClaims.length > 0
+              ? "culinary_baseline"
+              : null;
+      const expectedClaimIds = selectedClaims
+        .map((claim) => claim.claimId)
+        .filter((claimId): claimId is string => typeof claimId === "string");
+      expectedInputClaimIds.push(...expectedClaimIds);
       if (field.state !== "known") {
         if (
           menuFieldClaims.length > 0 ||
@@ -2397,6 +2633,76 @@ const validateCanonicalRelationships = (
             "claimIds",
           ]);
         }
+      }
+      if (expectedBasis === null) {
+        addContractIssue(issues, "known_field_requires_eligible_evidence", [
+          ...path,
+          "effectiveProfiles",
+          profileIndex,
+          "fields",
+          fieldName,
+        ]);
+      } else if (field.basis !== expectedBasis) {
+        addContractIssue(issues, "effective_field_basis_mismatch", [
+          ...path,
+          "effectiveProfiles",
+          profileIndex,
+          "fields",
+          fieldName,
+          "basis",
+        ]);
+      }
+      if (!contractValuesEqual(claimIds, expectedClaimIds)) {
+        addContractIssue(issues, "effective_field_claim_ids_mismatch", [
+          ...path,
+          "effectiveProfiles",
+          profileIndex,
+          "fields",
+          fieldName,
+          "claimIds",
+        ]);
+      }
+      if (claimIds.some((claimId) => !expectedClaimIds.includes(claimId))) {
+        addContractIssue(issues, "effective_field_references_ineligible_claim", [
+          ...path,
+          "effectiveProfiles",
+          profileIndex,
+          "fields",
+          fieldName,
+          "claimIds",
+        ]);
+      }
+      const effectiveValuePath = [
+        ...path,
+        "effectiveProfiles",
+        profileIndex,
+        "fields",
+        fieldName,
+        "value",
+      ];
+      const derivedValue = expectedEffectiveValue(
+        fieldName,
+        selectedClaims,
+        issues,
+        effectiveValuePath,
+      );
+      if (!contractValuesEqual(field.value, derivedValue)) {
+        addContractIssue(
+          issues,
+          "effective_field_value_mismatch",
+          effectiveValuePath,
+        );
+      }
+      const derivedProvenance = expectedEffectiveProvenance(selectedClaims);
+      if (!contractValuesEqual(field.provenance, derivedProvenance)) {
+        addContractIssue(issues, "effective_field_provenance_mismatch", [
+          ...path,
+          "effectiveProfiles",
+          profileIndex,
+          "fields",
+          fieldName,
+          "provenance",
+        ]);
       }
       const referencedClaims = claimIds
         .map((claimId) => allClaimsById.get(claimId))
@@ -2465,6 +2771,14 @@ const validateCanonicalRelationships = (
           }
         }
       }
+    }
+    if (!contractValuesEqual(inputClaimIds, expectedInputClaimIds)) {
+      addContractIssue(issues, "effective_profile_input_claim_ids_mismatch", [
+        ...path,
+        "effectiveProfiles",
+        profileIndex,
+        "inputClaimIds",
+      ]);
     }
     if (
       inputClaimIds.some((claimId) => !referencedFieldClaimIds.has(claimId))
