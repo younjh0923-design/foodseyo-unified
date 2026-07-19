@@ -16,6 +16,20 @@ runtime dependencies.
 
 ## Contract groups
 
+### Module interfaces
+
+`MODULE_INTERFACES.md` and
+`@foodseyo/contracts/module-interfaces` define
+`module-interfaces/0.1.0`: provider-neutral ports, the bounded invocation
+context, typed results, eligible-publication guard, and deterministic fake
+contract around the existing U1.3 DTOs.
+
+Owning feature packages export fake classes through their package roots and
+depend only on `@foodseyo/contracts` during U1.5. They do not redefine DTOs,
+import another package's internal source, or implement providers, database
+access, UI, transport, or deployment. The module-interface contract remains
+unavailable to feature code until U1.6.
+
 ### Vocabulary
 
 The shared package and `SENSORY_VOCABULARY.md` freeze:

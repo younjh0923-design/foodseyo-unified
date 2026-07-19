@@ -549,6 +549,10 @@ const boundaryDtos = await readFile(
   resolve("docs/BOUNDARY_DTOS.md"),
   "utf8",
 );
+const moduleInterfaces = await readFile(
+  resolve("docs/MODULE_INTERFACES.md"),
+  "utf8",
+);
 const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
@@ -591,6 +595,22 @@ const menuAnalysisPackage = await readFile(
 );
 const contractsPackage = await readFile(
   resolve("packages/contracts/README.md"),
+  "utf8",
+);
+const dishKnowledgePackage = await readFile(
+  resolve("packages/dish-knowledge/README.md"),
+  "utf8",
+);
+const mergePolicyPackage = await readFile(
+  resolve("packages/merge-policy/README.md"),
+  "utf8",
+);
+const databasePackage = await readFile(
+  resolve("packages/database/README.md"),
+  "utf8",
+);
+const observabilityPackage = await readFile(
+  resolve("packages/observability/README.md"),
   "utf8",
 );
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
@@ -640,6 +660,7 @@ assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
   "`docs/SENSORY_VOCABULARY.md`",
   "`docs/BOUNDARY_DTOS.md`",
+  "`docs/MODULE_INTERFACES.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
   "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
@@ -648,6 +669,7 @@ assertOrdered(readme, "README start-here guide order", [
   "[Shared contracts](docs/SHARED_CONTRACTS.md)",
   "[Sensory vocabulary](docs/SENSORY_VOCABULARY.md)",
   "[Boundary DTOs](docs/BOUNDARY_DTOS.md)",
+  "[Module interfaces](docs/MODULE_INTERFACES.md)",
   "[Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)",
   "[Contract change queue](docs/CONTRACT_CHANGE_QUEUE.md)",
   "[Task master](docs/TASK_MASTER.md)",
@@ -656,6 +678,7 @@ assertOrdered(integrationProtocol, "Codex handoff reading order", [
   "`docs/SHARED_CONTRACTS.md`",
   "`docs/SENSORY_VOCABULARY.md`",
   "`docs/BOUNDARY_DTOS.md`",
+  "`docs/MODULE_INTERFACES.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
   "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
@@ -679,8 +702,26 @@ for (const marker of [
   );
 }
 for (const marker of [
+  "`module-interfaces/0.1.0`",
+  "remains `draft` and unavailable to feature code until U1.6",
+  "`PortInvocationContext`",
+  "`PortResult<T>`",
+  "`isPublicationEligibleAnalysis`",
+  "All seven packages depend only on `@foodseyo/contracts`",
+  "The direct YTW-to-Juhyung lane",
+  "deterministic call count",
+  "Never import another package's `src/` path",
+  "all U2 feature work remains blocked",
+]) {
+  assert(
+    moduleInterfaces.includes(marker),
+    `module-interface documentation is missing ${marker}`,
+  );
+}
+for (const marker of [
   "`@foodseyo/contracts`",
   "`@foodseyo/contracts/boundary-dtos`",
+  "`@foodseyo/contracts/module-interfaces`",
   "`0.1.0`/`draft`",
   "unavailable to feature code until U1.6",
 ]) {
@@ -697,6 +738,34 @@ assert.match(
   decisionLog,
   /## U-012 - Typed boundary DTOs and derived Dish profiles[\s\S]*Issue #10[\s\S]*PR #12[\s\S]*6c7c3d32029674405f111d93bb4cd9982830400d[\s\S]*8050bc44cff2880b97b08576282565e1f44ed27c[\s\S]*\*\*Status:\*\* Accepted/,
 );
+assert.match(
+  decisionLog,
+  /## U-013 - Provider-neutral module ports and deterministic fakes[\s\S]*Issue #14[\s\S]*20535b23c32c5231ab4151ae1d3b8e1475d5154d[\s\S]*status:approved[\s\S]*\*\*Status:\*\* Proposed/,
+);
+assert.match(
+  contractChangeQueue,
+  /Keep an approved proposal open with `status:approved`[\s\S]*Only after that PR merges[\s\S]*`status:merged`[\s\S]*close/,
+);
+assert.match(
+  contractChangeGuide,
+  /move the still-open proposal from `status:approved` to `status:merged`[\s\S]*never close it merely because the proposal direction was\s+approved/,
+);
+for (const [name, documentation] of [
+  ["restaurant-resolution", restaurantPackage],
+  ["source-acquisition", sourcePackage],
+  ["menu-analysis", menuAnalysisPackage],
+  ["dish-knowledge", dishKnowledgePackage],
+  ["merge-policy", mergePolicyPackage],
+  ["database", databasePackage],
+  ["observability", observabilityPackage],
+] as const) {
+  assert.match(documentation, /U1\.5 public surface|U1\.5 keeps/);
+  assert.match(
+    documentation,
+    /deterministic\s+(?:fake|fakes|recorder fake)/,
+    `${name} must document its deterministic fake boundary`,
+  );
+}
 assertOrdered(contractChangeGuide, "contract change guide", [
   "## Is this a shared contract change?",
   "## Required workflow",
@@ -977,6 +1046,17 @@ assert.match(
   codeOwners,
   /\/packages\/menu-analysis\/ @ytw010629 @younjh0923-design @juhyungbaek0621/,
 );
+for (const path of [
+  "database",
+  "dish-knowledge",
+  "merge-policy",
+  "observability",
+]) {
+  assert.match(
+    codeOwners,
+    new RegExp(`/packages/${path}/ @younjh0923-design`),
+  );
+}
 assert.match(codeOwners, /\/apps\/web\/ @juhyungbaek0621/);
 assert.match(webPackage, /Owner: `juhyungbaek0621`/);
 assert.match(sourcePackage, /Owner: `ytw010629`/);
@@ -1063,7 +1143,7 @@ assertTaskStatus(
   "### U1.4 Freeze environment and feature-flag registry",
   "DONE",
 );
-assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "READY");
+assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "REVIEW");
 assertTaskStatus(
   taskMaster,
   "### U1.6 Approve and publish compatibility contract 1.0.0",

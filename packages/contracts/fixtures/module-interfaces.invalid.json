@@ -1,0 +1,30 @@
+[
+  {
+    "case": "non_positive_timeout",
+    "expectedIssue": {
+      "code": "invalid_invocation_timeout",
+      "path": ["invocationContext", "timeoutMs"]
+    }
+  },
+  {
+    "case": "analysis_only_publication",
+    "expectedIssue": {
+      "code": "publication_not_eligible",
+      "path": ["analysis", "publicationState"]
+    }
+  },
+  {
+    "case": "unsafe_observability_field",
+    "expectedIssue": {
+      "code": "unsafe_observability_field",
+      "path": ["observabilityEvent", "menuText"]
+    }
+  },
+  {
+    "case": "internal_package_import",
+    "expectedIssue": {
+      "code": "internal_package_import",
+      "path": ["specifier"]
+    }
+  }
+]

@@ -159,11 +159,14 @@ because branch protection is not available. Silence is not approval.
 
 After a contract PR is approved and merged:
 
-1. before U1.6, continue only the next ordered contract task;
-2. after U1.6, dependent feature branches update from current `main`;
-3. features import the shared contract rather than copying it;
-4. each feature adds its own deterministic fixtures and implementation tests;
-5. no compatibility alias is added for an unapproved legacy name.
+1. move the still-open proposal from `status:approved` to `status:merged` and
+   then close it; never close it merely because the proposal direction was
+   approved;
+2. before U1.6, continue only the next ordered contract task;
+3. after U1.6, dependent feature branches update from current `main`;
+4. features import the shared contract rather than copying it;
+5. each feature adds its own deterministic fixtures and implementation tests;
+6. no compatibility alias is added for an unapproved legacy name.
 
 ## Change-type rules
 

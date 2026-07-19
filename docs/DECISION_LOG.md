@@ -258,3 +258,31 @@
   identity, and final allergen/dietary claim vocabularies.
 - **Status:** Accepted
 - **Date:** 2026-07-19
+
+## U-013 - Provider-neutral module ports and deterministic fakes
+
+- **Decision:** Wrap the merged U1.3 DTOs in provider-neutral server-side ports
+  with one bounded invocation context and one success/outcome/error result
+  discipline. Each approved owning package exposes deterministic fakes through
+  its public root; feature packages do not redefine DTOs or ports.
+- **Package boundary:** Keep the seven Issue #14 responsibility boundaries:
+  restaurant resolution, source acquisition, combined menu-analysis trust
+  sequence, reviewed Dish knowledge, pure merge policy, database publication,
+  and privacy-safe observability. Every package depends only on
+  `@foodseyo/contracts` during U1.5, preventing cycles and internal-package
+  coupling.
+- **Trust boundary:** Compact extraction remains unvalidated. Explanation
+  receives only canonical analysis. Publication accepts only an eligible
+  canonical analysis with a menu version. The direct operational UI lane
+  carries no extracted menu meaning.
+- **Fake boundary:** Fakes return configured deterministic results and call
+  counts, cover cancellation and timeout behavior, and perform no environment,
+  provider, database, UI, transport, logging, clock, random, or deployment
+  work.
+- **Version impact:** Introduces `module-interfaces/0.1.0`. Every selected
+  contract remains `0.1.0`/`draft` and unavailable to feature code until U1.6.
+- **Governance evidence:** Issue #14 received all-owner direction approval
+  against main `20535b23c32c5231ab4151ae1d3b8e1475d5154d`. It remains open at
+  `status:approved` until the exact all-owner-reviewed contract PR merges.
+- **Status:** Proposed
+- **Date:** 2026-07-19

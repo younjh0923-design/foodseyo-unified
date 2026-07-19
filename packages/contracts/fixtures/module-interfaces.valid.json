@@ -1,0 +1,38 @@
+{
+  "invocationContext": {
+    "contractVersion": "module-interfaces/0.1.0",
+    "correlationId": "fixture_corr_u1_5",
+    "timeoutMs": 1000
+  },
+  "explanation": {
+    "contractVersion": "module-interfaces/0.1.0",
+    "analysisId": "99999999-9999-4999-8999-999999999999",
+    "rendererVersion": "explanation-renderer/0.1.0",
+    "blocks": [
+      {
+        "scope": "analysis",
+        "menuItemId": null,
+        "text": "Synthetic contract fixture explanation."
+      }
+    ],
+    "renderedAt": "2026-07-19T06:00:00.000Z"
+  },
+  "publicationReceipt": {
+    "contractVersion": "module-interfaces/0.1.0",
+    "analysisId": "99999999-9999-4999-8999-999999999999",
+    "menuVersionId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    "status": "published",
+    "publishedAt": "2026-07-19T06:00:01.000Z"
+  },
+  "observabilityEvent": {
+    "correlationId": "fixture_corr_u1_5",
+    "stage": "canonical_validation",
+    "status": {
+      "kind": "success"
+    },
+    "durationMs": 25,
+    "byteCount": null,
+    "providerCallCount": 0,
+    "structuralIssueCount": 0
+  }
+}
