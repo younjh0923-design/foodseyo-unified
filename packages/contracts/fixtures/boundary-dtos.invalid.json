@@ -1,0 +1,621 @@
+[
+  {
+    "case": "provider internals cannot enter RestaurantCandidate",
+    "schema": "RestaurantCandidate",
+    "fixture": "restaurantCandidate",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["providerResponse"],
+        "value": {}
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": ["providerResponse"]
+      }
+    ]
+  },
+  {
+    "case": "a top-ranked candidate is not automatic confirmation",
+    "schema": "RestaurantResolution",
+    "fixture": "restaurantResolution",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["confirmationEvidence"],
+        "value": null
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "confirmed_resolution_requires_evidence",
+        "path": ["confirmationEvidence"]
+      }
+    ]
+  },
+  {
+    "case": "raw URLs cannot enter MenuSourceInput",
+    "schema": "MenuSourceInput",
+    "fixture": "menuSourceInput",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["rawUrl"],
+        "value": "https://example.invalid/menu?token=secret"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": ["rawUrl"]
+      }
+    ]
+  },
+  {
+    "case": "provider responses cannot enter CompactMenuExtraction",
+    "schema": "CompactMenuExtraction",
+    "fixture": "compactMenuExtraction",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["providerResponse"],
+        "value": {}
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": ["providerResponse"]
+      }
+    ]
+  },
+  {
+    "case": "Dish cannot own a restaurant-specific price",
+    "schema": "DishCandidate",
+    "fixture": "dishCandidate",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["price"],
+        "value": {
+          "amountMinor": 1250,
+          "currency": "USD"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": ["price"]
+      }
+    ]
+  },
+  {
+    "case": "matched state requires explicit evidence-bearing decision",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["dishMatches", 0, "decision"],
+        "value": null
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "matched_dish_requires_identity_and_decision",
+        "path": ["dishMatches", 0]
+      }
+    ]
+  },
+  {
+    "case": "an unreviewed culinary baseline cannot feed an effective profile",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["dishClaims", 1, "reviewState"],
+        "value": "unreviewed"
+      },
+      {
+        "operation": "replace",
+        "path": ["dishClaims", 1, "reviewedAt"],
+        "value": null
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "baseline_requires_reviewed_dish_claim",
+        "path": ["effectiveProfiles", 0, "fields", "richness"]
+      }
+    ]
+  },
+  {
+    "case": "a culinary baseline cannot override current menu evidence",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "basis"],
+        "value": "culinary_baseline"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "baseline_cannot_override_menu_evidence",
+        "path": ["effectiveProfiles", 0, "fields", "heat"]
+      }
+    ]
+  },
+  {
+    "case": "inferred evidence cannot override a source statement",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["menuItemClaims", 4],
+        "value": {
+          "claimId": "90909090-9090-4090-8090-909090909090",
+          "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+          "claim": {
+            "kind": "heat",
+            "value": "medium"
+          },
+          "basis": "inferred_from_source",
+          "provenance": [
+            {
+              "kind": "menu_source",
+              "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              "sourceIndexes": [0]
+            }
+          ],
+          "recordedAt": "2026-07-18T16:10:00.000Z"
+        }
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "inputClaimIds", 0],
+        "value": "90909090-9090-4090-8090-909090909090"
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "basis"],
+        "value": "inferred_from_source"
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "value"],
+        "value": "medium"
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "claimIds", 0],
+        "value": "90909090-9090-4090-8090-909090909090"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "inference_cannot_override_source_statement",
+        "path": ["effectiveProfiles", 0, "fields", "heat"]
+      }
+    ]
+  },
+  {
+    "case": "unknown cannot ignore eligible current-menu evidence",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "inputClaimIds"],
+        "value": [
+          "66666666-6666-4666-8666-666666666666",
+          "77777777-7777-4777-8777-777777777777"
+        ]
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat"],
+        "value": {
+          "state": "unknown",
+          "basis": "unknown",
+          "claimIds": [],
+          "provenance": []
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unknown_field_ignores_available_evidence",
+        "path": ["effectiveProfiles", 0, "fields", "heat"]
+      }
+    ]
+  },
+  {
+    "case": "eligible menu version must belong to the confirmed restaurant",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuVersion", "restaurantId"],
+        "value": "91919191-9191-4191-8191-919191919191"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_version_restaurant_identity_mismatch",
+        "path": ["menuVersion", "restaurantId"]
+      }
+    ]
+  },
+  {
+    "case": "canonical menu item identities must be unique",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuItems", 1, "menuItemId"],
+        "value": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "duplicate_identity",
+        "path": ["menuItems", 1, "menuItemId"]
+      }
+    ]
+  },
+  {
+    "case": "unknown cannot carry a heat value or become zero",
+    "schema": "EffectiveDishProfile",
+    "fixture": "effectiveDishProfile",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["fields", "heat", "value"],
+        "value": "none"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": ["fields", "heat", "value"]
+      }
+    ]
+  },
+  {
+    "case": "unrestricted EAV or JSON claim attributes are rejected",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": ["dishClaims", 0, "claim", "attributes"],
+        "value": {
+          "anything": true
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": ["dishClaims", 0, "claim", "attributes"]
+      }
+    ]
+  },
+  {
+    "case": "an effective profile cannot be an unversioned independent fact",
+    "schema": "EffectiveDishProfile",
+    "fixture": "effectiveDishProfile",
+    "mutations": [
+      {
+        "operation": "delete",
+        "path": ["mergePolicyVersion"]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "missing_required_field",
+        "path": ["mergePolicyVersion"]
+      }
+    ]
+  },
+  {
+    "case": "analysis-only results cannot publish a restaurant menu version",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["publicationState"],
+        "value": "analysis_only"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "analysis_only_cannot_publish_menu_version",
+        "path": ["menuVersion"]
+      }
+    ]
+  },
+  {
+    "case": "public errors cannot replace safe copy with a raw URL",
+    "schema": "PublicErrorEnvelope",
+    "fixture": "publicErrorEnvelope",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["error", "message"],
+        "value": "Failed at https://example.invalid/menu?token=secret"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "public_error_definition_mismatch",
+        "path": []
+      }
+    ]
+  },
+  {
+    "case": "an effective scalar cannot invent a value that differs from its claims",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "value"],
+        "value": "very_hot"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "effective_field_value_mismatch",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "value"]
+      }
+    ]
+  },
+  {
+    "case": "an effective ingredient list cannot invent a restaurant-specific ingredient",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "effectiveProfiles",
+          0,
+          "fields",
+          "ingredients",
+          "value",
+          0,
+          "ingredientName"
+        ],
+        "value": "invented fixture ingredient"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "effective_field_value_mismatch",
+        "path": ["effectiveProfiles", 0, "fields", "ingredients", "value"]
+      }
+    ]
+  },
+  {
+    "case": "effective provenance must exactly match the selected claims",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "provenance"],
+        "value": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "sourceIndexes": [99]
+          },
+          {
+            "kind": "menu_source",
+            "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "sourceIndexes": [0]
+          }
+        ]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "effective_field_provenance_mismatch",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "provenance"]
+      }
+    ]
+  },
+  {
+    "case": "all eligible same-tier claims must contribute to the effective field",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "inputClaimIds"],
+        "value": [
+          "44444444-4444-4444-8444-444444444444",
+          "66666666-6666-4666-8666-666666666666",
+          "77777777-7777-4777-8777-777777777777"
+        ]
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "claimIds"],
+        "value": ["44444444-4444-4444-8444-444444444444"]
+      },
+      {
+        "operation": "replace",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "provenance"],
+        "value": [
+          {
+            "kind": "menu_source",
+            "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            "sourceIndexes": [1]
+          }
+        ]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "effective_field_claim_ids_mismatch",
+        "path": ["effectiveProfiles", 0, "fields", "heat", "claimIds"]
+      },
+      {
+        "code": "effective_profile_input_claim_ids_mismatch",
+        "path": ["effectiveProfiles", 0, "inputClaimIds"]
+      }
+    ]
+  },
+  {
+    "case": "menu version sources must equal the canonical analysis source set",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuVersion", "sourceRefs"],
+        "value": ["91919191-9191-4191-8191-919191919191"]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_version_source_refs_mismatch",
+        "path": ["menuVersion", "sourceRefs"]
+      }
+    ]
+  },
+  {
+    "case": "MenuItem evidence cannot reference a source outside the analysis source set",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuItems", 0, "sourceEvidence", 0, "sourceRef"],
+        "value": "91919191-9191-4191-8191-919191919191"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_evidence_source_not_allowed",
+        "path": ["menuItems", 0, "sourceEvidence", 0, "sourceRef"]
+      }
+    ]
+  },
+  {
+    "case": "DishCandidate evidence cannot reference a source outside the analysis source set",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["dishCandidates", 0, "sourceEvidence", 0, "sourceRef"],
+        "value": "91919191-9191-4191-8191-919191919191"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_evidence_source_not_allowed",
+        "path": ["dishCandidates", 0, "sourceEvidence", 0, "sourceRef"]
+      }
+    ]
+  },
+  {
+    "case": "MenuItemDishMatch evidence cannot reference a source outside the analysis source set",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["dishMatches", 0, "sourceEvidence", 0, "sourceRef"],
+        "value": "91919191-9191-4191-8191-919191919191"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_evidence_source_not_allowed",
+        "path": ["dishMatches", 0, "sourceEvidence", 0, "sourceRef"]
+      }
+    ]
+  },
+  {
+    "case": "MenuItemClaim provenance cannot reference a source outside the analysis source set",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysis",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuItemClaims", 0, "provenance", 0, "sourceRef"],
+        "value": "91919191-9191-4191-8191-919191919191"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_evidence_source_not_allowed",
+        "path": ["menuItemClaims", 0, "provenance", 0, "sourceRef"]
+      }
+    ]
+  },
+  {
+    "case": "a menu version cannot be rebound to another Restaurant branch",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysisSecondRestaurant",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuVersion", "restaurantId"],
+        "value": "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_version_restaurant_identity_mismatch",
+        "path": ["menuVersion", "restaurantId"]
+      }
+    ]
+  },
+  {
+    "case": "branch-specific price and evidence cannot be rebound to another menu version",
+    "schema": "CanonicalMenuAnalysis",
+    "fixture": "canonicalMenuAnalysisSecondRestaurant",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["menuItems", 0, "menuVersionId"],
+        "value": "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
+      },
+      {
+        "operation": "replace",
+        "path": ["menuItems", 0, "price", "amountMinor"],
+        "value": 1250
+      },
+      {
+        "operation": "replace",
+        "path": ["menuItems", 0, "sourceEvidence", 0, "sourceRef"],
+        "value": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "menu_item_version_mismatch",
+        "path": ["menuItems", 0, "menuVersionId"]
+      },
+      {
+        "code": "menu_evidence_source_not_allowed",
+        "path": ["menuItems", 0, "sourceEvidence", 0, "sourceRef"]
+      }
+    ]
+  }
+]

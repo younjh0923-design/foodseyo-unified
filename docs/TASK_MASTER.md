@@ -128,7 +128,7 @@ Execution order:
 - **Inputs:** YTW upstream producer needs, Juhyung explanation/UI consumer
   needs
 - **Dependency:** U1.2
-- **Status:** READY
+- **Status:** REVIEW
 - **Define:**
   - `RestaurantCandidate`
   - `RestaurantResolution`
@@ -140,6 +140,11 @@ Execution order:
   - safe public error envelope
 - **Acceptance:** runtime schemas, TypeScript types, examples, invalid fixtures,
   and version tokens exist.
+- **Review candidate:** `BOUNDARY_DTOS.md`,
+  `packages/contracts/src/boundary-dtos.ts`, and the network-free valid/invalid
+  fixtures implement `boundary-dtos/0.1.0`. Issue #10 supplies the all-owner
+  Dish semantic direction. Exact-HEAD approval and merge evidence are still
+  required before this task becomes `DONE`.
 
 ### U1.4 Freeze environment and feature-flag registry
 

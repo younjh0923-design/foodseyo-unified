@@ -5,7 +5,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./boundary-dtos": "./src/boundary-dtos.ts",
     "./environment": "./src/environment.ts",
+    "./runtime-schema": "./src/runtime-schema.ts",
     "./versions": "./src/versions.ts",
     "./vocabulary": "./src/vocabulary.ts"
   },
