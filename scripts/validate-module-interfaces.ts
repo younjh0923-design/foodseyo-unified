@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import {
   ContractValidationError,
   BOUNDARY_DTO_SCHEMAS,
+  AnalysisApplicationResultSchema,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
   MODULE_INTERFACE_VERSION,
@@ -404,8 +405,21 @@ const analysisOnly = {
   ...canonicalAnalysis,
   publicationState: "analysis_only",
   menuVersion: null,
+  menuItems: canonicalAnalysis.menuItems.map((menuItem) => ({
+    ...menuItem,
+    menuVersionId: null,
+  })),
 } as CanonicalMenuAnalysis;
 assert.equal(isPublicationEligibleAnalysis(analysisOnly), false);
+assert.equal(
+  BOUNDARY_DTO_SCHEMAS.CanonicalMenuAnalysis.safeParse(analysisOnly).success,
+  true,
+);
+AnalysisApplicationResultSchema.parse({
+  analysis: analysisOnly,
+  explanation,
+  publication: null,
+});
 
 const publicationReceipt =
   moduleFixtures.publicationReceipt as unknown as PublicationReceipt;
@@ -438,13 +452,14 @@ const applicationResult: AnalysisApplicationResult = {
   publication: publicationReceipt,
 };
 const workflowFake = new FakeAnalysisWorkflowPort(plan(applicationResult));
-assertResultStatus(
-  await workflowFake.run(
+const workflowSuccess = await workflowFake.run(
     { menuSource: menuSourceInput, restaurantResolution },
     context,
-  ),
-  "success",
 );
+assertResultStatus(workflowSuccess, "success");
+if (workflowSuccess.status === "success") {
+  AnalysisApplicationResultSchema.parse(workflowSuccess.value);
+}
 assertResultStatus(
   await workflowFake.run(
     { menuSource: menuSourceInput, restaurantResolution },
@@ -598,6 +613,105 @@ for (const fixture of invalidFixtures as InvalidFixture[]) {
         },
         PublicationReceiptSchema,
       ),
+    );
+    continue;
+  }
+  if (fixture.case === "workflow_explanation_analysis_mismatch") {
+    await expectContractIssue(fixture, () =>
+      new FakeAnalysisWorkflowPort(
+        plan({
+          ...applicationResult,
+          explanation: {
+            ...explanation,
+            analysisId: String(fixture.input.analysisId),
+          },
+        }),
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "workflow_explanation_menu_item_missing") {
+    await expectContractIssue(fixture, () =>
+      new FakeAnalysisWorkflowPort(
+        plan({
+          ...applicationResult,
+          explanation: {
+            ...explanation,
+            blocks: explanation.blocks.map((block, index) =>
+              index === 1
+                ? {
+                    ...block,
+                    menuItemId: String(fixture.input.menuItemId),
+                  }
+                : block,
+            ),
+          },
+        }),
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "workflow_analysis_only_with_publication") {
+    await expectContractIssue(fixture, () =>
+      new FakeAnalysisWorkflowPort(
+        plan({
+          analysis: analysisOnly,
+          explanation,
+          publication: publicationReceipt,
+        }),
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "workflow_publication_analysis_mismatch") {
+    await expectContractIssue(fixture, () =>
+      new FakeAnalysisWorkflowPort(
+        plan({
+          ...applicationResult,
+          publication: {
+            ...publicationReceipt,
+            analysisId: String(fixture.input.analysisId),
+          },
+        }),
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "workflow_publication_menu_version_mismatch") {
+    await expectContractIssue(fixture, () =>
+      new FakeAnalysisWorkflowPort(
+        plan({
+          ...applicationResult,
+          publication: {
+            ...publicationReceipt,
+            menuVersionId: String(fixture.input.menuVersionId),
+          },
+        }),
+      ),
+    );
+    continue;
+  }
+  if (fixture.case === "publication_port_receipt_analysis_mismatch") {
+    const invalidPublicationFake = new FakeAnalysisPublicationPort(
+      plan({
+        ...publicationReceipt,
+        analysisId: String(fixture.input.analysisId),
+      }),
+    );
+    await expectContractIssue(fixture, () =>
+      invalidPublicationFake.publish(canonicalAnalysis as never, context),
+    );
+    continue;
+  }
+  if (fixture.case === "publication_port_receipt_menu_version_mismatch") {
+    const invalidPublicationFake = new FakeAnalysisPublicationPort(
+      plan({
+        ...publicationReceipt,
+        menuVersionId: String(fixture.input.menuVersionId),
+      }),
+    );
+    await expectContractIssue(fixture, () =>
+      invalidPublicationFake.publish(canonicalAnalysis as never, context),
     );
     continue;
   }

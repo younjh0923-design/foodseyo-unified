@@ -13,6 +13,11 @@
         "scope": "analysis",
         "menuItemId": null,
         "text": "Synthetic contract fixture explanation."
+      },
+      {
+        "scope": "menu_item",
+        "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        "text": "Synthetic contract fixture menu-item explanation."
       }
     ],
     "renderedAt": "2026-07-19T06:00:00.000Z"

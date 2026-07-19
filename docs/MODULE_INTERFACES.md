@@ -70,6 +70,12 @@ receives only `PublicationEligibleAnalysis`.
 `isPublicationEligibleAnalysis` is the explicit guard between
 `analysis_only` and publication. An analysis is eligible only when
 `publicationState` is `eligible` and a `RestaurantMenuVersion` is present.
+Application results additionally bind the explanation, menu-item explanation
+blocks, and optional publication receipt to that same canonical analysis.
+An `analysis_only` result cannot carry a publication receipt. Every non-null
+receipt must match the eligible analysis ID and menu-version ID. The
+publication fake enforces the same binding against its invocation input rather
+than trusting a separately valid configured receipt.
 
 ## Deterministic fake contract
 
@@ -94,8 +100,9 @@ events after cancellation or deadline expiry.
 
 The network-free fixtures execute actual valid and invalid values through the
 runtime schemas or port boundary. They lock success, cancellation, timeout,
-invalid fake plans, publication-ineligible, unsafe-observability, and
-internal-import cases by exact issue code and path.
+invalid fake plans, publication-ineligible, explanation/analysis identity,
+menu-item membership, receipt/analysis identity, receipt/menu-version identity,
+unsafe-observability, and internal-import cases by exact issue code and path.
 
 ## Import rules
 

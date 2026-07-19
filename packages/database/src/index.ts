@@ -2,6 +2,7 @@ import {
   PublicationEligibleAnalysisSchema,
   PublicationReceiptSchema,
   parseDeterministicFakePlan,
+  parsePublicationReceiptForAnalysis,
   selectDeterministicFakeResult,
   type AnalysisPublicationPort,
   type DeterministicFakePlan,
@@ -35,7 +36,17 @@ export class FakeAnalysisPublicationPort
     context: PortInvocationContext,
   ): Promise<PortResult<PublicationReceipt>> {
     this.#callCount += 1;
-    PublicationEligibleAnalysisSchema.parse(analysis);
-    return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
+    const parsedAnalysis = PublicationEligibleAnalysisSchema.parse(analysis);
+    const result = selectDeterministicFakeResult(context, this.plan);
+    if (result.status === "success") {
+      return Promise.resolve({
+        ...result,
+        value: parsePublicationReceiptForAnalysis(
+          parsedAnalysis,
+          result.value,
+        ),
+      });
+    }
+    return Promise.resolve(result);
   }
 }

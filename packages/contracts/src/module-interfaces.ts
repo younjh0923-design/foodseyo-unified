@@ -36,6 +36,7 @@ import {
   type WorkflowStage,
 } from "./boundary-dtos.js";
 import {
+  ContractValidationError,
   addContractIssue,
   createRuntimeSchema,
   isContractRecord,
@@ -916,6 +917,120 @@ export const PublicationReceiptSchema =
     },
   );
 
+const validateExplanationBinding = (
+  analysis: CanonicalMenuAnalysis,
+  explanation: ConstrainedExplanation,
+  issues: ContractValidationIssue[],
+  path: readonly ContractPathSegment[] = ["explanation"],
+) => {
+  if (explanation.analysisId !== analysis.analysisId) {
+    addContractIssue(issues, "explanation_analysis_mismatch", [
+      ...path,
+      "analysisId",
+    ]);
+  }
+
+  const menuItemIds = new Set(
+    analysis.menuItems.map((menuItem) => menuItem.menuItemId),
+  );
+  explanation.blocks.forEach((block, index) => {
+    if (
+      block.scope === "menu_item" &&
+      (block.menuItemId === null || !menuItemIds.has(block.menuItemId))
+    ) {
+      addContractIssue(issues, "explanation_menu_item_not_found", [
+        ...path,
+        "blocks",
+        index,
+        "menuItemId",
+      ]);
+    }
+  });
+};
+
+const validatePublicationBinding = (
+  analysis: CanonicalMenuAnalysis,
+  publication: PublicationReceipt,
+  issues: ContractValidationIssue[],
+  path: readonly ContractPathSegment[] = ["publication"],
+) => {
+  if (!isPublicationEligibleAnalysis(analysis)) {
+    addContractIssue(issues, "publication_not_eligible", path);
+    return;
+  }
+  if (publication.analysisId !== analysis.analysisId) {
+    addContractIssue(issues, "publication_analysis_mismatch", [
+      ...path,
+      "analysisId",
+    ]);
+  }
+  if (publication.menuVersionId !== analysis.menuVersion.menuVersionId) {
+    addContractIssue(issues, "publication_menu_version_mismatch", [
+      ...path,
+      "menuVersionId",
+    ]);
+  }
+};
+
+export const parseConstrainedExplanationForAnalysis = (
+  analysis: unknown,
+  explanation: unknown,
+): ConstrainedExplanation => {
+  const issues: ContractValidationIssue[] = [];
+  const analysisResult = CanonicalMenuAnalysisSchema.safeParse(analysis);
+  const explanationResult = ConstrainedExplanationSchema.safeParse(explanation);
+  appendSchemaIssues(analysisResult, issues, ["analysis"]);
+  appendSchemaIssues(explanationResult, issues, ["explanation"]);
+  if (analysisResult.success && explanationResult.success) {
+    validateExplanationBinding(
+      analysisResult.data,
+      explanationResult.data,
+      issues,
+    );
+  }
+  if (issues.length > 0) {
+    throw new ContractValidationError(
+      "ConstrainedExplanationForAnalysis",
+      issues,
+    );
+  }
+  if (!explanationResult.success) {
+    throw new ContractValidationError(
+      "ConstrainedExplanationForAnalysis",
+      explanationResult.issues,
+    );
+  }
+  return explanationResult.data;
+};
+
+export const parsePublicationReceiptForAnalysis = (
+  analysis: unknown,
+  publication: unknown,
+): PublicationReceipt => {
+  const issues: ContractValidationIssue[] = [];
+  const analysisResult = PublicationEligibleAnalysisSchema.safeParse(analysis);
+  const publicationResult = PublicationReceiptSchema.safeParse(publication);
+  appendSchemaIssues(analysisResult, issues, []);
+  appendSchemaIssues(publicationResult, issues, ["publication"]);
+  if (analysisResult.success && publicationResult.success) {
+    validatePublicationBinding(
+      analysisResult.data,
+      publicationResult.data,
+      issues,
+    );
+  }
+  if (issues.length > 0) {
+    throw new ContractValidationError("PublicationReceiptForAnalysis", issues);
+  }
+  if (!publicationResult.success) {
+    throw new ContractValidationError(
+      "PublicationReceiptForAnalysis",
+      publicationResult.issues,
+    );
+  }
+  return publicationResult.data;
+};
+
 export const AnalysisWorkflowRequestSchema =
   createRuntimeSchema<AnalysisWorkflowRequest>(
     "AnalysisWorkflowRequest",
@@ -940,24 +1055,40 @@ export const AnalysisApplicationResultSchema =
       if (!validateRecord(value, ["analysis", "explanation", "publication"], [], issues)) {
         return;
       }
-      validateSchema(
-        CanonicalMenuAnalysisSchema,
+      const analysisResult = CanonicalMenuAnalysisSchema.safeParse(
         value.analysis,
-        issues,
-        ["analysis"],
       );
-      validateSchema(
-        ConstrainedExplanationSchema,
+      const explanationResult = ConstrainedExplanationSchema.safeParse(
         value.explanation,
-        issues,
-        ["explanation"],
       );
-      validateNullableSchema(
-        PublicationReceiptSchema,
-        value.publication,
-        issues,
-        ["publication"],
-      );
+      const publicationResult =
+        value.publication === null
+          ? null
+          : PublicationReceiptSchema.safeParse(value.publication);
+
+      appendSchemaIssues(analysisResult, issues, ["analysis"]);
+      appendSchemaIssues(explanationResult, issues, ["explanation"]);
+      if (publicationResult !== null) {
+        appendSchemaIssues(publicationResult, issues, ["publication"]);
+      }
+      if (analysisResult.success && explanationResult.success) {
+        validateExplanationBinding(
+          analysisResult.data,
+          explanationResult.data,
+          issues,
+        );
+      }
+      if (
+        analysisResult.success &&
+        publicationResult !== null &&
+        publicationResult.success
+      ) {
+        validatePublicationBinding(
+          analysisResult.data,
+          publicationResult.data,
+          issues,
+        );
+      }
     },
   );
 

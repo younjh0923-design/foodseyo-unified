@@ -6,6 +6,7 @@ import {
   CompactMenuExtractionSchema,
   ConstrainedExplanationSchema,
   MenuSourceInputSchema,
+  parseConstrainedExplanationForAnalysis,
   parseDeterministicFakePlan,
   selectDeterministicFakeResult,
   type AnalysisApplicationResult,
@@ -106,8 +107,18 @@ export class FakeConstrainedExplanationPort
     context: PortInvocationContext,
   ): Promise<PortResult<ConstrainedExplanation>> {
     this.#callCount += 1;
-    CanonicalMenuAnalysisSchema.parse(analysis);
-    return Promise.resolve(selectDeterministicFakeResult(context, this.plan));
+    const parsedAnalysis = CanonicalMenuAnalysisSchema.parse(analysis);
+    const result = selectDeterministicFakeResult(context, this.plan);
+    if (result.status === "success") {
+      return Promise.resolve({
+        ...result,
+        value: parseConstrainedExplanationForAnalysis(
+          parsedAnalysis,
+          result.value,
+        ),
+      });
+    }
+    return Promise.resolve(result);
   }
 }
 
