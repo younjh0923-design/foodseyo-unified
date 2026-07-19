@@ -78,8 +78,8 @@ const invalidFixtures = await readJson(
 assert(isRecord(boundaryFixtures));
 assert(isRecord(moduleFixtures));
 assert(Array.isArray(invalidFixtures));
-assert.equal(CONTRACT_STATUS, "draft");
-assert.equal(MODULE_INTERFACE_VERSION, "module-interfaces/0.1.0");
+assert.equal(CONTRACT_STATUS, "frozen");
+assert.equal(MODULE_INTERFACE_VERSION, "module-interfaces/1.0.0");
 
 const parseBoundaryFixture = <T>(
   schemaName: keyof typeof BOUNDARY_DTO_SCHEMAS,
@@ -743,7 +743,7 @@ for (const packageName of owningPackages) {
     await readFile(resolve(`packages/${packageName}/package.json`), "utf8"),
   ) as JsonObject;
   assert.equal(manifest.name, `@foodseyo/${packageName}`);
-  assert.equal(manifest.version, "0.1.0");
+  assert.equal(manifest.version, "1.0.0");
   assert.deepEqual(manifest.dependencies, {
     "@foodseyo/contracts": "workspace:*",
   });

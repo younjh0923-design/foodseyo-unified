@@ -428,10 +428,22 @@ assert.match(
   /not evidence that dairy is present/,
 );
 
-assert.equal(CONTRACT_STATUS, "draft");
-for (const version of Object.values(CONTRACT_VERSIONS)) {
-  assert.match(version, /^[a-z-]+\/0\.1\.0$/);
-}
+assert.equal(CONTRACT_STATUS, "frozen");
+assert.deepEqual(CONTRACT_VERSIONS, {
+  sharedVocabulary: "shared-vocabulary/1.0.0",
+  menuSource: "menu-source/1.0.0",
+  restaurantResolution: "restaurant-resolution/1.0.0",
+  compactExtraction: "compact-extraction/1.0.0",
+  analysisSnapshot: "analysis-snapshot/1.0.0",
+  consistency: "consistency/1.0.0",
+  dishKnowledge: "dish-knowledge/1.0.0",
+  mergePolicy: "merge-policy/1.0.0",
+  explanationRenderer: "explanation-renderer/1.0.0",
+  exactCacheKey: "exact-cache-key/1.0.0",
+  environmentRegistry: "environment-registry/1.0.0",
+  boundaryDtos: "boundary-dtos/1.0.0",
+  moduleInterfaces: "module-interfaces/1.0.0",
+});
 
 const runtimeNames = Object.values(SERVER_ENV_NAMES);
 const operatorNames = Object.values(OPERATOR_ENV_NAMES);
@@ -613,6 +625,29 @@ const observabilityPackage = await readFile(
   resolve("packages/observability/README.md"),
   "utf8",
 );
+const rootManifest = JSON.parse(
+  await readFile(resolve("package.json"), "utf8"),
+) as { readonly version?: unknown };
+assert.equal(rootManifest.version, "0.0.0");
+for (const packageName of [
+  "contracts",
+  "restaurant-resolution",
+  "source-acquisition",
+  "menu-analysis",
+  "dish-knowledge",
+  "merge-policy",
+  "database",
+  "observability",
+] as const) {
+  const manifest = JSON.parse(
+    await readFile(resolve(`packages/${packageName}/package.json`), "utf8"),
+  ) as { readonly version?: unknown };
+  assert.equal(
+    manifest.version,
+    "1.0.0",
+    `${packageName} must share the selected U1.6 package version`,
+  );
+}
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
 assert(operatorExample.includes("DATABASE_MIGRATION_URL="));
 for (const name of runtimeNames) {
@@ -637,7 +672,7 @@ assert.match(
   /value-free owner[\s\S]*`ENVIRONMENT_REGISTRY\.md`[\s\S]*`@foodseyo\/contracts`/,
 );
 for (const marker of [
-  "`environment-registry/0.1.0`",
+  "`environment-registry/1.0.0`",
   "contains no environment values",
   "## Approved server-runtime variables",
   "## Operator-only variable",
@@ -684,8 +719,8 @@ assertOrdered(integrationProtocol, "Codex handoff reading order", [
   "`docs/TASK_MASTER.md`",
 ]);
 for (const marker of [
-  "`boundary-dtos/0.1.0`",
-  "remains `draft` until U1.6",
+  "`boundary-dtos/1.0.0`",
+  "all-owner approval",
   "`CompactMenuExtraction` is provider-neutral but explicitly",
   "`unvalidated`",
   "`MenuItemDishMatch` is the evidence-bearing many-to-many relationship",
@@ -702,8 +737,8 @@ for (const marker of [
   );
 }
 for (const marker of [
-  "`module-interfaces/0.1.0`",
-  "remains `draft` and unavailable to feature code until U1.6",
+  "`module-interfaces/1.0.0`",
+  "all-owner approval",
   "`PortInvocationContext`",
   "`PortResult<T>`",
   "`isPublicationEligibleAnalysis`",
@@ -722,8 +757,8 @@ for (const marker of [
   "`@foodseyo/contracts`",
   "`@foodseyo/contracts/boundary-dtos`",
   "`@foodseyo/contracts/module-interfaces`",
-  "`0.1.0`/`draft`",
-  "unavailable to feature code until U1.6",
+  "`1.0.0`/`frozen`",
+  "feature consumption",
 ]) {
   assert(
     contractsPackage.includes(marker),
@@ -732,7 +767,7 @@ for (const marker of [
 }
 assert.match(
   sharedContracts,
-  /`BOUNDARY_DTOS\.md`[\s\S]*`boundary-dtos\/0\.1\.0`[\s\S]*unavailable to feature code/,
+  /`BOUNDARY_DTOS\.md`[\s\S]*`boundary-dtos\/1\.0\.0`[\s\S]*unavailable to feature code/,
 );
 assert.match(
   decisionLog,
@@ -741,6 +776,10 @@ assert.match(
 assert.match(
   decisionLog,
   /## U-013 - Provider-neutral module ports and deterministic fakes[\s\S]*Issue #14[\s\S]*PR #15[\s\S]*b77fcdbeb0a15948a0dd529ea1c4ef739483dccb[\s\S]*e732983d1b44d282907d85b6d0ea4132984cc3bb[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+assert.match(
+  decisionLog,
+  /## U-014 - U1 compatibility contract 1\.0\.0 freeze[\s\S]*13 selected shared contract tokens[\s\S]*eight[\s\S]*dish-match\/0\.1\.0[\s\S]*dish-profile\/0\.1\.0[\s\S]*Issue #17[\s\S]*e6307d3f2b7bb59680575a5cbb9c99862b8642be[\s\S]*\*\*Status:\*\* Review/,
 );
 assert.match(
   contractChangeQueue,
@@ -1147,7 +1186,7 @@ assertTaskStatus(taskMaster, "### U1.5 Freeze module interfaces", "DONE");
 assertTaskStatus(
   taskMaster,
   "### U1.6 Approve and publish compatibility contract 1.0.0",
-  "READY",
+  "REVIEW",
 );
 assertTaskStatus(
   taskMaster,

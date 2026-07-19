@@ -11,4 +11,5 @@ It consumes `@foodseyo/contracts` plus approved application services and view
 models. It must not call Google/OpenAI providers directly, import database rows
 or provider DTOs, or present unvalidated extraction as final analysis.
 
-Implementation starts only after U1.6.
+Implementation starts only after U1.6 merges to `main` and is recorded
+`DONE`.

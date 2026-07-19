@@ -288,3 +288,23 @@
   `status:merged` and closed.
 - **Status:** Accepted
 - **Date:** 2026-07-19
+
+## U-014 - U1 compatibility contract 1.0.0 freeze
+
+- **Decision:** Promote the 13 selected shared contract tokens and the eight
+  approved package manifests to `1.0.0`, with `CONTRACT_STATUS` set to
+  `frozen`, as one compatibility unit.
+- **Compatibility boundary:** The root private workspace remains `0.0.0`.
+  Future data-carried `dish-match/0.1.0` and `dish-profile/0.1.0` tokens remain
+  unchanged because they are outside the selected U1 contract registry.
+- **Consumption gate:** No U2 or feature code may consume the frozen candidate
+  until all three owners approve the exact final U1.6 PR HEAD, it merges to
+  `main`, and U1.6 is recorded `DONE`.
+- **Scope:** This freeze changes no vocabulary value, DTO field, outcome,
+  public error, environment name, interface behavior, provider configuration,
+  persistence shape, framework choice, or model value.
+- **Approval evidence:** Issue #17 received all-owner proposal approval against
+  `main` at `e6307d3f2b7bb59680575a5cbb9c99862b8642be`. Exact final PR HEAD
+  approval and merge evidence remain pending.
+- **Status:** Review
+- **Date:** 2026-07-19

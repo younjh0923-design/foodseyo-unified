@@ -1,13 +1,13 @@
 {
   "invocationContext": {
-    "contractVersion": "module-interfaces/0.1.0",
+    "contractVersion": "module-interfaces/1.0.0",
     "correlationId": "fixture_corr_u1_5",
     "timeoutMs": 1000
   },
   "explanation": {
-    "contractVersion": "module-interfaces/0.1.0",
+    "contractVersion": "module-interfaces/1.0.0",
     "analysisId": "99999999-9999-4999-8999-999999999999",
-    "rendererVersion": "explanation-renderer/0.1.0",
+    "rendererVersion": "explanation-renderer/1.0.0",
     "blocks": [
       {
         "scope": "analysis",
@@ -23,7 +23,7 @@
     "renderedAt": "2026-07-19T06:00:00.000Z"
   },
   "publicationReceipt": {
-    "contractVersion": "module-interfaces/0.1.0",
+    "contractVersion": "module-interfaces/1.0.0",
     "analysisId": "99999999-9999-4999-8999-999999999999",
     "menuVersionId": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
     "status": "published",

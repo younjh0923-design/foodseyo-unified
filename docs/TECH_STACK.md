@@ -99,7 +99,7 @@ These choices are intentionally unresolved and must not be guessed:
 
 | Choice | Freeze point |
 | --- | --- |
-| Web framework and exact React/framework versions | U1.5 module-interface freeze and U2.4 web-foundation PR |
+| Web framework and exact React/framework versions | U2.4 web-foundation contract and PR |
 | Neon/Postgres runtime driver and connection-pool implementation | S2.1 after the Vercel runtime shape is verified |
 | Exact OpenAI model values | Authorized provider configuration task |
 | Upload byte/count limits | U1 boundary contract, preserving the agreed product limits |

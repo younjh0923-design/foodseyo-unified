@@ -11,7 +11,8 @@ Discovery output is not canonical proof. This package does not render UI,
 define culinary truth, persist canonical data, expose raw source URLs in logs
 or public errors, or make a real provider call in automated tests.
 
-Implementation starts only after U1.6.
+The package manifest is frozen at `1.0.0`. Real implementation starts only
+after U1.6 merges to `main` and is recorded `DONE`.
 
 U1.5 public surface: `MenuSourceAcquisitionPort` and
 `FakeMenuSourceAcquisitionPort`. This package isolates source discovery,

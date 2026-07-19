@@ -10,7 +10,8 @@ This package does not own the browser UI, canonical menu facts, database
 persistence, or final explanation. Provider internals and unvalidated menu
 meaning never enter the direct UI-safe outcome lane.
 
-Implementation starts only after U1.6.
+The package manifest is frozen at `1.0.0`. Real implementation starts only
+after U1.6 merges to `main` and is recorded `DONE`.
 
 U1.5 public surface: `RestaurantResolutionPort`,
 `UiOperationalEventPort`, `FakeRestaurantResolutionPort`, and

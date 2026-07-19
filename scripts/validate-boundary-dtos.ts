@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import {
   BOUNDARY_DTO_SCHEMAS,
   CANONICAL_PUBLICATION_STATES,
+  CONTRACT_STATUS,
   CONTRACT_VERSIONS,
   CULINARY_CLAIM_KINDS,
   EXTRACTION_WARNING_CODES,
@@ -51,7 +52,8 @@ const assertExactValues = (
   assert.deepEqual(actual, expected, `${label} drifted`);
 };
 
-assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/0.1.0");
+assert.equal(CONTRACT_STATUS, "frozen");
+assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/1.0.0");
 assert.deepEqual(Object.keys(BOUNDARY_DTO_SCHEMAS), [
   "RestaurantCandidate",
   "RestaurantResolution",

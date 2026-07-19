@@ -1,6 +1,6 @@
 {
   "restaurantCandidate": {
-    "contractVersion": "restaurant-resolution/0.1.0",
+    "contractVersion": "restaurant-resolution/1.0.0",
     "candidateId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     "googlePlaceId": "fixture_google_place_001",
     "displayName": "Fixture Restaurant",
@@ -14,11 +14,11 @@
     "rank": 1
   },
   "restaurantResolution": {
-    "contractVersion": "restaurant-resolution/0.1.0",
+    "contractVersion": "restaurant-resolution/1.0.0",
     "state": "user_confirmed",
     "candidates": [
       {
-        "contractVersion": "restaurant-resolution/0.1.0",
+        "contractVersion": "restaurant-resolution/1.0.0",
         "candidateId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "googlePlaceId": "fixture_google_place_001",
         "displayName": "Fixture Restaurant",
@@ -44,7 +44,7 @@
     "resolvedAt": "2026-07-18T20:00:00.000Z"
   },
   "menuSourceInput": {
-    "contractVersion": "menu-source/0.1.0",
+    "contractVersion": "menu-source/1.0.0",
     "source": {
       "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "sourceType": "uploaded_menu",
@@ -68,7 +68,7 @@
     "requestedAt": "2026-07-18T20:01:01.000Z"
   },
   "compactMenuExtraction": {
-    "contractVersion": "compact-extraction/0.1.0",
+    "contractVersion": "compact-extraction/1.0.0",
     "extractionState": "unvalidated",
     "source": {
       "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -112,7 +112,7 @@
     "completedAt": "2026-07-18T20:02:00.000Z"
   },
   "canonicalMenuAnalysis": {
-    "contractVersion": "boundary-dtos/0.1.0",
+    "contractVersion": "boundary-dtos/1.0.0",
     "analysisId": "99999999-9999-4999-8999-999999999999",
     "source": {
       "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -121,11 +121,11 @@
       "collectedAt": "2026-07-18T20:01:00.000Z"
     },
     "restaurantResolution": {
-      "contractVersion": "restaurant-resolution/0.1.0",
+      "contractVersion": "restaurant-resolution/1.0.0",
       "state": "user_confirmed",
       "candidates": [
         {
-          "contractVersion": "restaurant-resolution/0.1.0",
+          "contractVersion": "restaurant-resolution/1.0.0",
           "candidateId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           "googlePlaceId": "fixture_google_place_001",
           "displayName": "Fixture Restaurant",
@@ -241,7 +241,7 @@
     ],
     "dishCandidates": [
       {
-        "contractVersion": "dish-knowledge/0.1.0",
+        "contractVersion": "dish-knowledge/1.0.0",
         "candidateId": "11111111-1111-4111-8111-111111111111",
         "dishId": "22222222-2222-4222-8222-222222222222",
         "displayName": "Noodle bowl",
@@ -256,7 +256,7 @@
         ]
       },
       {
-        "contractVersion": "dish-knowledge/0.1.0",
+        "contractVersion": "dish-knowledge/1.0.0",
         "candidateId": "30303030-3030-4030-8030-303030303030",
         "dishId": null,
         "displayName": "Candidate A",
@@ -271,7 +271,7 @@
         ]
       },
       {
-        "contractVersion": "dish-knowledge/0.1.0",
+        "contractVersion": "dish-knowledge/1.0.0",
         "candidateId": "40404040-4040-4040-8040-404040404040",
         "dishId": null,
         "displayName": "Candidate B",
@@ -286,7 +286,7 @@
         ]
       },
       {
-        "contractVersion": "dish-knowledge/0.1.0",
+        "contractVersion": "dish-knowledge/1.0.0",
         "candidateId": "50505050-5050-4050-8050-505050505050",
         "dishId": "60606060-6060-4060-8060-606060606060",
         "displayName": "Combo component A",
@@ -301,7 +301,7 @@
         ]
       },
       {
-        "contractVersion": "dish-knowledge/0.1.0",
+        "contractVersion": "dish-knowledge/1.0.0",
         "candidateId": "70707070-7070-4070-8070-707070707070",
         "dishId": "80808080-8080-4080-8080-808080808080",
         "displayName": "Combo component B",
@@ -548,13 +548,13 @@
     ],
     "effectiveProfiles": [
       {
-        "contractVersion": "boundary-dtos/0.1.0",
+        "contractVersion": "boundary-dtos/1.0.0",
         "kind": "derived",
         "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
         "dishId": "22222222-2222-4222-8222-222222222222",
         "matchId": "33333333-3333-4333-8333-333333333333",
-        "mergePolicyVersion": "merge-policy/0.1.0",
-        "dishKnowledgeVersion": "dish-knowledge/0.1.0",
+        "mergePolicyVersion": "merge-policy/1.0.0",
+        "dishKnowledgeVersion": "dish-knowledge/1.0.0",
         "inputClaimIds": [
           "44444444-4444-4444-8444-444444444444",
           "45454545-4545-4545-8545-454545454545",
@@ -643,13 +643,13 @@
         "derivedAt": "2026-07-18T20:04:00.000Z"
       },
       {
-        "contractVersion": "boundary-dtos/0.1.0",
+        "contractVersion": "boundary-dtos/1.0.0",
         "kind": "derived",
         "menuItemId": "ffffffff-ffff-4fff-8fff-ffffffffffff",
         "dishId": "22222222-2222-4222-8222-222222222222",
         "matchId": "34343434-3434-4434-8434-343434343434",
-        "mergePolicyVersion": "merge-policy/0.1.0",
-        "dishKnowledgeVersion": "dish-knowledge/0.1.0",
+        "mergePolicyVersion": "merge-policy/1.0.0",
+        "dishKnowledgeVersion": "dish-knowledge/1.0.0",
         "inputClaimIds": [
           "88888888-8888-4888-8888-888888888888",
           "55555555-5555-4555-8555-555555555555",
@@ -727,7 +727,7 @@
     "validatedAt": "2026-07-18T20:05:00.000Z"
   },
   "canonicalMenuAnalysisSecondRestaurant": {
-    "contractVersion": "boundary-dtos/0.1.0",
+    "contractVersion": "boundary-dtos/1.0.0",
     "analysisId": "abababab-abab-4bab-8bab-abababababab",
     "source": {
       "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
@@ -736,11 +736,11 @@
       "collectedAt": "2026-07-18T21:01:00.000Z"
     },
     "restaurantResolution": {
-      "contractVersion": "restaurant-resolution/0.1.0",
+      "contractVersion": "restaurant-resolution/1.0.0",
       "state": "user_confirmed",
       "candidates": [
         {
-          "contractVersion": "restaurant-resolution/0.1.0",
+          "contractVersion": "restaurant-resolution/1.0.0",
           "candidateId": "acacacac-acac-4aca-8aca-acacacacacac",
           "googlePlaceId": "fixture_google_place_002",
           "displayName": "Fixture Restaurant Branch B",
@@ -802,7 +802,7 @@
     ],
     "dishCandidates": [
       {
-        "contractVersion": "dish-knowledge/0.1.0",
+        "contractVersion": "dish-knowledge/1.0.0",
         "candidateId": "b1b1b1b1-b1b1-41b1-81b1-b1b1b1b1b1b1",
         "dishId": "22222222-2222-4222-8222-222222222222",
         "displayName": "Noodle bowl",
@@ -880,13 +880,13 @@
     "dishClaims": [],
     "effectiveProfiles": [
       {
-        "contractVersion": "boundary-dtos/0.1.0",
+        "contractVersion": "boundary-dtos/1.0.0",
         "kind": "derived",
         "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
         "dishId": "22222222-2222-4222-8222-222222222222",
         "matchId": "b2b2b2b2-b2b2-42b2-82b2-b2b2b2b2b2b2",
-        "mergePolicyVersion": "merge-policy/0.1.0",
-        "dishKnowledgeVersion": "dish-knowledge/0.1.0",
+        "mergePolicyVersion": "merge-policy/1.0.0",
+        "dishKnowledgeVersion": "dish-knowledge/1.0.0",
         "inputClaimIds": [
           "b3b3b3b3-b3b3-43b3-83b3-b3b3b3b3b3b3",
           "b4b4b4b4-b4b4-44b4-84b4-b4b4b4b4b4b4"
@@ -962,7 +962,7 @@
     "validatedAt": "2026-07-18T21:05:00.000Z"
   },
   "dishCandidate": {
-    "contractVersion": "dish-knowledge/0.1.0",
+    "contractVersion": "dish-knowledge/1.0.0",
     "candidateId": "11111111-1111-4111-8111-111111111111",
     "dishId": "22222222-2222-4222-8222-222222222222",
     "displayName": "Noodle bowl",
@@ -977,13 +977,13 @@
     ]
   },
   "effectiveDishProfile": {
-    "contractVersion": "boundary-dtos/0.1.0",
+    "contractVersion": "boundary-dtos/1.0.0",
     "kind": "derived",
     "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
     "dishId": "22222222-2222-4222-8222-222222222222",
     "matchId": "33333333-3333-4333-8333-333333333333",
-    "mergePolicyVersion": "merge-policy/0.1.0",
-    "dishKnowledgeVersion": "dish-knowledge/0.1.0",
+    "mergePolicyVersion": "merge-policy/1.0.0",
+    "dishKnowledgeVersion": "dish-knowledge/1.0.0",
     "inputClaimIds": [],
     "fields": {
       "basicTastes": {
