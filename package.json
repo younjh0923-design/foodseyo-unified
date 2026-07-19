@@ -10,9 +10,10 @@
   },
   "scripts": {
     "typecheck": "pnpm --filter @foodseyo/contracts typecheck",
+    "validate:boundary-dtos": "tsx scripts/validate-boundary-dtos.ts",
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:security"
+    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:security"
   },
   "devDependencies": {
     "tsx": "4.20.6",

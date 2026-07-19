@@ -52,15 +52,19 @@ knowledge claim, not the match.
 ### Minimum submission Dish contract
 
 U1 freezes a minimum typed Dish boundary for `DishCandidate`,
-`DishMatchState`, and `EffectiveDishProfile`. It must preserve source-specific
-menu facts, distinguish reviewed general guidance, and return `unknown` when no
-reviewed baseline is available.
+`MenuItemDishMatch`, typed `MenuItemClaim` and `DishClaim`, and
+`EffectiveDishProfile`. `RestaurantMenuVersion` owns menu scope and lifecycle;
+`MenuItem` owns restaurant-specific price, description, options, and evidence;
+`Dish` remains reusable general culinary meaning. The effective profile must
+preserve source-specific menu facts, distinguish reviewed general guidance,
+and return `unknown` when no reviewed baseline is available.
 
 The minimum contract is not the complete post-submission Dish knowledge model.
 Alias graphs, broad knowledge accumulation, authoring and review workflows, and
-the complete versioned claim lifecycle remain P3 scope. U1.1 must make any
-remaining minimum-scope decision explicit before U1.3 freezes the DTOs; feature
-code must not infer an unapproved baseline source.
+the complete versioned claim lifecycle remain P3 scope. The candidate U1.3
+fields, runtime schemas, examples, invalid cases, and deferred choices are
+defined in `BOUNDARY_DTOS.md`. Feature code remains blocked until U1.6 and must
+not infer an unapproved baseline source.
 
 ### Submission input and acquisition sequence
 
@@ -179,8 +183,10 @@ every workstream.
 8. Juhyung presents the final analysis result only after that publication gate
    succeeds or an explicitly frozen safe fallback permits otherwise.
 
-Exact DTO names and fields remain a U1.3 decision. No package may invent a
-temporary local handoff shape while that contract is pending.
+The candidate DTO names and fields are frozen for review in
+`BOUNDARY_DTOS.md` and `@foodseyo/contracts` at
+`boundary-dtos/0.1.0`. They remain `draft` and unavailable to feature code
+until U1.6. No package may invent a temporary local handoff shape.
 
 ## Package boundaries
 

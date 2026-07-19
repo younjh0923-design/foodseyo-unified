@@ -545,6 +545,10 @@ const sensoryVocabulary = await readFile(
   resolve("docs/SENSORY_VOCABULARY.md"),
   "utf8",
 );
+const boundaryDtos = await readFile(
+  resolve("docs/BOUNDARY_DTOS.md"),
+  "utf8",
+);
 const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
@@ -583,6 +587,10 @@ const sourcePackage = await readFile(
 );
 const menuAnalysisPackage = await readFile(
   resolve("packages/menu-analysis/README.md"),
+  "utf8",
+);
+const contractsPackage = await readFile(
+  resolve("packages/contracts/README.md"),
   "utf8",
 );
 assert(!runtimeExample.includes("DATABASE_MIGRATION_URL="));
@@ -631,6 +639,7 @@ assert.match(
 assertOrdered(agentsGuide, "AGENTS required reading", [
   "`docs/SHARED_CONTRACTS.md`",
   "`docs/SENSORY_VOCABULARY.md`",
+  "`docs/BOUNDARY_DTOS.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
   "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
@@ -638,16 +647,56 @@ assertOrdered(agentsGuide, "AGENTS required reading", [
 assertOrdered(readme, "README start-here guide order", [
   "[Shared contracts](docs/SHARED_CONTRACTS.md)",
   "[Sensory vocabulary](docs/SENSORY_VOCABULARY.md)",
+  "[Boundary DTOs](docs/BOUNDARY_DTOS.md)",
   "[Shared contract change guide](docs/CONTRACT_CHANGE_GUIDE.md)",
   "[Contract change queue](docs/CONTRACT_CHANGE_QUEUE.md)",
   "[Task master](docs/TASK_MASTER.md)",
 ]);
 assertOrdered(integrationProtocol, "Codex handoff reading order", [
   "`docs/SHARED_CONTRACTS.md`",
+  "`docs/SENSORY_VOCABULARY.md`",
+  "`docs/BOUNDARY_DTOS.md`",
   "`docs/CONTRACT_CHANGE_GUIDE.md`",
   "`docs/CONTRACT_CHANGE_QUEUE.md`",
   "`docs/TASK_MASTER.md`",
 ]);
+for (const marker of [
+  "`boundary-dtos/0.1.0`",
+  "remains `draft` until U1.6",
+  "`CompactMenuExtraction` is provider-neutral but explicitly",
+  "`unvalidated`",
+  "`MenuItemDishMatch` is the evidence-bearing many-to-many relationship",
+  "source_stated",
+  "inferred_from_source",
+  "reviewed culinary_baseline",
+  "`unknown`, with no value, claim, or provenance",
+  "does not implement a provider",
+  "does not decide:",
+]) {
+  assert(
+    boundaryDtos.includes(marker),
+    `boundary DTO documentation is missing ${marker}`,
+  );
+}
+for (const marker of [
+  "`@foodseyo/contracts`",
+  "`@foodseyo/contracts/boundary-dtos`",
+  "`0.1.0`/`draft`",
+  "unavailable to feature code until U1.6",
+]) {
+  assert(
+    contractsPackage.includes(marker),
+    `contracts package documentation is missing ${marker}`,
+  );
+}
+assert.match(
+  sharedContracts,
+  /`BOUNDARY_DTOS\.md`[\s\S]*`boundary-dtos\/0\.1\.0`[\s\S]*unavailable to feature code/,
+);
+assert.match(
+  decisionLog,
+  /## U-012 - Typed boundary DTOs and derived Dish profiles[\s\S]*Issue #10[\s\S]*\*\*Status:\*\* Proposed/,
+);
 assertOrdered(contractChangeGuide, "contract change guide", [
   "## Is this a shared contract change?",
   "## Required workflow",
@@ -1008,7 +1057,7 @@ assertTaskStatus(
   "DONE",
 );
 assertTaskStatus(taskMaster, "### U1.2 Freeze shared vocabulary", "DONE");
-assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "READY");
+assertTaskStatus(taskMaster, "### U1.3 Freeze boundary DTOs", "REVIEW");
 assertTaskStatus(
   taskMaster,
   "### U1.4 Freeze environment and feature-flag registry",

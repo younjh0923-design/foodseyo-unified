@@ -219,3 +219,41 @@
   `7c537e19c133285b50bbc096f38510c63a063e56`.
 - **Status:** Accepted
 - **Date:** 2026-07-18
+
+## U-012 - Typed boundary DTOs and derived Dish profiles
+
+- **Decision candidate:** Use exact runtime-validated DTOs for restaurant
+  candidates and confirmation, transient menu-source input, unvalidated compact
+  extraction, canonical analysis, typed Dish matching and claims, derived
+  effective profiles, normal outcomes, and safe public errors.
+- **Trust boundary:** UI-safe restaurant operations are separate from sensitive
+  transient source content. Compact extraction is explicitly unvalidated.
+  Provider DTOs, raw URLs, source bodies, database rows, and ORM types do not
+  enter canonical or UI result contracts.
+- **Dish semantics:** `RestaurantMenuVersion` and `MenuItem` own restaurant
+  context and current-menu facts. Reusable Dish knowledge is typed,
+  provenance-bearing, versioned, and separately reviewed. The many-to-many
+  match requires evidence and an explicit decision; candidate rank is never
+  confirmation.
+- **Merge semantics:** An `EffectiveDishProfile` is derived, carries input,
+  policy, and knowledge versions, and applies `source_stated >
+  inferred_from_source > reviewed culinary_baseline > unknown` per field. A
+  lower-priority baseline cannot append to or override a field with current
+  menu evidence.
+- **Safety:** Unknown has no value, claim, or provenance and cannot become
+  zero, absence, false, confirmed, allergen-safe, or dietary-safe. The candidate
+  U1.3 claim families do not create allergen or dietary certification.
+- **Public boundary:** Normal no-result/user-action outcomes remain separate
+  from public errors. Public messages are registry-owned safe copy with a
+  correlation ID, retryability, and HTTP status; callers cannot include raw
+  source or provider detail.
+- **Version impact:** Introduces `boundary-dtos/0.1.0`. All contracts remain
+  `0.1.0`/`draft` and unavailable to feature code until U1.6.
+- **Approval basis:** Issue #10 has all-owner direction approval. The exact
+  U1.3 contract PR still requires all three owners to approve the same final
+  HEAD before merge.
+- **Deferred:** Provider-specific DTOs, service ports and fakes, matcher scoring,
+  effective-profile materialization, physical schema, migrations, cache
+  identity, and final allergen/dietary claim vocabularies.
+- **Status:** Proposed
+- **Date:** 2026-07-18

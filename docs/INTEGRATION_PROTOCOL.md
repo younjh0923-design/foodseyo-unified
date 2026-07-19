@@ -79,11 +79,13 @@ Every Codex task starts by reading:
 2. `docs/TECH_STACK.md`
 3. `docs/PRODUCT_FLOW.md`
 4. `docs/SHARED_CONTRACTS.md`
-5. `docs/CONTRACT_CHANGE_GUIDE.md`
-6. `docs/CONTRACT_CHANGE_QUEUE.md`
-7. the assigned task in `docs/TASK_MASTER.md`
-8. `docs/TEAM_OWNERSHIP.md`
-9. the owning package README and tests
+5. `docs/SENSORY_VOCABULARY.md`
+6. `docs/BOUNDARY_DTOS.md`
+7. `docs/CONTRACT_CHANGE_GUIDE.md`
+8. `docs/CONTRACT_CHANGE_QUEUE.md`
+9. the assigned task in `docs/TASK_MASTER.md`
+10. `docs/TEAM_OWNERSHIP.md`
+11. the owning package README and tests
 
 Before implementation, every Codex task refreshes GitHub state and scans the
 complete open contract-change queue. It then deeply reviews only proposals in
