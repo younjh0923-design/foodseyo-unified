@@ -222,7 +222,7 @@
 
 ## U-012 - Typed boundary DTOs and derived Dish profiles
 
-- **Decision candidate:** Use exact runtime-validated DTOs for restaurant
+- **Decision:** Use exact runtime-validated DTOs for restaurant
   candidates and confirmation, transient menu-source input, unvalidated compact
   extraction, canonical analysis, typed Dish matching and claims, derived
   effective profiles, normal outcomes, and safe public errors.
@@ -249,11 +249,12 @@
   source or provider detail.
 - **Version impact:** Introduces `boundary-dtos/0.1.0`. All contracts remain
   `0.1.0`/`draft` and unavailable to feature code until U1.6.
-- **Approval basis:** Issue #10 has all-owner direction approval. The exact
-  U1.3 contract PR still requires all three owners to approve the same final
-  HEAD before merge.
+- **Approval evidence:** Issue #10 received all-owner direction approval. YTW
+  and Juhyung approved the exact PR #12 head
+  `6c7c3d32029674405f111d93bb4cd9982830400d`; PR #12 merged to `main` as
+  `8050bc44cff2880b97b08576282565e1f44ed27c`.
 - **Deferred:** Provider-specific DTOs, service ports and fakes, matcher scoring,
   effective-profile materialization, physical schema, migrations, cache
   identity, and final allergen/dietary claim vocabularies.
-- **Status:** Proposed
-- **Date:** 2026-07-18
+- **Status:** Accepted
+- **Date:** 2026-07-19
