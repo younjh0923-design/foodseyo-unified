@@ -111,15 +111,16 @@ Execution order:
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** REVIEW
+- **Status:** DONE
 - **Decide:** allowed sensory values, ingredient roles, restaurant states,
   menu scopes, menu lifecycle, Dish match states, knowledge review states.
 - **Acceptance:** no ambiguous `taste` field; heat/richness cannot mix; contract
   tests pass; the candidate vocabulary is complete but remains `0.1.0`/`draft`
   until U1.6.
-- **Proposal evidence:** issue #6 was approved by all three owners. The
-  dedicated contract PR still requires all-owner approval on its exact final
-  HEAD before merge.
+- **Completion evidence:** issue #6 was approved by all three owners; all three
+  approved the exact PR #8 head
+  `b8447159b1132266af6ac9b17ece891c399e7bf1`; PR #8 merged to `main` as
+  `7c537e19c133285b50bbc096f38510c63a063e56`.
 
 ### U1.3 Freeze boundary DTOs
 
@@ -127,8 +128,7 @@ Execution order:
 - **Inputs:** YTW upstream producer needs, Juhyung explanation/UI consumer
   needs
 - **Dependency:** U1.2
-- **Status:** BLOCKED
-- **Blocked by:** U1.2
+- **Status:** READY
 - **Define:**
   - `RestaurantCandidate`
   - `RestaurantResolution`
@@ -146,15 +146,16 @@ Execution order:
 - **Owner:** Youn
 - **Reviewers:** all three
 - **Dependency:** U1.1
-- **Status:** REVIEW
+- **Status:** DONE
 - **Acceptance:** every variable has owner, secret classification, runtime
   scope, Development/Preview/Production policy, and no printed value.
   Migration credentials remain outside application runtime;
   `TECH_STACK.md`, environment examples, and TypeScript environment names agree;
   no Supabase or legacy model alias is approved.
-- **Proposal evidence:** issue #7 was approved by all three owners. The
-  dedicated contract PR still requires all-owner approval on its exact final
-  HEAD before merge.
+- **Completion evidence:** issue #7 was approved by all three owners; all three
+  approved the exact PR #9 head
+  `982a5d52fdc9e18bad819a7602e58d15b0a03ae1`; PR #9 merged to `main` as
+  `e1dac696da91d82d715ae70b513ebef757957980`.
 
 ### U1.5 Freeze module interfaces
 
@@ -172,7 +173,7 @@ Execution order:
 - **Owner:** all three
 - **Dependency:** U1.2, U1.3, U1.4, U1.5
 - **Status:** BLOCKED
-- **Blocked by:** U1.2, U1.3, U1.4, and U1.5
+- **Blocked by:** U1.3 and U1.5
 - **Scope:** verify vocabulary, DTOs, outcomes, environment registry, versions,
   package interfaces, fixtures, invalid cases, and ownership handoffs as one
   compatible system.
@@ -508,9 +509,9 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U1.1 is complete. Complete exact-HEAD review of the **U1.2 - Freeze shared
-vocabulary** contract PR while **U1.4 - Freeze environment and feature-flag
-registry** proceeds independently through its own contract PR. U1.3 remains
-blocked until U1.2 merges. Do not start U2 feature code until U1.6 is `DONE`
-and the selected contract versions are promoted from `0.1.0`/`draft` to
-`1.0.0`.
+U1.1, U1.2, and U1.4 are complete. Begin **U1.3 - Freeze boundary DTOs** using
+the approved Dish semantic direction in issue #10 as an input while preserving
+the exact vocabulary, environment, ownership, provenance, unknown, and safety
+contracts already merged. U1.5 remains blocked until U1.3 is complete. Do not
+start U2 feature code until U1.6 is `DONE` and the selected contract versions
+are promoted from `0.1.0`/`draft` to `1.0.0`.
