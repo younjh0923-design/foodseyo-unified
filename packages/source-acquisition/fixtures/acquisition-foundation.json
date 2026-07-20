@@ -1,0 +1,201 @@
+{
+  "cases": [
+    {
+      "case": "supported_upload",
+      "submissionHandles": ["handle:upload-supported"],
+      "identities": {
+        "handle:upload-supported": {
+          "sourceRef": "10000000-0000-4000-8000-000000000001",
+          "sourceFingerprint": "sha256:upload-supported"
+        }
+      },
+      "discoveries": {},
+      "expected": { "status": "success", "sourceType": "uploaded_menu" }
+    },
+    {
+      "case": "supported_official_pdf",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {
+        "official_pdf": [
+          {
+            "sourceRef": "10000000-0000-4000-8000-000000000002",
+            "sourceFingerprint": "sha256:official-pdf-supported",
+            "rawUrl": "https://menu.fixture.example/current-menu.pdf",
+            "content": {
+              "kind": "pdf",
+              "contentHandle": "handle:official-pdf-supported",
+              "sensitivity": "sensitive_transient",
+              "byteCount": 4096,
+              "pageCount": 2
+            }
+          }
+        ]
+      },
+      "expected": { "status": "success", "sourceType": "official_pdf" }
+    },
+    {
+      "case": "supported_web_search_fallback",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {
+        "web_search_discovery": [
+          {
+            "sourceRef": "10000000-0000-4000-8000-000000000003",
+            "sourceFingerprint": "sha256:web-search-supported",
+            "rawUrl": "https://restaurant.fixture.example/menu",
+            "content": {
+              "kind": "html",
+              "contentHandle": "handle:web-search-supported",
+              "sensitivity": "sensitive_transient",
+              "byteCount": 2048,
+              "pageCount": null
+            }
+          }
+        ]
+      },
+      "expected": { "status": "success", "sourceType": "web_search_discovery" }
+    },
+    {
+      "case": "supported_official_after_peer_failure",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "rejectedDiscoveries": ["official_website"],
+      "discoveries": {
+        "official_pdf": [
+          {
+            "sourceRef": "10000000-0000-4000-8000-000000000009",
+            "sourceFingerprint": "sha256:official-after-peer-failure",
+            "rawUrl": "https://menu.fixture.example/resilient-menu.pdf",
+            "content": {
+              "kind": "pdf",
+              "contentHandle": "handle:official-after-peer-failure",
+              "sensitivity": "sensitive_transient",
+              "byteCount": 3072,
+              "pageCount": 1
+            }
+          }
+        ]
+      },
+      "expected": { "status": "success", "sourceType": "official_pdf" }
+    },
+    {
+      "case": "supported_web_search_after_official_failure",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "rejectedDiscoveries": ["official_website", "official_pdf", "ordering_page"],
+      "discoveries": {
+        "web_search_discovery": [
+          {
+            "sourceRef": "10000000-0000-4000-8000-000000000010",
+            "sourceFingerprint": "sha256:web-after-official-failure",
+            "rawUrl": "https://restaurant.fixture.example/fallback-menu",
+            "content": {
+              "kind": "html",
+              "contentHandle": "handle:web-after-official-failure",
+              "sensitivity": "sensitive_transient",
+              "byteCount": 1536,
+              "pageCount": null
+            }
+          }
+        ]
+      },
+      "expected": { "status": "success", "sourceType": "web_search_discovery" }
+    },
+    {
+      "case": "unsupported",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {
+        "official_pdf": [
+          {
+            "sourceRef": "10000000-0000-4000-8000-000000000004",
+            "sourceFingerprint": "sha256:unsupported-official-pdf",
+            "rawUrl": "https://menu.fixture.example/not-a-pdf",
+            "content": {
+              "kind": "html",
+              "contentHandle": "handle:unsupported-official-pdf",
+              "sensitivity": "sensitive_transient",
+              "byteCount": 1024,
+              "pageCount": null
+            }
+          }
+        ]
+      },
+      "expected": { "status": "outcome", "code": "MENU_SOURCE_NOT_FOUND" }
+    },
+    {
+      "case": "duplicate",
+      "submissionHandles": ["handle:upload-duplicate", "handle:upload-duplicate"],
+      "identities": {
+        "handle:upload-duplicate": {
+          "sourceRef": "10000000-0000-4000-8000-000000000005",
+          "sourceFingerprint": "sha256:upload-duplicate"
+        }
+      },
+      "discoveries": {},
+      "expected": { "status": "success", "sourceType": "uploaded_menu" }
+    },
+    {
+      "case": "conflict",
+      "submissionHandles": ["handle:upload-conflict-a", "handle:upload-conflict-b"],
+      "identities": {
+        "handle:upload-conflict-a": {
+          "sourceRef": "10000000-0000-4000-8000-000000000006",
+          "sourceFingerprint": "sha256:upload-conflict-a"
+        },
+        "handle:upload-conflict-b": {
+          "sourceRef": "10000000-0000-4000-8000-000000000007",
+          "sourceFingerprint": "sha256:upload-conflict-b"
+        }
+      },
+      "discoveries": {},
+      "expected": { "status": "outcome", "code": "MENU_SOURCE_CONFLICT" }
+    },
+    {
+      "case": "timeout",
+      "submissionHandles": ["handle:upload-timeout"],
+      "identities": {},
+      "discoveries": {},
+      "timedOut": true,
+      "expected": { "status": "error", "code": "UPSTREAM_TIMEOUT" }
+    },
+    {
+      "case": "in_flight_discovery_timeout_rejection",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {},
+      "timedOutDiscoveries": ["official_website"],
+      "expected": { "status": "error", "code": "UPSTREAM_TIMEOUT" }
+    },
+    {
+      "case": "no_source",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {},
+      "expected": { "status": "outcome", "code": "MENU_SOURCE_NOT_FOUND" }
+    },
+    {
+      "case": "unsafe_url",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {
+        "official_pdf": [
+          {
+            "sourceRef": "10000000-0000-4000-8000-000000000008",
+            "sourceFingerprint": "sha256:unsafe-official-pdf",
+            "rawUrl": "https://127.0.0.1/private-menu.pdf",
+            "content": {
+              "kind": "pdf",
+              "contentHandle": "handle:unsafe-official-pdf",
+              "sensitivity": "sensitive_transient",
+              "byteCount": 512,
+              "pageCount": 1
+            }
+          }
+        ]
+      },
+      "expected": { "status": "error", "code": "UNSAFE_SOURCE" }
+    }
+  ]
+}

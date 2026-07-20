@@ -402,7 +402,26 @@ export class FoundationRestaurantResolutionPort
           context,
         );
       } catch {
+        if (context.signal.aborted) {
+          return isTimeoutAbortSignal(context.signal)
+            ? {
+                status: "error",
+                error: publicError("UPSTREAM_TIMEOUT", context),
+              }
+            : {
+                status: "outcome",
+                outcome: publicOutcome("RESTAURANT_NOT_RESOLVED", context),
+              };
+        }
         return { status: "error", error: publicError("INTERNAL_ERROR", context) };
+      }
+      if (context.signal.aborted) {
+        return isTimeoutAbortSignal(context.signal)
+          ? { status: "error", error: publicError("UPSTREAM_TIMEOUT", context) }
+          : {
+              status: "outcome",
+              outcome: publicOutcome("RESTAURANT_NOT_RESOLVED", context),
+            };
       }
       return this.success({
         state:

@@ -14,8 +14,9 @@
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
     "validate:restaurant-resolution": "pnpm --filter @foodseyo/restaurant-resolution validate:foundation",
+    "validate:source-acquisition": "pnpm --filter @foodseyo/source-acquisition validate:foundation",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:restaurant-resolution && pnpm validate:security"
+    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:security"
   },
   "devDependencies": {
     "tsx": "4.20.6",

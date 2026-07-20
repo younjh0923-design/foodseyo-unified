@@ -64,6 +64,11 @@
     { "case": "in_flight_timeout", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" },
     { "case": "in_flight_timeout_success_discarded", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" },
     { "case": "in_flight_cancellation_success_discarded", "records": ["alpha"], "expected": "RESTAURANT_NOT_RESOLVED" },
-    { "case": "provider_rejection", "records": [], "expected": "UPSTREAM_UNAVAILABLE" }
+    { "case": "provider_rejection", "records": [], "expected": "UPSTREAM_UNAVAILABLE" },
+    { "case": "identity_assignment_timeout_success_discarded", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" },
+    { "case": "identity_assignment_cancellation_success_discarded", "records": ["alpha"], "expected": "RESTAURANT_NOT_RESOLVED" },
+    { "case": "identity_assignment_timeout_rejection", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" },
+    { "case": "identity_assignment_cancellation_rejection", "records": ["alpha"], "expected": "RESTAURANT_NOT_RESOLVED" },
+    { "case": "identity_assignment_failure", "records": ["alpha"], "expected": "INTERNAL_ERROR" }
   ]
 }

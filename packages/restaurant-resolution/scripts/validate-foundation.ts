@@ -99,6 +99,20 @@ const inFlightCancelledContext = (
   };
 };
 
+const deferred = <T>(): {
+  readonly promise: Promise<T>;
+  readonly resolve: (value: T | PromiseLike<T>) => void;
+  readonly reject: (reason?: unknown) => void;
+} => {
+  let resolvePromise!: (value: T | PromiseLike<T>) => void;
+  let rejectPromise!: (reason?: unknown) => void;
+  const promise = new Promise<T>((resolve, reject) => {
+    resolvePromise = resolve;
+    rejectPromise = reject;
+  });
+  return { promise, resolve: resolvePromise, reject: rejectPromise };
+};
+
 class InFlightTimeoutGooglePlacesAdapter
   implements GooglePlacesCandidateAdapter
 {
@@ -252,6 +266,131 @@ assert.equal(confirmed.value.restaurantId, internalRestaurantId);
 assert.notEqual(confirmed.value.restaurantId, alpha.googlePlaceId);
 assert.deepEqual(confirmed.value.confirmationEvidence, userEvidence);
 RestaurantResolutionSchema.parse(confirmed.value);
+
+const runInterruptedAssignment = async (
+  fixtureName: string,
+  interruption: {
+    readonly context: PortInvocationContext;
+    readonly abort: () => void;
+    readonly expectedStatus: "error" | "outcome";
+    readonly expectedCode: "UPSTREAM_TIMEOUT" | "RESTAURANT_NOT_RESOLVED";
+  },
+  settlement: "resolve" | "reject",
+) => {
+  const started = deferred<void>();
+  const assignment = deferred<string | null>();
+  const interruptedPort = new FoundationRestaurantResolutionPort(async () => {
+    started.resolve();
+    return assignment.promise;
+  });
+  const pendingResult = interruptedPort.resolve(
+    {
+      candidates: [alpha],
+      priorResolution: initial.value,
+      selectedCandidateId: alpha.candidateId,
+      confirmationEvidence: userEvidence,
+    },
+    interruption.context,
+  );
+
+  await started.promise;
+  interruption.abort();
+  if (settlement === "resolve") {
+    assignment.resolve(internalRestaurantId);
+  } else {
+    assignment.reject(new Error("deterministic assignment rejection"));
+  }
+
+  const result = await pendingResult;
+  assert.equal(result.status, interruption.expectedStatus, fixtureName);
+  if (result.status === "error") {
+    assert.equal(result.error.error.code, interruption.expectedCode, fixtureName);
+  } else if (result.status === "outcome") {
+    assert.equal(result.outcome.code, interruption.expectedCode, fixtureName);
+  }
+  const serialized = JSON.stringify(result);
+  assert.equal("value" in result, false, fixtureName);
+  assert.equal(serialized.includes(internalRestaurantId), false, fixtureName);
+  assert.equal(serialized.includes(alpha.candidateId), false, fixtureName);
+  assert.equal(serialized.includes("user_confirmed"), false, fixtureName);
+  assert.equal(serialized.includes("confirmationEvidence"), false, fixtureName);
+  await Promise.resolve();
+  assert.equal(JSON.stringify(result), serialized, fixtureName);
+};
+
+const assignmentTimeoutResolve = inFlightTimedOutContext(
+  "assignment-timeout-resolve",
+);
+await runInterruptedAssignment(
+  "identity_assignment_timeout_success_discarded",
+  {
+    context: assignmentTimeoutResolve.context,
+    abort: assignmentTimeoutResolve.abortAsTimedOut,
+    expectedStatus: "error",
+    expectedCode: "UPSTREAM_TIMEOUT",
+  },
+  "resolve",
+);
+
+const assignmentCancellationResolve = inFlightCancelledContext(
+  "assignment-cancellation-resolve",
+);
+await runInterruptedAssignment(
+  "identity_assignment_cancellation_success_discarded",
+  {
+    context: assignmentCancellationResolve.context,
+    abort: assignmentCancellationResolve.abortAsCancelled,
+    expectedStatus: "outcome",
+    expectedCode: "RESTAURANT_NOT_RESOLVED",
+  },
+  "resolve",
+);
+
+const assignmentTimeoutReject = inFlightTimedOutContext(
+  "assignment-timeout-reject",
+);
+await runInterruptedAssignment(
+  "identity_assignment_timeout_rejection",
+  {
+    context: assignmentTimeoutReject.context,
+    abort: assignmentTimeoutReject.abortAsTimedOut,
+    expectedStatus: "error",
+    expectedCode: "UPSTREAM_TIMEOUT",
+  },
+  "reject",
+);
+
+const assignmentCancellationReject = inFlightCancelledContext(
+  "assignment-cancellation-reject",
+);
+await runInterruptedAssignment(
+  "identity_assignment_cancellation_rejection",
+  {
+    context: assignmentCancellationReject.context,
+    abort: assignmentCancellationReject.abortAsCancelled,
+    expectedStatus: "outcome",
+    expectedCode: "RESTAURANT_NOT_RESOLVED",
+  },
+  "reject",
+);
+
+const failedAssignment = await new FoundationRestaurantResolutionPort(
+  async () => {
+    throw new Error("deterministic assignment failure");
+  },
+).resolve(
+  {
+    candidates: [alpha],
+    priorResolution: initial.value,
+    selectedCandidateId: alpha.candidateId,
+    confirmationEvidence: userEvidence,
+  },
+  context("assignment-failure"),
+);
+assert.equal(failedAssignment.status, "error");
+if (failedAssignment.status === "error") {
+  assert.equal(failedAssignment.error.error.code, "INTERNAL_ERROR");
+}
 
 const externallyVerified = await resolutionPort.resolve(
   {
@@ -537,6 +676,11 @@ assert.deepEqual(
     "in_flight_timeout_success_discarded",
     "in_flight_cancellation_success_discarded",
     "provider_rejection",
+    "identity_assignment_timeout_success_discarded",
+    "identity_assignment_cancellation_success_discarded",
+    "identity_assignment_timeout_rejection",
+    "identity_assignment_cancellation_rejection",
+    "identity_assignment_failure",
   ],
 );
 
