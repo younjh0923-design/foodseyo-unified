@@ -17,5 +17,32 @@
     "General dish guidance",
     "Not confirmed"
   ],
+  "restaurantResolutionStates": [
+    {
+      "state": "candidate",
+      "selectable": true,
+      "controlIds": ["continue-menu-only"]
+    },
+    {
+      "state": "conflicting",
+      "selectable": true,
+      "controlIds": ["continue-menu-only"]
+    },
+    {
+      "state": "user_confirmed",
+      "selectable": false,
+      "controlIds": ["continue-analysis"]
+    },
+    {
+      "state": "externally_verified",
+      "selectable": false,
+      "controlIds": ["continue-analysis"]
+    },
+    {
+      "state": "rejected",
+      "selectable": false,
+      "controlIds": ["retry-restaurant-matching", "continue-menu-only"]
+    }
+  ],
   "blockedContractIssues": [20, 21]
 }

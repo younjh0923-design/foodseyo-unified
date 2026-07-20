@@ -26,6 +26,7 @@ import {
   buildResultScreen,
   buildUploadReviewScreen,
   createLocalInputDraft,
+  formatMenuItemPrice,
   preserveLinkInput,
   runDeterministicExperience,
 } from "../src/index.js";
@@ -51,6 +52,11 @@ interface WebFixture {
   }[];
   readonly viewportWidths: readonly number[];
   readonly requiredEvidenceLabels: readonly string[];
+  readonly restaurantResolutionStates: readonly {
+    readonly state: RestaurantResolution["state"];
+    readonly selectable: boolean;
+    readonly controlIds: readonly string[];
+  }[];
   readonly blockedContractIssues: readonly number[];
 }
 
@@ -121,6 +127,111 @@ for (const screen of [
 assert.equal(restaurantScreen.candidates.length, 1);
 assert.equal(restaurantScreen.candidates[0]?.name, "Fixture Restaurant");
 assert.equal("googlePlaceId" in (restaurantScreen.candidates[0] ?? {}), false);
+
+const secondCandidate = {
+  ...resolution.candidates[0]!,
+  candidateId: "10101010-1010-4010-8010-101010101010",
+  googlePlaceId: "fixture_google_place_002",
+  displayName: "Second Fixture Restaurant",
+  fullAddress: "2 Fixture Avenue",
+  shortAddress: "Second Fixture Avenue",
+  rank: 2,
+};
+const resolutionForState = (
+  state: RestaurantResolution["state"],
+): RestaurantResolution => {
+  if (state === "user_confirmed") return resolution;
+  if (state === "externally_verified") {
+    return RestaurantResolutionSchema.parse({
+      ...resolution,
+      state,
+      confirmationEvidence: {
+        kind: "external_evidence",
+        sourceRefs: ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"],
+        recordedAt: resolution.resolvedAt,
+      },
+    });
+  }
+  return RestaurantResolutionSchema.parse({
+    ...resolution,
+    state,
+    candidates:
+      state === "conflicting"
+        ? [...resolution.candidates, secondCandidate]
+        : resolution.candidates,
+    selectedCandidateId: null,
+    restaurantId: null,
+    confirmationEvidence: null,
+    requiresUserConfirmation: state !== "rejected",
+    resolvedAt: null,
+  });
+};
+
+for (const expected of webFixture.restaurantResolutionStates) {
+  const screen = buildRestaurantSelectionScreen(
+    draft,
+    resolutionForState(expected.state),
+  );
+  assert.equal(screen.resolutionState, expected.state);
+  assert.deepEqual(
+    screen.controls.map((control) => control.id),
+    expected.controlIds,
+  );
+  assert(
+    screen.candidates.every(
+      (candidate) => candidate.canSelect === expected.selectable,
+    ),
+  );
+  assert(
+    screen.candidates.every(
+      (candidate) =>
+        (candidate.confirmLabel !== null) === expected.selectable &&
+        (candidate.confirmAriaLabel !== null) === expected.selectable,
+    ),
+  );
+  if (expected.state === "candidate" || expected.state === "conflicting") {
+    assert(
+      screen.candidates.every((candidate) => candidate.isSelected === false),
+      "unconfirmed rank-one candidate must not be auto-selected",
+    );
+  }
+  if (expected.state === "conflicting") {
+    assert.match(screen.description, /different locations/i);
+  }
+  if (expected.state === "user_confirmed") {
+    assert.match(screen.title, /confirmed/i);
+    assert.equal(screen.candidates[0]?.isSelected, true);
+  }
+  if (expected.state === "externally_verified") {
+    assert.match(screen.title, /verified/i);
+    assert.equal(screen.candidates[0]?.isSelected, true);
+  }
+  if (expected.state === "rejected") {
+    assert.match(screen.description, /menu-photo-only/i);
+  }
+}
+
+const numericMeaning = (display: string): string => {
+  const numeric = display.match(/[\d,]+(?:\.\d+)?/)?.[0];
+  assert(numeric, `price has no numeric value: ${display}`);
+  return `${display.includes("-") ? "-" : ""}${numeric.replaceAll(",", "")}`;
+};
+const fixtureMenuItem = analysis.menuItems[0]!;
+const priceMeaning = (amountMinor: number, currency: string): string =>
+  numericMeaning(
+    formatMenuItemPrice({
+      ...fixtureMenuItem,
+      price: { amountMinor, currency },
+    }),
+  );
+
+assert.equal(priceMeaning(1500, "JPY"), "1500");
+assert.equal(priceMeaning(1234, "USD"), "12.34");
+assert.equal(priceMeaning(1234, "KWD"), "1.234");
+assert.equal(priceMeaning(-1234, "USD"), "-12.34");
+assert.equal(priceMeaning(0, "KWD"), "0.000");
+assert.equal(priceMeaning(Number.MAX_SAFE_INTEGER, "USD"), "90071992547409.91");
+assert.equal(priceMeaning(1234, "NOT_A_CURRENCY"), "12.34");
 
 const unresolvedRestaurantOutcome: PublicOutcome = {
   code: "RESTAURANT_NOT_RESOLVED",

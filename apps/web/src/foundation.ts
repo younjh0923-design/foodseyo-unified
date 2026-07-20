@@ -63,13 +63,16 @@ export interface RestaurantCandidateRowView {
   readonly address: string;
   readonly rank: number;
   readonly isSelected: boolean;
-  readonly confirmLabel: string;
-  readonly confirmAriaLabel: string;
+  readonly canSelect: boolean;
+  readonly confirmLabel: string | null;
+  readonly confirmAriaLabel: string | null;
 }
 
 export interface RestaurantSelectionScreenView {
   readonly kind: "restaurant_confirmation";
-  readonly title: "Choose the restaurant";
+  readonly resolutionState: RestaurantResolution["state"];
+  readonly title: string;
+  readonly description: string;
   readonly draft: LocalInputDraft;
   readonly requiresUserConfirmation: boolean;
   readonly canContinueMenuOnly: true;
@@ -232,6 +235,37 @@ const OUTCOME_COPY = {
   Record<PublicOutcome["code"], { readonly title: string; readonly message: string }>
 >;
 
+const RESTAURANT_RESOLUTION_COPY = {
+  candidate: {
+    title: "Choose the restaurant",
+    description: "Select the location that matches your visit.",
+  },
+  conflicting: {
+    title: "Restaurant details conflict",
+    description:
+      "The available clues point to different locations. Choose the correct one or continue with menu-only analysis.",
+  },
+  user_confirmed: {
+    title: "Restaurant confirmed",
+    description: "Your restaurant choice is confirmed. Menu analysis can continue.",
+  },
+  externally_verified: {
+    title: "Restaurant verified",
+    description:
+      "This restaurant was verified from external evidence. Menu analysis can continue.",
+  },
+  rejected: {
+    title: "Restaurant not confirmed",
+    description:
+      "Try restaurant matching again or continue with menu-photo-only analysis.",
+  },
+} as const satisfies Readonly<
+  Record<
+    RestaurantResolution["state"],
+    { readonly title: string; readonly description: string }
+  >
+>;
+
 const cloneDraft = (draft: LocalInputDraft): LocalInputDraft => ({
   linkInput: draft.linkInput,
   photos: draft.photos.map((photo) => ({ ...photo })),
@@ -354,9 +388,41 @@ export const buildRestaurantSelectionScreen = (
   resolution: RestaurantResolution,
 ): RestaurantSelectionScreenView => {
   const parsed = RestaurantResolutionSchema.parse(resolution);
+  const copy = RESTAURANT_RESOLUTION_COPY[parsed.state];
+  const canSelectCandidate =
+    parsed.state === "candidate" || parsed.state === "conflicting";
+  const controls: AccessibleControl[] = [];
+
+  if (parsed.state === "rejected") {
+    controls.push({
+      id: "retry-restaurant-matching",
+      label: "Try restaurant matching again",
+      ariaLabel: "Try restaurant matching again",
+      keyboardAction: "activate",
+    });
+  }
+
+  if (parsed.state === "user_confirmed" || parsed.state === "externally_verified") {
+    controls.push({
+      id: "continue-analysis",
+      label: "Continue to menu analysis",
+      ariaLabel: "Continue to menu analysis with the confirmed restaurant",
+      keyboardAction: "activate",
+    });
+  } else {
+    controls.push({
+      id: "continue-menu-only",
+      label: "Continue with menu photos only",
+      ariaLabel: "Continue without confirming a restaurant",
+      keyboardAction: "activate",
+    });
+  }
+
   return {
     kind: "restaurant_confirmation",
-    title: "Choose the restaurant",
+    resolutionState: parsed.state,
+    title: copy.title,
+    description: copy.description,
     draft: cloneDraft(draft),
     requiresUserConfirmation: parsed.requiresUserConfirmation,
     canContinueMenuOnly: parsed.canContinueMenuOnly,
@@ -367,19 +433,17 @@ export const buildRestaurantSelectionScreen = (
         candidate.fullAddress ?? candidate.shortAddress ?? "Address not available",
       rank: candidate.rank,
       isSelected: candidate.candidateId === parsed.selectedCandidateId,
-      confirmLabel: "Choose this restaurant",
-      confirmAriaLabel: `Choose ${candidate.displayName} at ${
-        candidate.fullAddress ?? candidate.shortAddress ?? "the displayed location"
-      }`,
+      canSelect: canSelectCandidate,
+      confirmLabel: canSelectCandidate ? "Choose this restaurant" : null,
+      confirmAriaLabel: canSelectCandidate
+        ? `Choose ${candidate.displayName} at ${
+            candidate.fullAddress ??
+            candidate.shortAddress ??
+            "the displayed location"
+          }`
+        : null,
     })),
-    controls: [
-      {
-        id: "continue-menu-only",
-        label: "Continue with menu only",
-        ariaLabel: "Continue without confirming a restaurant",
-        keyboardAction: "activate",
-      },
-    ],
+    controls,
   };
 };
 
@@ -451,15 +515,65 @@ const humanize = (value: string): string =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 
-const formatMoney = (item: MenuItem): string => {
-  if (item.price === null) return "Price not confirmed";
+const DEFAULT_CURRENCY_FRACTION_DIGITS = 2;
+
+const currencyFractionDigits = (currency: string): number => {
   try {
-    return new Intl.NumberFormat("en", {
+    const options = new Intl.NumberFormat("en", {
       style: "currency",
-      currency: item.price.currency,
-    }).format(item.price.amountMinor / 100);
+      currency,
+    }).resolvedOptions();
+    const digits = options.maximumFractionDigits;
+    if (
+      typeof digits === "number" &&
+      options.minimumFractionDigits === digits &&
+      Number.isInteger(digits) &&
+      digits >= 0 &&
+      digits <= 20
+    ) {
+      return digits;
+    }
   } catch {
-    return `${item.price.currency} ${(item.price.amountMinor / 100).toFixed(2)}`;
+    // An unknown or malformed currency must not make the result screen fail.
+  }
+  return DEFAULT_CURRENCY_FRACTION_DIGITS;
+};
+
+export const formatMenuItemPrice = (item: MenuItem): string => {
+  if (item.price === null) return "Price not confirmed";
+  const { amountMinor, currency } = item.price;
+  const fractionDigits = currencyFractionDigits(currency);
+  const minorAmount = BigInt(amountMinor);
+  const divisor = 10n ** BigInt(fractionDigits);
+  const absoluteMinorAmount = minorAmount < 0n ? -minorAmount : minorAmount;
+  const wholeAmount = absoluteMinorAmount / divisor;
+  const fraction = (absoluteMinorAmount % divisor)
+    .toString()
+    .padStart(fractionDigits, "0");
+
+  try {
+    const formatter = new Intl.NumberFormat("en", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+    const signedWholeAmount: bigint | number =
+      minorAmount < 0n
+        ? wholeAmount === 0n
+          ? -0
+          : -wholeAmount
+        : wholeAmount;
+    return formatter
+      .formatToParts(signedWholeAmount)
+      .map((part) =>
+        part.type === "fraction" && fractionDigits > 0 ? fraction : part.value,
+      )
+      .join("");
+  } catch {
+    const sign = minorAmount < 0n ? "-" : "";
+    const decimal = fractionDigits > 0 ? `.${fraction}` : "";
+    return `${currency} ${sign}${wholeAmount}${decimal}`;
   }
 };
 
@@ -582,7 +696,7 @@ export const buildResultScreen = (
         menuItemId: item.menuItemId,
         name: item.name,
         description: item.description ?? "Description not confirmed",
-        price: formatMoney(item),
+        price: formatMenuItemPrice(item),
         sectionIndex: item.sectionIndex,
         itemIndex: item.itemIndex,
         dishResolved: profile !== null,
