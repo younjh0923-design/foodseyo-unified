@@ -72,8 +72,15 @@ const sourceFiles = async (directory: string): Promise<readonly string[]> => {
   return files.sort();
 };
 
+const APPROVED_PNPM_VERSION = "11.9.0";
+const PNPM_ACTION_SETUP =
+  "pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320";
+assert.match(PNPM_ACTION_SETUP, /^pnpm\/action-setup@[0-9a-f]{40}$/u);
 const rootManifest = await readJson<PackageManifest>(resolve("package.json"));
-assert.equal(rootManifest.packageManager, "pnpm@11.9.0");
+assert.equal(
+  rootManifest.packageManager,
+  `pnpm@${APPROVED_PNPM_VERSION}`,
+);
 assert.equal(rootManifest.engines?.node, ">=20.19.0");
 assert(rootManifest.scripts, "root scripts are required");
 
@@ -427,7 +434,11 @@ for (const step of steps) {
   assert.equal("if" in step, false, "required CI steps must not be conditional");
   if (typeof step.uses === "string") {
     assert(
-      ["actions/checkout@v4", "actions/setup-node@v4"].includes(step.uses),
+      [
+        "actions/checkout@v4",
+        "actions/setup-node@v4",
+        PNPM_ACTION_SETUP,
+      ].includes(step.uses),
       `unapproved GitHub Action ${step.uses}`,
     );
   }
@@ -439,12 +450,50 @@ assert(checkoutStep && isRecord(checkoutStep.with));
 assert.equal(checkoutStep.with["fetch-depth"], 0);
 assert.equal(checkoutStep.with["persist-credentials"], false);
 
+const setupNodeStep = steps.find(
+  (step) => step.uses === "actions/setup-node@v4",
+);
+assert(setupNodeStep && isRecord(setupNodeStep.with));
+assert.equal(setupNodeStep.with["node-version"], "20.19.0");
+
+const pnpmSetupStep = steps.find((step) => step.uses === PNPM_ACTION_SETUP);
+assert(pnpmSetupStep, "approved pnpm setup action is required");
+assert.equal(
+  "with" in pnpmSetupStep,
+  false,
+  "pnpm setup must read the frozen packageManager field without an override",
+);
+
 const runCommands = steps
   .map((step) => step.run)
   .filter((run): run is string => typeof run === "string");
-assert(runCommands.some((run) => run.includes("corepack enable")));
-assert(runCommands.some((run) => run.includes("pnpm --version")));
-assert(runCommands.includes("pnpm install --frozen-lockfile"));
+const pnpmVersionCheck = [
+  'pnpm_version="$(pnpm --version)"',
+  "printf '%s\\n' \"$pnpm_version\"",
+  `test "$pnpm_version" = "${APPROVED_PNPM_VERSION}"`,
+].join("\n");
+const pnpmVersionStep = steps.find((step) => step.run === pnpmVersionCheck);
+assert(pnpmVersionStep, "exact pnpm version check is required");
+const installStep = steps.find(
+  (step) => step.run === "pnpm install --frozen-lockfile",
+);
+assert(installStep, "frozen dependency install is required");
+assert(
+  steps.indexOf(pnpmSetupStep) < steps.indexOf(pnpmVersionStep) &&
+    steps.indexOf(pnpmVersionStep) < steps.indexOf(installStep),
+  "pnpm setup and exact version verification must precede installation",
+);
+for (const forbiddenBootstrap of [
+  "corepack",
+  "COREPACK_INTEGRITY_KEYS",
+  "npm install -g",
+]) {
+  assert.equal(
+    workflowSource.includes(forbiddenBootstrap),
+    false,
+    `CI must not use forbidden pnpm bootstrap ${forbiddenBootstrap}`,
+  );
+}
 const verifyStep = steps.find((step) => step.run === "pnpm verify");
 assert(verifyStep && isRecord(verifyStep.env));
 assert.match(String(verifyStep.env.NODE_OPTIONS), /deny-network\.cjs/);

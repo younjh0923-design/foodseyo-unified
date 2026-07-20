@@ -37,7 +37,11 @@
         },
         {
           "name": "Enable approved pnpm version",
-          "run": "corepack enable\npnpm --version"
+          "uses": "pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320"
+        },
+        {
+          "name": "Verify approved pnpm version",
+          "run": "pnpm_version=\"$(pnpm --version)\"\nprintf '%s\\n' \"$pnpm_version\"\ntest \"$pnpm_version\" = \"11.9.0\""
         },
         {
           "name": "Install frozen dependencies",

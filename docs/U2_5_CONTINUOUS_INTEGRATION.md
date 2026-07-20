@@ -3,9 +3,17 @@
 ## Scope and status
 
 U2.5 adds one pull-request validation job for changes targeting `main`. It
-installs the approved pnpm `11.9.0` dependency graph from the frozen lockfile,
-runs the repository-owned `pnpm verify` command without provider or database
-network access, and fails when validation produces a dirty worktree.
+uses the official `pnpm/action-setup` action to install the exact pnpm
+`11.9.0` version frozen in `package.json`, installs the dependency graph from
+the frozen lockfile, runs the repository-owned `pnpm verify` command without
+provider or database network access, and fails when validation produces a
+dirty worktree.
+
+The pnpm action is pinned to GitHub-verified `v4.4.0` commit
+`fc06bc1257f339d1d5d8b3a19a8cae5388b55320`. The workflow does not pass a
+second version input: the action reads `packageManager`, and the next step
+requires `pnpm --version` to equal `11.9.0` before dependency installation.
+Corepack and integrity-check bypasses are not part of the bootstrap path.
 
 The workflow contains no deployment, migration, provider, database, Preview,
 or Production job. Its GitHub token has read-only repository contents
@@ -42,10 +50,11 @@ its complete syntax with the platform runtime and no new YAML dependency.
 
 ## Network and secret boundary
 
-Dependency installation is the only repository command allowed to use the
-package registry. The verification process preloads `scripts/deny-network.cjs`
-into every Node child process. The preload blocks Node TCP, TLS, HTTP, HTTPS,
-HTTP/2, UDP, `fetch`, and WebSocket entry points before tests execute.
+The pinned pnpm bootstrap and frozen dependency installation are the only
+repository steps allowed to use the package registry. The verification process
+preloads `scripts/deny-network.cjs` into every Node child process. The preload
+blocks Node TCP, TLS, HTTP, HTTPS, HTTP/2, UDP, `fetch`, and WebSocket entry
+points before tests execute.
 
 CI also supplies empty values for every provider model/key and database
 credential name. The network-boundary validator fails if any such value is
