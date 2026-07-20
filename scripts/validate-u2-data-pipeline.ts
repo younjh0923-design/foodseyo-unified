@@ -530,6 +530,70 @@ assert.equal(timeoutExplanationPort.callCount, 0);
 assert.equal(timeoutPublicationService.callCount, 0);
 assert.equal(timeoutRepository.transactionCount, 0);
 
+const timeoutRejectionController = new AbortController();
+const timeoutRejectionExplanationPort = new FakeConstrainedExplanationPort(
+  plan(explanation),
+);
+const timeoutRejectionRepository = new DeterministicFakeAnalysisRepository();
+const timeoutRejectionPublicationService =
+  new TransactionalAnalysisPublicationService(
+    timeoutRejectionRepository,
+    publishedAt,
+  );
+const timeoutRejectionWorkflow = new AnalysisApplicationService(
+  new FakeCompactMenuExtractionPort(plan(extraction)),
+  new CanonicalMenuValidationService(async () => {
+    timeoutRejectionController.abort(
+      new DOMException("synthetic timeout", "TimeoutError"),
+    );
+    throw new Error("synthetic provider failure after timeout");
+  }),
+  timeoutRejectionExplanationPort,
+  timeoutRejectionPublicationService,
+);
+assertError(
+  await timeoutRejectionWorkflow.run(
+    { menuSource, restaurantResolution },
+    contextForSignal(timeoutRejectionController.signal),
+  ),
+  "UPSTREAM_TIMEOUT",
+);
+assert.equal(timeoutRejectionExplanationPort.callCount, 0);
+assert.equal(timeoutRejectionPublicationService.callCount, 0);
+assert.equal(timeoutRejectionRepository.transactionCount, 0);
+
+const cancellationRejectionController = new AbortController();
+const cancellationRejectionExplanationPort =
+  new FakeConstrainedExplanationPort(plan(explanation));
+const cancellationRejectionRepository =
+  new DeterministicFakeAnalysisRepository();
+const cancellationRejectionPublicationService =
+  new TransactionalAnalysisPublicationService(
+    cancellationRejectionRepository,
+    publishedAt,
+  );
+const cancellationRejectionWorkflow = new AnalysisApplicationService(
+  new FakeCompactMenuExtractionPort(plan(extraction)),
+  new CanonicalMenuValidationService(async () => {
+    cancellationRejectionController.abort(
+      new DOMException("synthetic cancellation", "AbortError"),
+    );
+    throw new Error("synthetic provider failure after cancellation");
+  }),
+  cancellationRejectionExplanationPort,
+  cancellationRejectionPublicationService,
+);
+assertError(
+  await cancellationRejectionWorkflow.run(
+    { menuSource, restaurantResolution },
+    contextForSignal(cancellationRejectionController.signal),
+  ),
+  "ANALYSIS_TEMPORARILY_UNAVAILABLE",
+);
+assert.equal(cancellationRejectionExplanationPort.callCount, 0);
+assert.equal(cancellationRejectionPublicationService.callCount, 0);
+assert.equal(cancellationRejectionRepository.transactionCount, 0);
+
 const providerFailureExplanationPort = new FakeConstrainedExplanationPort(
   plan(explanation),
 );

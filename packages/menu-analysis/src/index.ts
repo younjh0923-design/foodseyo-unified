@@ -394,6 +394,11 @@ export class CanonicalMenuValidationService
         value: analysisResult.data,
       };
     } catch {
+      const interruptedAfterNormalizeFailure =
+        interruptedResult<CanonicalMenuAnalysis>(context);
+      if (interruptedAfterNormalizeFailure !== null) {
+        return interruptedAfterNormalizeFailure;
+      }
       return {
         status: "error",
         error: publicError("INVALID_UPSTREAM_RESULT", context),
