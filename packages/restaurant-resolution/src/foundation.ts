@@ -278,6 +278,14 @@ export class GooglePlacesCandidateFinder {
             error: publicError("UPSTREAM_UNAVAILABLE", context),
           };
     }
+    if (context.signal.aborted) {
+      return isTimeoutAbortSignal(context.signal)
+        ? { status: "error", error: publicError("UPSTREAM_TIMEOUT", context) }
+        : {
+            status: "outcome",
+            outcome: publicOutcome("RESTAURANT_NOT_RESOLVED", context),
+          };
+    }
     if (providerResult.status !== "success") {
       return providerResult;
     }

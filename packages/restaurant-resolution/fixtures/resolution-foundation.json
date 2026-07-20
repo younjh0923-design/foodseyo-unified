@@ -61,6 +61,9 @@
     { "case": "no_candidates", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
     { "case": "menu_only_fallback", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
     { "case": "cross_branch_semantic_leak", "records": ["branchSemanticLeak"], "expected": "INVALID_UPSTREAM_RESULT" },
-    { "case": "in_flight_timeout", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" }
+    { "case": "in_flight_timeout", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" },
+    { "case": "in_flight_timeout_success_discarded", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" },
+    { "case": "in_flight_cancellation_success_discarded", "records": ["alpha"], "expected": "RESTAURANT_NOT_RESOLVED" },
+    { "case": "provider_rejection", "records": [], "expected": "UPSTREAM_UNAVAILABLE" }
   ]
 }

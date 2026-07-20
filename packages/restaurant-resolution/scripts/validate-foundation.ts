@@ -79,6 +79,26 @@ const inFlightTimedOutContext = (
   };
 };
 
+const inFlightCancelledContext = (
+  name: string,
+): {
+  readonly context: PortInvocationContext;
+  readonly abortAsCancelled: () => void;
+} => {
+  const controller = new AbortController();
+  return {
+    context: {
+      contractVersion: MODULE_INTERFACE_VERSION,
+      correlationId: `u2_3_${name}`,
+      timeoutMs: 5000,
+      signal: controller.signal,
+    },
+    abortAsCancelled: () => {
+      controller.abort(new DOMException("cancelled", "AbortError"));
+    },
+  };
+};
+
 class InFlightTimeoutGooglePlacesAdapter
   implements GooglePlacesCandidateAdapter
 {
@@ -91,6 +111,36 @@ class InFlightTimeoutGooglePlacesAdapter
     await Promise.resolve();
     this.abortAsTimedOut();
     throw new Error("deterministic in-flight Places timeout rejection");
+  }
+}
+
+class InFlightAbortSuccessGooglePlacesAdapter
+  implements GooglePlacesCandidateAdapter
+{
+  callCount = 0;
+
+  constructor(
+    private readonly records: readonly unknown[],
+    private readonly abortInFlight: () => void,
+  ) {}
+
+  async search(): Promise<{
+    readonly status: "success";
+    readonly value: readonly unknown[];
+  }> {
+    this.callCount += 1;
+    await Promise.resolve();
+    this.abortInFlight();
+    return { status: "success", value: [...this.records] };
+  }
+}
+
+class RejectingGooglePlacesAdapter implements GooglePlacesCandidateAdapter {
+  callCount = 0;
+
+  async search(): Promise<never> {
+    this.callCount += 1;
+    throw new Error("deterministic provider rejection");
   }
 }
 
@@ -381,6 +431,61 @@ if (inFlightTimedOut.status === "error") {
 }
 assert.equal(inFlightTimeoutAdapter.callCount, 1);
 
+const timeoutSuccessInvocation = inFlightTimedOutContext(
+  "in-flight-timeout-success",
+);
+const timeoutSuccessAdapter = new InFlightAbortSuccessGooglePlacesAdapter(
+  [record("alpha")],
+  timeoutSuccessInvocation.abortAsTimedOut,
+);
+const timeoutSuccessResult = await new GooglePlacesCandidateFinder(
+  timeoutSuccessAdapter,
+).findCandidates(clues(), timeoutSuccessInvocation.context);
+assert.equal(timeoutSuccessResult.status, "error");
+if (timeoutSuccessResult.status === "error") {
+  assert.equal(timeoutSuccessResult.error.error.code, "UPSTREAM_TIMEOUT");
+}
+assert.equal(timeoutSuccessAdapter.callCount, 1);
+assert.equal("value" in timeoutSuccessResult, false);
+assert.equal(
+  JSON.stringify(timeoutSuccessResult).includes("fixture_place_alpha"),
+  false,
+);
+
+const cancellationSuccessInvocation = inFlightCancelledContext(
+  "in-flight-cancellation-success",
+);
+const cancellationSuccessAdapter = new InFlightAbortSuccessGooglePlacesAdapter(
+  [record("alpha")],
+  cancellationSuccessInvocation.abortAsCancelled,
+);
+const cancellationSuccessResult = await new GooglePlacesCandidateFinder(
+  cancellationSuccessAdapter,
+).findCandidates(clues(), cancellationSuccessInvocation.context);
+assert.equal(cancellationSuccessResult.status, "outcome");
+if (cancellationSuccessResult.status === "outcome") {
+  assert.equal(
+    cancellationSuccessResult.outcome.code,
+    "RESTAURANT_NOT_RESOLVED",
+  );
+}
+assert.equal(cancellationSuccessAdapter.callCount, 1);
+assert.equal("value" in cancellationSuccessResult, false);
+assert.equal(
+  JSON.stringify(cancellationSuccessResult).includes("fixture_place_alpha"),
+  false,
+);
+
+const rejectionAdapter = new RejectingGooglePlacesAdapter();
+const rejectionResult = await new GooglePlacesCandidateFinder(
+  rejectionAdapter,
+).findCandidates(clues(), context("provider-rejection"));
+assert.equal(rejectionResult.status, "error");
+if (rejectionResult.status === "error") {
+  assert.equal(rejectionResult.error.error.code, "UPSTREAM_UNAVAILABLE");
+}
+assert.equal(rejectionAdapter.callCount, 1);
+
 const invalidLinkAdapter = new DeterministicFakeGooglePlacesAdapter([]);
 const invalidLinkFinder = new GooglePlacesCandidateFinder(invalidLinkAdapter);
 const invalidLink = await invalidLinkFinder.findCandidates(
@@ -429,6 +534,9 @@ assert.deepEqual(
     "menu_only_fallback",
     "cross_branch_semantic_leak",
     "in_flight_timeout",
+    "in_flight_timeout_success_discarded",
+    "in_flight_cancellation_success_discarded",
+    "provider_rejection",
   ],
 );
 
