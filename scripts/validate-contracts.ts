@@ -1198,7 +1198,7 @@ for (const heading of [
 assertTaskStatus(
   taskMaster,
   "### U2.2 Source acquisition foundation",
-  "REVIEW",
+  "DONE",
 );
 assertTaskStatus(
   taskMaster,
