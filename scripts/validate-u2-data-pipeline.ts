@@ -106,6 +106,21 @@ const plan = <T>(value: T): DeterministicFakePlan<T> => ({
   abortedResult: { status: "outcome", outcome: publicOutcome },
   timedOutResult: { status: "error", error: timeoutError },
 });
+const deferred = <T>(): {
+  promise: Promise<T>;
+  resolve: (value: T | PromiseLike<T>) => void;
+} => {
+  let resolvePromise!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromiseValue) => {
+    resolvePromise = resolvePromiseValue;
+  });
+  return { promise, resolve: resolvePromise };
+};
+const contextForSignal = (signal: AbortSignal): PortInvocationContext =>
+  PortInvocationContextSchema.parse({
+    ...context,
+    signal,
+  });
 
 const assertError = <T>(
   result: PortResult<T>,
@@ -416,10 +431,19 @@ const workflowPublicationService = new TransactionalAnalysisPublicationService(
   workflowRepository,
   publishedAt,
 );
+const workflowExtractionPort = new FakeCompactMenuExtractionPort(
+  plan(extraction),
+);
+const workflowCanonicalService = new CanonicalMenuValidationService(
+  () => canonicalAnalysis,
+);
+const workflowExplanationPort = new FakeConstrainedExplanationPort(
+  plan(explanation),
+);
 const workflow = new AnalysisApplicationService(
-  new FakeCompactMenuExtractionPort(plan(extraction)),
-  new CanonicalMenuValidationService(() => canonicalAnalysis),
-  new FakeConstrainedExplanationPort(plan(explanation)),
+  workflowExtractionPort,
+  workflowCanonicalService,
+  workflowExplanationPort,
   workflowPublicationService,
 );
 const workflowResult = await workflow.run(
@@ -430,7 +454,111 @@ assert.equal(workflowResult.status, "success");
 if (workflowResult.status === "success") {
   assert.equal(workflowResult.value.publication?.status, "published");
 }
+assert.equal(workflowExtractionPort.callCount, 1);
+assert.equal(workflowCanonicalService.callCount, 1);
+assert.equal(workflowExplanationPort.callCount, 1);
+assert.equal(workflowPublicationService.callCount, 1);
 assert.equal(workflowRepository.commitCount, 1);
+
+const cancellationNormalizerStarted = deferred<void>();
+const cancellationNormalizerResult = deferred<CanonicalMenuAnalysis>();
+const cancellationController = new AbortController();
+const cancellationExplanationPort = new FakeConstrainedExplanationPort(
+  plan(explanation),
+);
+const cancellationRepository = new DeterministicFakeAnalysisRepository();
+const cancellationPublicationService =
+  new TransactionalAnalysisPublicationService(
+    cancellationRepository,
+    publishedAt,
+  );
+const cancellationWorkflow = new AnalysisApplicationService(
+  new FakeCompactMenuExtractionPort(plan(extraction)),
+  new CanonicalMenuValidationService(async () => {
+    cancellationNormalizerStarted.resolve();
+    return cancellationNormalizerResult.promise;
+  }),
+  cancellationExplanationPort,
+  cancellationPublicationService,
+);
+const cancellationWorkflowResult = cancellationWorkflow.run(
+  { menuSource, restaurantResolution },
+  contextForSignal(cancellationController.signal),
+);
+await cancellationNormalizerStarted.promise;
+cancellationController.abort(
+  new DOMException("synthetic cancellation", "AbortError"),
+);
+cancellationNormalizerResult.resolve(canonicalAnalysis);
+assertError(
+  await cancellationWorkflowResult,
+  "ANALYSIS_TEMPORARILY_UNAVAILABLE",
+);
+assert.equal(cancellationExplanationPort.callCount, 0);
+assert.equal(cancellationPublicationService.callCount, 0);
+assert.equal(cancellationRepository.transactionCount, 0);
+
+const timeoutNormalizerStarted = deferred<void>();
+const timeoutNormalizerResult = deferred<CanonicalMenuAnalysis>();
+const timeoutController = new AbortController();
+const timeoutExplanationPort = new FakeConstrainedExplanationPort(
+  plan(explanation),
+);
+const timeoutRepository = new DeterministicFakeAnalysisRepository();
+const timeoutPublicationService = new TransactionalAnalysisPublicationService(
+  timeoutRepository,
+  publishedAt,
+);
+const timeoutWorkflow = new AnalysisApplicationService(
+  new FakeCompactMenuExtractionPort(plan(extraction)),
+  new CanonicalMenuValidationService(async () => {
+    timeoutNormalizerStarted.resolve();
+    return timeoutNormalizerResult.promise;
+  }),
+  timeoutExplanationPort,
+  timeoutPublicationService,
+);
+const timeoutWorkflowResult = timeoutWorkflow.run(
+  { menuSource, restaurantResolution },
+  contextForSignal(timeoutController.signal),
+);
+await timeoutNormalizerStarted.promise;
+timeoutController.abort(new DOMException("synthetic timeout", "TimeoutError"));
+timeoutNormalizerResult.resolve(canonicalAnalysis);
+assertError(await timeoutWorkflowResult, "UPSTREAM_TIMEOUT");
+assert.equal(timeoutExplanationPort.callCount, 0);
+assert.equal(timeoutPublicationService.callCount, 0);
+assert.equal(timeoutRepository.transactionCount, 0);
+
+const providerFailureExplanationPort = new FakeConstrainedExplanationPort(
+  plan(explanation),
+);
+const providerFailureRepository = new DeterministicFakeAnalysisRepository();
+const providerFailurePublicationService =
+  new TransactionalAnalysisPublicationService(
+    providerFailureRepository,
+    publishedAt,
+  );
+const providerFailureWorkflow = new AnalysisApplicationService(
+  new FakeCompactMenuExtractionPort(plan(extraction)),
+  new CanonicalMenuValidationService(async () => {
+    throw new Error("synthetic provider failure");
+  }),
+  providerFailureExplanationPort,
+  providerFailurePublicationService,
+);
+const providerFailureResult = await providerFailureWorkflow.run(
+  { menuSource, restaurantResolution },
+  context,
+);
+assertError(providerFailureResult, "INVALID_UPSTREAM_RESULT");
+assert.equal(
+  JSON.stringify(providerFailureResult).includes("synthetic provider failure"),
+  false,
+);
+assert.equal(providerFailureExplanationPort.callCount, 0);
+assert.equal(providerFailurePublicationService.callCount, 0);
+assert.equal(providerFailureRepository.transactionCount, 0);
 
 const partialRepository = new DeterministicFakeAnalysisRepository(
   intermediateFailureWrite,

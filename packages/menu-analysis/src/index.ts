@@ -371,6 +371,11 @@ export class CanonicalMenuValidationService
 
     try {
       const candidate = await this.normalize(requestResult.data);
+      const interruptedAfterNormalize =
+        interruptedResult<CanonicalMenuAnalysis>(context);
+      if (interruptedAfterNormalize !== null) {
+        return interruptedAfterNormalize;
+      }
       const analysisResult = CanonicalMenuAnalysisSchema.safeParse(candidate);
       if (
         !analysisResult.success ||
