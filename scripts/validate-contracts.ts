@@ -1205,6 +1205,23 @@ assertTaskStatus(
   "### U2.3 Restaurant-resolution foundation",
   "BLOCKED",
 );
+assertTaskStatus(
+  taskMaster,
+  "### S1.2 Official menu-source acquisition",
+  "READY",
+);
+const officialSourceAcquisition = markdownTaskSection(
+  taskMaster,
+  "### S1.2 Official menu-source acquisition",
+);
+assert.match(officialSourceAcquisition, /\*\*Dependency:\*\* U2\.2/);
+assert.doesNotMatch(officialSourceAcquisition, /\*\*Blocked by:\*\*/);
+const immediateNextAction = markdownTaskSection(
+  taskMaster,
+  "## Immediate next action",
+);
+assert.match(immediateNextAction, /Finish PR #23 review and integration/);
+assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bU2\.2\b/);
 const sourceFoundation = markdownTaskSection(
   taskMaster,
   "### U2.2 Source acquisition foundation",

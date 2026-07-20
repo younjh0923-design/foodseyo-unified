@@ -305,8 +305,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.2
-- **Status:** BLOCKED
-- **Blocked by:** U2.2
+- **Status:** READY
 - **Scope:** bounded retrieval from the confirmed restaurant's official
   website, menu page, PDF, or ordering page; URL normalization, SSRF defense,
   redirect revalidation, content/type/size limits, provenance, and typed
@@ -532,7 +531,7 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-Start U2.1, U2.2, U2.3, U2.4, and U2.5 from current `main` on their documented
-feature branches. U2.1 through U2.4 may proceed in parallel against the frozen
-contracts and deterministic fakes. Shared-contract changes still use the
-contract-change queue and their impact-based approval tier.
+Finish PR #23 review and integration for the current U2.3 foundation without
+consuming the proposed Issue #21 shapes. Independent U2 work may continue
+against the frozen contracts and deterministic fakes. Shared-contract changes
+still use the contract-change queue and their impact-based approval tier.
