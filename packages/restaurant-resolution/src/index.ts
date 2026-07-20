@@ -19,6 +19,10 @@ export {
   FoundationRestaurantResolutionPort,
   RestaurantResolutionCoordinator,
 } from "./foundation.js";
+export {
+  GooglePlacesTextSearchAdapter,
+  createGooglePlacesTextSearchAdapterFromEnvironment,
+} from "./google-places-server.js";
 
 export class FakeRestaurantResolutionPort
   implements RestaurantResolutionPort

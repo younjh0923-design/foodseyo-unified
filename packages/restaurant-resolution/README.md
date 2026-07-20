@@ -28,3 +28,34 @@ a temporary intake DTO or progress enum while that proposal is unmerged.
 Server-internal clue fixtures contain no raw URL, upload bytes, filename,
 provider response, or menu meaning. A first-ranked candidate always remains
 unconfirmed until user-action or valid external evidence is supplied.
+
+## S1.1 Google Places thin path
+
+`GooglePlacesTextSearchAdapter` is a server-only, injected implementation of
+the existing package-local `GooglePlacesCandidateAdapter`. Server composition
+uses `createGooglePlacesTextSearchAdapterFromEnvironment`, which reads only the
+frozen `SERVER_ENV_NAMES.googlePlacesApiKey` (`GOOGLE_PLACES_API_KEY`) entry and
+fails closed when it is absent. The key is never read by browser code, returned,
+or logged.
+
+The adapter follows Google Places API (New)
+[Text Search](https://developers.google.com/maps/documentation/places/web-service/text-search):
+an HTTP `POST` to `places:searchText`, an API-key header, and an explicit field
+mask. It requests only `places.id`, `places.displayName`,
+`places.formattedAddress`, and `places.location`. Search location is a bias,
+not confirmation. Place ID remains `googlePlaceId`; request-scoped candidate
+UUIDs remain separate, and neither provider rank nor proximity supplies user
+confirmation or external-verification evidence.
+
+The existing finder maps the provider-normalized records through the frozen
+`RestaurantCandidate` runtime schema and bounds results to ten. Missing results
+preserve `RESTAURANT_NOT_RESOLVED` with menu-only continuation. Provider
+failures use the frozen public error registry. The invocation signal and
+bounded timeout race the whole provider response/parsing operation, so a late
+success or rejection after cancellation/deadline cannot expose candidate
+identity.
+
+`validate-google-places-thin-path.ts` is network-free. It injects deterministic
+fetch, ID, timeout, success, failure, late-settlement, and provider-internal
+field fixtures; no automated test calls Google. No provider response is cached,
+persisted, or logged.
