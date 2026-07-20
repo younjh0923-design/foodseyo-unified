@@ -14,6 +14,7 @@ import {
   DeterministicFakeGooglePlacesAdapter,
   GooglePlacesCandidateFinder,
   normalizeServerRestaurantClues,
+  type GooglePlacesCandidateAdapter,
   type ServerRestaurantClues,
 } from "../src/foundation.js";
 import {
@@ -57,6 +58,41 @@ const timedOutContext = (name: string): PortInvocationContext => {
     signal: controller.signal,
   };
 };
+
+const inFlightTimedOutContext = (
+  name: string,
+): {
+  readonly context: PortInvocationContext;
+  readonly abortAsTimedOut: () => void;
+} => {
+  const controller = new AbortController();
+  return {
+    context: {
+      contractVersion: MODULE_INTERFACE_VERSION,
+      correlationId: `u2_3_${name}`,
+      timeoutMs: 5000,
+      signal: controller.signal,
+    },
+    abortAsTimedOut: () => {
+      controller.abort(new DOMException("deadline exceeded", "TimeoutError"));
+    },
+  };
+};
+
+class InFlightTimeoutGooglePlacesAdapter
+  implements GooglePlacesCandidateAdapter
+{
+  callCount = 0;
+
+  constructor(private readonly abortAsTimedOut: () => void) {}
+
+  async search(): Promise<never> {
+    this.callCount += 1;
+    await Promise.resolve();
+    this.abortAsTimedOut();
+    throw new Error("deterministic in-flight Places timeout rejection");
+  }
+}
 
 const clues = (overrides: Partial<ServerRestaurantClues> = {}): ServerRestaurantClues => ({
   name: "Fixture Alpha",
@@ -126,6 +162,22 @@ assert.equal(initial.value.confirmationEvidence, null);
 assert.equal(initial.value.requiresUserConfirmation, true);
 assert.equal(events.events.length, 2);
 assert.equal(events.events[1]?.code, "RESTAURANT_CONFIRMATION_REQUIRED");
+
+const inactiveCandidate = await coordinator.resolve(
+  {
+    candidates: [alpha],
+    priorResolution: initial.value,
+    selectedCandidateId: null,
+    confirmationEvidence: null,
+  },
+  context("inactive-candidate"),
+);
+assert.equal(inactiveCandidate.status, "success");
+if (inactiveCandidate.status === "success") {
+  assert.equal(inactiveCandidate.value.state, "candidate");
+  assert.equal(inactiveCandidate.value.requiresUserConfirmation, true);
+}
+assert.equal(events.events.at(-1)?.code, "RESTAURANT_CONFIRMATION_REQUIRED");
 
 const userEvidence = {
   kind: "user_action" as const,
@@ -198,20 +250,19 @@ if (conflicting.status !== "success") {
 assert.equal(conflicting.value.state, "conflicting");
 assert.equal(conflicting.value.requiresUserConfirmation, true);
 
-const rejected = await resolutionPort.resolve(
+const inactiveConflict = await resolutionPort.resolve(
   {
     candidates: conflictDiscovery.result.value,
     priorResolution: conflicting.value,
     selectedCandidateId: null,
     confirmationEvidence: null,
   },
-  context("rejected"),
+  context("inactive-conflict"),
 );
-assert.equal(rejected.status, "success");
-if (rejected.status === "success") {
-  assert.equal(rejected.value.state, "rejected");
-  assert.equal(rejected.value.restaurantId, null);
-  assert.equal(rejected.value.canContinueMenuOnly, true);
+assert.equal(inactiveConflict.status, "success");
+if (inactiveConflict.status === "success") {
+  assert.equal(inactiveConflict.value.state, "conflicting");
+  assert.equal(inactiveConflict.value.requiresUserConfirmation, true);
 }
 
 const noLocation = await find(
@@ -313,6 +364,23 @@ if (timedOut.status === "error") {
 }
 assert.equal(timeoutAdapter.callCount, 0);
 
+const inFlightInvocation = inFlightTimedOutContext("in-flight-timeout");
+const inFlightTimeoutAdapter = new InFlightTimeoutGooglePlacesAdapter(
+  inFlightInvocation.abortAsTimedOut,
+);
+const inFlightTimeoutFinder = new GooglePlacesCandidateFinder(
+  inFlightTimeoutAdapter,
+);
+const inFlightTimedOut = await inFlightTimeoutFinder.findCandidates(
+  clues(),
+  inFlightInvocation.context,
+);
+assert.equal(inFlightTimedOut.status, "error");
+if (inFlightTimedOut.status === "error") {
+  assert.equal(inFlightTimedOut.error.error.code, "UPSTREAM_TIMEOUT");
+}
+assert.equal(inFlightTimeoutAdapter.callCount, 1);
+
 const invalidLinkAdapter = new DeterministicFakeGooglePlacesAdapter([]);
 const invalidLinkFinder = new GooglePlacesCandidateFinder(invalidLinkAdapter);
 const invalidLink = await invalidLinkFinder.findCandidates(
@@ -354,12 +422,13 @@ assert.deepEqual(
     "user_confirmation",
     "external_verification",
     "conflicting",
-    "rejected",
+    "inactivity_preserves_conflicting",
     "location_unavailable",
     "insufficient_clues",
     "no_candidates",
     "menu_only_fallback",
     "cross_branch_semantic_leak",
+    "in_flight_timeout",
   ],
 );
 

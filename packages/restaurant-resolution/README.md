@@ -15,10 +15,11 @@ The package manifest and shared interfaces are frozen at `1.0.0`.
 U1.5 public surface: `RestaurantResolutionPort`,
 `UiOperationalEventPort`, `FakeRestaurantResolutionPort`, and
 `FakeUiOperationalEventPort`. U2.3 adds a frozen-port implementation for
-candidate, conflicting, user-confirmed, externally-verified, and rejected
-resolution plus a coordinator that emits only frozen UI-safe operational
-values. Package-local, network-free fixtures exercise a strict fake Places
-adapter and provider-to-candidate normalization.
+candidate, conflicting, user-confirmed, and externally-verified resolution,
+and preserves an already typed state without interpreting missing user input as
+rejection. A coordinator emits only frozen UI-safe operational values.
+Package-local, network-free fixtures exercise a strict fake Places adapter and
+provider-to-candidate normalization.
 The original deterministic fake remains available for parallel consumers.
 
 Raw photo/link intake and new progress events are not implemented here. They

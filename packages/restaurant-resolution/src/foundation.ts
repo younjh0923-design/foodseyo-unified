@@ -271,10 +271,12 @@ export class GooglePlacesCandidateFinder {
     try {
       providerResult = await this.adapter.search(normalized, context);
     } catch {
-      return {
-        status: "error",
-        error: publicError("UPSTREAM_UNAVAILABLE", context),
-      };
+      return isTimeoutAbortSignal(context.signal)
+        ? { status: "error", error: publicError("UPSTREAM_TIMEOUT", context) }
+        : {
+            status: "error",
+            error: publicError("UPSTREAM_UNAVAILABLE", context),
+          };
     }
     if (providerResult.status !== "success") {
       return providerResult;
@@ -368,23 +370,10 @@ export class FoundationRestaurantResolutionPort
 
     if (
       value.priorResolution !== null &&
-      (value.priorResolution.state === "candidate" ||
-        value.priorResolution.state === "conflicting") &&
       value.selectedCandidateId === null &&
       value.confirmationEvidence === null
     ) {
-      return this.success({
-        state: "rejected",
-        candidates:
-          candidates.length > 0
-            ? candidates
-            : value.priorResolution.candidates,
-        selectedCandidateId: null,
-        restaurantId: null,
-        confirmationEvidence: null,
-        requiresUserConfirmation: false,
-        resolvedAt: null,
-      }, context);
+      return { status: "success", value: value.priorResolution };
     }
 
     if (value.selectedCandidateId !== null) {

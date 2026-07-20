@@ -55,11 +55,12 @@
     { "case": "user_confirmation", "records": ["alpha"], "expected": "user_confirmed" },
     { "case": "external_verification", "records": ["alpha"], "expected": "externally_verified" },
     { "case": "conflicting", "records": ["alpha", "beta"], "expected": "conflicting" },
-    { "case": "rejected", "records": ["alpha", "beta"], "expected": "rejected" },
+    { "case": "inactivity_preserves_conflicting", "records": ["alpha", "beta"], "expected": "conflicting" },
     { "case": "location_unavailable", "records": ["withoutLocation"], "expected": "candidate" },
     { "case": "insufficient_clues", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
     { "case": "no_candidates", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
     { "case": "menu_only_fallback", "records": [], "expected": "RESTAURANT_NOT_RESOLVED" },
-    { "case": "cross_branch_semantic_leak", "records": ["branchSemanticLeak"], "expected": "INVALID_UPSTREAM_RESULT" }
+    { "case": "cross_branch_semantic_leak", "records": ["branchSemanticLeak"], "expected": "INVALID_UPSTREAM_RESULT" },
+    { "case": "in_flight_timeout", "records": ["alpha"], "expected": "UPSTREAM_TIMEOUT" }
   ]
 }
