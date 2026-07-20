@@ -245,7 +245,9 @@ abstract class InterfaceOnlyDiscoveryAdapter
     try {
       discovered = await this.discovery.discover(request, context);
     } catch {
-      return noCandidates("upstream_unavailable");
+      return noCandidates(
+        isTimeoutAbortSignal(context.signal) ? "timeout" : "upstream_unavailable",
+      );
     }
     if (context.signal.aborted) {
       return noCandidates(

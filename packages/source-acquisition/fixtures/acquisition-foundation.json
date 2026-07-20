@@ -161,6 +161,14 @@
       "expected": { "status": "error", "code": "UPSTREAM_TIMEOUT" }
     },
     {
+      "case": "in_flight_discovery_timeout_rejection",
+      "submissionHandles": ["handle:upload-unreadable"],
+      "identities": {},
+      "discoveries": {},
+      "timedOutDiscoveries": ["official_website"],
+      "expected": { "status": "error", "code": "UPSTREAM_TIMEOUT" }
+    },
+    {
       "case": "no_source",
       "submissionHandles": ["handle:upload-unreadable"],
       "identities": {},

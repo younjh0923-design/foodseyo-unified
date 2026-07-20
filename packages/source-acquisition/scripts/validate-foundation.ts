@@ -41,6 +41,7 @@ interface AcquisitionFixture {
     Partial<Record<Exclude<MenuSourceType, "uploaded_menu">, readonly TransientDiscoveredMenuSource[]>>
   >;
   readonly rejectedDiscoveries?: readonly Exclude<MenuSourceType, "uploaded_menu">[];
+  readonly timedOutDiscoveries?: readonly Exclude<MenuSourceType, "uploaded_menu">[];
   readonly timedOut?: boolean;
   readonly expected: ExpectedFixture;
 }
@@ -90,14 +91,21 @@ class FixtureDiscoveryPort implements MenuSourceDiscoveryPort {
   constructor(
     private readonly discoveries: readonly TransientDiscoveredMenuSource[],
     private readonly rejects: boolean,
+    private readonly timesOutInFlight: boolean,
+    private readonly abortAsTimedOut: () => void,
   ) {}
 
-  discover(): Promise<readonly TransientDiscoveredMenuSource[]> {
+  async discover(): Promise<readonly TransientDiscoveredMenuSource[]> {
     this.callCount += 1;
-    if (this.rejects) {
-      return Promise.reject(new Error("deterministic discovery failure"));
+    if (this.timesOutInFlight) {
+      await Promise.resolve();
+      this.abortAsTimedOut();
+      throw new Error("deterministic in-flight timeout rejection");
     }
-    return Promise.resolve(this.discoveries);
+    if (this.rejects) {
+      throw new Error("deterministic discovery failure");
+    }
+    return this.discoveries;
   }
 }
 
@@ -112,16 +120,21 @@ const makeContent = (contentHandle: string): TransientMenuContent => ({
 const makeContext = (
   fixtureName: string,
   timedOut: boolean,
-): PortInvocationContext => {
+): { readonly context: PortInvocationContext; readonly abortAsTimedOut: () => void } => {
   const controller = new AbortController();
   if (timedOut) {
     controller.abort(new DOMException("deadline exceeded", "TimeoutError"));
   }
   return {
-    contractVersion: MODULE_INTERFACE_VERSION,
-    correlationId: `u2_2_${fixtureName}`,
-    timeoutMs: 5000,
-    signal: controller.signal,
+    context: {
+      contractVersion: MODULE_INTERFACE_VERSION,
+      correlationId: `u2_2_${fixtureName}`,
+      timeoutMs: 5000,
+      signal: controller.signal,
+    },
+    abortAsTimedOut: () => {
+      controller.abort(new DOMException("deadline exceeded", "TimeoutError"));
+    },
   };
 };
 
@@ -135,6 +148,7 @@ const sourceTypes = [
 for (const rawFixture of acquisitionFixtures.cases) {
   assert(isRecord(rawFixture));
   const fixture = rawFixture as unknown as AcquisitionFixture;
+  const invocation = makeContext(fixture.case, fixture.timedOut === true);
   const identityPort = new FixtureIdentityPort(fixture.identities);
   const discoveryPorts = Object.fromEntries(
     sourceTypes.map((sourceType) => [
@@ -142,6 +156,8 @@ for (const rawFixture of acquisitionFixtures.cases) {
       new FixtureDiscoveryPort(
         fixture.discoveries[sourceType] ?? [],
         fixture.rejectedDiscoveries?.includes(sourceType) === true,
+        fixture.timedOutDiscoveries?.includes(sourceType) === true,
+        invocation.abortAsTimedOut,
       ),
     ]),
   ) as Record<(typeof sourceTypes)[number], FixtureDiscoveryPort>;
@@ -165,7 +181,7 @@ for (const rawFixture of acquisitionFixtures.cases) {
 
   const result = await acquisition.acquire(
     request,
-    makeContext(fixture.case, fixture.timedOut === true),
+    invocation.context,
   );
   assert.equal(
     result.status,
