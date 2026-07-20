@@ -1191,7 +1191,20 @@ assertTaskStatus(
 assertTaskStatus(
   taskMaster,
   "### U2.1 Data and pipeline foundation",
-  "REVIEW",
+  "DONE",
+);
+const dataPipelineFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.1 Data and pipeline foundation",
+);
+assert.match(dataPipelineFoundation, /PR #25 feature HEAD/);
+assert.match(
+  dataPipelineFoundation,
+  /7453b7f99f701c482ada7e4b7897fad71fa4306f/,
+);
+assert.match(
+  dataPipelineFoundation,
+  /47c6a61e0a38397c5bc881e38872764e978013ed/,
 );
 for (const heading of [
   "### U2.4 Web and result-experience foundation",
@@ -1248,7 +1261,14 @@ const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
-assert.match(immediateNextAction, /Finish PR #25 review and integration/);
+assertOrdered(immediateNextAction, "active integration order", [
+  "current integration target is PR #24",
+  "next integration target is PR #26",
+]);
+assert.doesNotMatch(
+  immediateNextAction,
+  /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,
+);
 assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bS1\./);
 const sourceFoundation = markdownTaskSection(
   taskMaster,
