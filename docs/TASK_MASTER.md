@@ -219,7 +219,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `sources/acquisition-foundation`
 - **Dependency:** U1.6
-- **Status:** REVIEW
+- **Status:** DONE
 - **Scope:** uploaded-menu adapter and interface-only adapters for official web,
   PDF, ordering page, and Web Search discovery; source classification and
   normalized `MenuSourceInput`.
@@ -227,6 +227,9 @@ parallel against the frozen interfaces and deterministic fakes.
   `packages/source-acquisition`; deterministic network-free fixtures cover
   supported, unsupported, duplicate, conflict, timeout, unsafe, and no-source
   behavior. Real retrieval and provider adapters remain in S1.2/S1.3.
+- **Completion evidence:** PR #22 feature HEAD
+  `33ab501809652f85f2147f5a2652e2d8a495700f` merged to `main` as
+  `1c89c121d0cd819889dc7b7c4bbd70f75eccaf0d`.
 - **No:** unrestricted crawling, provider call in tests, source-body logging,
   canonical persistence.
 - **Acceptance:** deterministic fixtures cover supported, unsupported,
@@ -237,7 +240,9 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `restaurant/resolution-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** BLOCKED
+- **Blocked by:** proposed contract-change Issue #21 for sensitive photo/link
+  intake and UI-safe workflow progress. No proposed shape is consumed.
 - **Scope:** server-side intake contract, restaurant candidate and confirmation
   service, fake Google Places adapter, confirmation evidence, and UI-safe
   candidate/progress/action/outcome data.
@@ -247,6 +252,9 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Acceptance:** deterministic fixtures cover candidate, confirmed,
   conflicting, rejected, location-unavailable, and menu-only fallback cases;
   no UI-safe DTO contains provider internals or unvalidated menu meaning.
+- **Evidence:** frozen-port resolution, confirmation evidence, strict fake
+  Places normalization, typed outcomes, and network-free fixtures are ready in
+  `packages/restaurant-resolution`. Raw intake and progress remain blocked.
 
 ### U2.4 Web and result-experience foundation
 
@@ -297,8 +305,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.2
-- **Status:** BLOCKED
-- **Blocked by:** U2.2
+- **Status:** READY
 - **Scope:** bounded retrieval from the confirmed restaurant's official
   website, menu page, PDF, or ordering page; URL normalization, SSRF defense,
   redirect revalidation, content/type/size limits, provenance, and typed
@@ -524,7 +531,7 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-Start U2.1, U2.2, U2.3, U2.4, and U2.5 from current `main` on their documented
-feature branches. U2.1 through U2.4 may proceed in parallel against the frozen
-contracts and deterministic fakes. Shared-contract changes still use the
-contract-change queue and their impact-based approval tier.
+Finish PR #23 review and integration for the current U2.3 foundation without
+consuming the proposed Issue #21 shapes. Independent U2 work may continue
+against the frozen contracts and deterministic fakes. Shared-contract changes
+still use the contract-change queue and their impact-based approval tier.

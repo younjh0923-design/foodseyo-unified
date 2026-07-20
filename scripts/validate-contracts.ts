@@ -1190,7 +1190,6 @@ assertTaskStatus(
 );
 for (const heading of [
   "### U2.1 Data and pipeline foundation",
-  "### U2.3 Restaurant-resolution foundation",
   "### U2.4 Web and result-experience foundation",
   "### U2.5 Continuous integration",
 ]) {
@@ -1199,8 +1198,30 @@ for (const heading of [
 assertTaskStatus(
   taskMaster,
   "### U2.2 Source acquisition foundation",
-  "REVIEW",
+  "DONE",
 );
+assertTaskStatus(
+  taskMaster,
+  "### U2.3 Restaurant-resolution foundation",
+  "BLOCKED",
+);
+assertTaskStatus(
+  taskMaster,
+  "### S1.2 Official menu-source acquisition",
+  "READY",
+);
+const officialSourceAcquisition = markdownTaskSection(
+  taskMaster,
+  "### S1.2 Official menu-source acquisition",
+);
+assert.match(officialSourceAcquisition, /\*\*Dependency:\*\* U2\.2/);
+assert.doesNotMatch(officialSourceAcquisition, /\*\*Blocked by:\*\*/);
+const immediateNextAction = markdownTaskSection(
+  taskMaster,
+  "## Immediate next action",
+);
+assert.match(immediateNextAction, /Finish PR #23 review and integration/);
+assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bU2\.2\b/);
 const sourceFoundation = markdownTaskSection(
   taskMaster,
   "### U2.2 Source acquisition foundation",
