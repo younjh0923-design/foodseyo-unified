@@ -15,6 +15,11 @@ import {
   type UiSafeOperationalEvent,
 } from "@foodseyo/contracts";
 
+export {
+  FoundationRestaurantResolutionPort,
+  RestaurantResolutionCoordinator,
+} from "./foundation.js";
+
 export class FakeRestaurantResolutionPort
   implements RestaurantResolutionPort
 {

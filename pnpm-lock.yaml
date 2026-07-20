@@ -8,6 +8,18 @@ importers:
 
   .:
     devDependencies:
+      '@foodseyo/contracts':
+        specifier: workspace:*
+        version: link:packages/contracts
+      '@foodseyo/database':
+        specifier: workspace:*
+        version: link:packages/database
+      '@foodseyo/menu-analysis':
+        specifier: workspace:*
+        version: link:packages/menu-analysis
+      '@foodseyo/merge-policy':
+        specifier: workspace:*
+        version: link:packages/merge-policy
       tsx:
         specifier: 4.20.6
         version: 4.20.6

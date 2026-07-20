@@ -11,10 +11,26 @@ Discovery output is not canonical proof. This package does not render UI,
 define culinary truth, persist canonical data, expose raw source URLs in logs
 or public errors, or make a real provider call in automated tests.
 
-The package manifest is frozen at `1.0.0`. Real implementation starts only
-after U1.6 merges to `main` and is recorded `DONE`.
+The package manifest and shared interfaces are frozen at `1.0.0`.
 
-U1.5 public surface: `MenuSourceAcquisitionPort` and
-`FakeMenuSourceAcquisitionPort`. This package isolates source discovery,
-retrieval, and provenance from restaurant ranking and compact extraction. Its
-U1.5 class is a deterministic fake only.
+U1.5 public surface remains `MenuSourceAcquisitionPort` and
+`FakeMenuSourceAcquisitionPort`; U2.2 implements that frozen port without
+changing its DTOs, outcomes, public errors, or environment contract.
+The deterministic fake remains available for independent downstream work.
+
+U2.2 adds a foundation implementation of `MenuSourceAcquisitionPort` with:
+
+- an uploaded-menu adapter backed by an injected transient identity resolver;
+- interface-only adapters for official websites, official PDFs, ordering
+  pages, and Web Search discovery;
+- common source/content classification, exact-fingerprint duplicate handling,
+  conflict handling, and safe provenance projection into `MenuSourceInput`;
+- a syntactic HTTPS/host safety precheck that never returns or logs raw URLs;
+- deterministic, network-free fixtures for supported, unsupported, duplicate,
+  conflict, timeout, unsafe, and no-source cases.
+
+The discovery ports are intentionally dependency-injected and perform no
+network access themselves. Bounded retrieval, DNS/IP verification, redirect
+revalidation, and provider-specific Web Search are separate S1.2/S1.3 work.
+This package never returns source bodies, raw provider responses, or raw URLs
+through the frozen shared port.
