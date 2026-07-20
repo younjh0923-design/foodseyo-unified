@@ -1188,8 +1188,12 @@ assertTaskStatus(
   "### U1.6 Approve and publish compatibility contract 1.0.0",
   "DONE",
 );
-for (const heading of [
+assertTaskStatus(
+  taskMaster,
   "### U2.1 Data and pipeline foundation",
+  "REVIEW",
+);
+for (const heading of [
   "### U2.4 Web and result-experience foundation",
   "### U2.5 Continuous integration",
 ]) {
@@ -1203,8 +1207,32 @@ assertTaskStatus(
 assertTaskStatus(
   taskMaster,
   "### U2.3 Restaurant-resolution foundation",
-  "BLOCKED",
+  "DONE",
 );
+const restaurantResolutionFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.3 Restaurant-resolution foundation",
+);
+assert.match(
+  restaurantResolutionFoundation,
+  /7de54ac08fbfb4f0e56f8cb5cf0cfdf02af4a454/,
+);
+assert.match(
+  restaurantResolutionFoundation,
+  /0f47531a837ef6854e8831a570966b09dd207d81/,
+);
+assert.doesNotMatch(restaurantResolutionFoundation, /\*\*Blocked by:\*\*/);
+assertTaskStatus(
+  taskMaster,
+  "### S1.1 Restaurant resolution",
+  "READY",
+);
+const restaurantResolutionSlice = markdownTaskSection(
+  taskMaster,
+  "### S1.1 Restaurant resolution",
+);
+assert.match(restaurantResolutionSlice, /\*\*Dependency:\*\* U2\.3/);
+assert.doesNotMatch(restaurantResolutionSlice, /\*\*Blocked by:\*\*/);
 assertTaskStatus(
   taskMaster,
   "### S1.2 Official menu-source acquisition",
@@ -1220,8 +1248,8 @@ const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
-assert.match(immediateNextAction, /Finish PR #23 review and integration/);
-assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bU2\.2\b/);
+assert.match(immediateNextAction, /Finish PR #25 review and integration/);
+assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bS1\./);
 const sourceFoundation = markdownTaskSection(
   taskMaster,
   "### U2.2 Source acquisition foundation",

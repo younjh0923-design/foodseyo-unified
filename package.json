@@ -15,10 +15,15 @@
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
     "validate:restaurant-resolution": "pnpm --filter @foodseyo/restaurant-resolution validate:foundation",
     "validate:source-acquisition": "pnpm --filter @foodseyo/source-acquisition validate:foundation",
+    "validate:u2-data-pipeline": "tsx scripts/validate-u2-data-pipeline.ts",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:security"
+    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:u2-data-pipeline && pnpm validate:security"
   },
   "devDependencies": {
+    "@foodseyo/contracts": "workspace:*",
+    "@foodseyo/database": "workspace:*",
+    "@foodseyo/menu-analysis": "workspace:*",
+    "@foodseyo/merge-policy": "workspace:*",
     "tsx": "4.20.6",
     "typescript": "5.9.3"
   }
