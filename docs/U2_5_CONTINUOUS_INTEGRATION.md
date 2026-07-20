@@ -13,7 +13,10 @@ The pnpm action is pinned to GitHub-verified `v4.4.0` commit
 `fc06bc1257f339d1d5d8b3a19a8cae5388b55320`. The workflow does not pass a
 second version input: the action reads `packageManager`, and the next step
 requires `pnpm --version` to equal `11.9.0` before dependency installation.
-Corepack and integrity-check bypasses are not part of the bootstrap path.
+The action's supported standalone mode supplies the bundled pnpm runtime needed
+for pnpm `11.9.0` while the repository and every project command remain on the
+approved Node.js `20.19.0` runtime. Corepack and integrity-check bypasses are
+not part of the bootstrap path.
 
 The workflow contains no deployment, migration, provider, database, Preview,
 or Production job. Its GitHub token has read-only repository contents

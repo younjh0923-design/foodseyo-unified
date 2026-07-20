@@ -458,10 +458,19 @@ assert.equal(setupNodeStep.with["node-version"], "20.19.0");
 
 const pnpmSetupStep = steps.find((step) => step.uses === PNPM_ACTION_SETUP);
 assert(pnpmSetupStep, "approved pnpm setup action is required");
+assert(
+  isRecord(pnpmSetupStep.with),
+  "pnpm setup action inputs are required",
+);
+assert.deepEqual(
+  pnpmSetupStep.with,
+  { standalone: true },
+  "pnpm setup must use its bundled runtime without overriding packageManager",
+);
 assert.equal(
-  "with" in pnpmSetupStep,
+  "version" in pnpmSetupStep.with,
   false,
-  "pnpm setup must read the frozen packageManager field without an override",
+  "pnpm setup must read the frozen packageManager version without an override",
 );
 
 const runCommands = steps
