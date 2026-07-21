@@ -10,6 +10,7 @@
   },
   "scripts": {
     "typecheck": "pnpm --recursive --if-present typecheck",
+    "build": "pnpm --filter @foodseyo/web build",
     "validate:boundary-dtos": "tsx scripts/validate-boundary-dtos.ts",
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
@@ -26,7 +27,7 @@
     "validate:ci": "tsx scripts/validate-ci-foundation.ts",
     "validate:network-boundary": "node scripts/validate-network-boundary.mjs",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm test && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:u2-data-pipeline && pnpm validate:web-foundation && pnpm validate:web-platform && pnpm validate:security && pnpm validate:ci && pnpm validate:network-boundary"
+    "verify": "pnpm typecheck && pnpm build && pnpm test && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:u2-data-pipeline && pnpm validate:web-foundation && pnpm validate:web-platform && pnpm validate:security && pnpm validate:ci && pnpm validate:network-boundary"
   },
   "devDependencies": {
     "@foodseyo/contracts": "workspace:*",
