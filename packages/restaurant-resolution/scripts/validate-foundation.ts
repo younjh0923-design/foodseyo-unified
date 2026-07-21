@@ -36,9 +36,15 @@ assert(isRecord(fixtures.providerRecords));
 assert(Array.isArray(fixtures.cases));
 
 const providerRecords = fixtures.providerRecords;
-const record = (name: string): unknown => {
+const record = (
+  name: string,
+  requestCorrelationId = "u2_3_fixture",
+): unknown => {
   assert(Object.hasOwn(providerRecords, name), `missing record ${name}`);
-  return providerRecords[name];
+  const value = providerRecords[name];
+  assert(isRecord(value), `provider record ${name} must be an object`);
+  assert.equal(typeof value.requestCorrelationId, "string");
+  return { ...value, requestCorrelationId };
 };
 
 const context = (name: string): PortInvocationContext => ({
@@ -173,7 +179,7 @@ const find = async (
   invocation = context("find"),
 ) => {
   const adapter = new DeterministicFakeGooglePlacesAdapter(
-    names.map(record),
+    names.map((name) => record(name, invocation.correlationId)),
   );
   const finder = new GooglePlacesCandidateFinder(adapter);
   return {
@@ -200,6 +206,32 @@ if (candidateDiscovery.result.status !== "success") {
 const [alpha] = candidateDiscovery.result.value;
 assert(alpha !== undefined);
 RestaurantCandidateSchema.parse(alpha);
+
+const missingCorrelationInvocation = context("missing-correlation");
+const missingCorrelationRecord = record(
+  "alpha",
+  missingCorrelationInvocation.correlationId,
+);
+assert(isRecord(missingCorrelationRecord));
+delete missingCorrelationRecord.requestCorrelationId;
+const missingCorrelation = await new GooglePlacesCandidateFinder(
+  new DeterministicFakeGooglePlacesAdapter([missingCorrelationRecord]),
+).findCandidates(clues(), missingCorrelationInvocation);
+assert.equal(missingCorrelation.status, "error");
+if (missingCorrelation.status === "error") {
+  assert.equal(missingCorrelation.error.error.code, "INVALID_UPSTREAM_RESULT");
+}
+
+const mismatchedCorrelationInvocation = context("mismatched-correlation");
+const mismatchedCorrelation = await new GooglePlacesCandidateFinder(
+  new DeterministicFakeGooglePlacesAdapter([
+    record("alpha", "u2_3_different_request"),
+  ]),
+).findCandidates(clues(), mismatchedCorrelationInvocation);
+assert.equal(mismatchedCorrelation.status, "error");
+if (mismatchedCorrelation.status === "error") {
+  assert.equal(mismatchedCorrelation.error.error.code, "INVALID_UPSTREAM_RESULT");
+}
 
 const internalRestaurantId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const resolutionPort = new FoundationRestaurantResolutionPort(() =>
