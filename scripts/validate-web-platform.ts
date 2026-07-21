@@ -129,7 +129,7 @@ const collectSourceFiles = async (directory: string): Promise<void> => {
   }
 };
 const forbiddenServerImport =
-  /\b(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)["'](?:openai(?:\/|["'])|@google|@neondatabase|drizzle|@foodseyo\/database)/u;
+  /\b(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)["'](?:openai(?:\/|["'])|@google|@neondatabase|drizzle|@foodseyo\/(?:database|source-acquisition|restaurant-resolution)(?:\/|["']))/u;
 const assertBrowserBoundary = (file: string, source: string): void => {
   assert.doesNotMatch(
     source,
@@ -144,9 +144,11 @@ const assertBrowserBoundary = (file: string, source: string): void => {
 };
 
 for (const [file, source] of [
-  ["apps/web/app/page.tsx", 'import OpenAI from "openai";'],
-  ["apps/web/pages/index.tsx", 'import "@foodseyo/database";'],
+  ["apps/web/app/page.tsx", 'import "@foodseyo/source-acquisition";'],
+  ["apps/web/pages/index.tsx", 'import "@foodseyo/restaurant-resolution";'],
   ["apps/web/middleware.ts", 'const db = require("drizzle-orm");'],
+  ["apps/web/proxy.ts", 'import OpenAI from "openai";'],
+  ["apps/web/app/database-probe.ts", 'import "@foodseyo/database";'],
 ] as const) {
   assert.throws(
     () => assertBrowserBoundary(file, source),
