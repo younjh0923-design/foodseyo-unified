@@ -436,9 +436,9 @@ Checkpoint state:
 - **DB-1:** DONE - eleven-table persistence and physical contract;
 - **DB-2:** DONE - Drizzle schema, reviewed migration, and static
   parity validation;
-- **DB-3:** IN PROGRESS - exact cache, ownership, bounded waiting, and
+- **DB-3:** DONE - exact cache, ownership, bounded waiting, and
   `analysis_only` persistence;
-- **DB-4:** BLOCKED by DB-3 - Google Place convergence and atomic eligible
+- **DB-4:** IN PROGRESS - Google Place convergence and atomic eligible
   publication;
 - **DB-5:** BLOCKED by explicit owner authorization - Neon Development
   migration and real test-row mutation.

@@ -46,3 +46,11 @@ and receipt as one fake transaction. Deterministic write-failure injection
 proves rollback and prevents partial publication. DB-3 and DB-4 replace that
 foundation with the authorized exact-cache and publication repository APIs;
 runtime credentials and live database application remain gated by DB-5.
+
+DB-3 adds `PostgresMvpAnalysisRepository` behind an injected transaction
+runner and its network-free deterministic counterpart. The minimal API resolves
+exact evidence plus semantic identities, elects one lease owner, provides a
+bounded waiter, records retryable or terminal failure through guarded CAS, and
+persists only runtime-validated `analysis_only` canonical results. The
+menu-only transaction cannot create restaurant, menu, Dish, match, or receipt
+rows, and stale owners are rejected before any canonical write.

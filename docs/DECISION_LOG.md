@@ -402,5 +402,11 @@
   both receipt integrity foreign keys, and an exact frozen receipt-version
   check. Static parity validation runs in the repository integration suite; the
   migration remains unapplied.
+- **DB-3 evidence:** The provider-independent repository resolves exact
+  identities, elects a single application-generated run owner, bounds duplicate
+  waiting, replaces expired leases, records retryable or terminal outcomes, and
+  rejects stale owner writes through guarded compare-and-swap. The menu-only
+  operation accepts only a runtime-validated `analysis_only` canonical value and
+  leaves all seven publication-side table counts at zero in deterministic tests.
 - **Status:** Accepted implementation baseline
 - **Date:** 2026-07-21

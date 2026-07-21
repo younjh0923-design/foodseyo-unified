@@ -24,6 +24,8 @@ import {
   type RestaurantMenuVersion,
 } from "@foodseyo/contracts";
 
+export * from "./mvp-persistence.js";
+
 const publicError = (
   code: PublicErrorCode,
   context: PortInvocationContext,
