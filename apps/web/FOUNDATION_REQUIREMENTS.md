@@ -30,21 +30,22 @@ database rows, or cache shapes.
 
 ## Deliberately blocked
 
-The repository still marks the web framework and exact React/framework
-versions as pending. Issue #20 proposes the minimum platform choice. No
-framework dependency, component, route, browser build, or rendered shell is
-included until its contract PR is approved and merged.
+Issue #20 has all-owner proposal approval. Its contract-only candidate freezes
+Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7` as exact
+`apps/web` dependencies. No component, route, browser build, or rendered shell
+is included until the exact contract PR is approved and merged.
 
-The frozen contracts also lack the initial sensitive browser-to-server
-photo/link intake request and an approved UI-safe official-source/Web Search
-progress event. Issue #21 proposes those boundaries. This slice does not invent
-a local progress enum, request DTO, or fake success state while that proposal is
-unmerged.
+The frozen U1 registry does not contain the initial sensitive browser-to-server
+photo/link intake request or UI-safe official-source/Web Search progress event.
+Those boundaries are now available through the separately versioned, merged
+Issue #21 `@foodseyo/contracts/web-experience` entry point. This completed
+foundation slice did not invent or implement a local progress enum, request DTO,
+or fake success state.
 
-Because those two contracts are pending, browser visual QA is not yet truthful
-or executable. The next UI slice must consume the merged platform and
-intake/progress contracts, render these projections, and then perform keyboard,
-screen-reader, 320px overflow, and mobile-browser QA.
+Because the Issue #20 platform contract remains pending, browser visual QA is
+not yet truthful or executable. After that contract merges, the next UI slice
+must consume both merged contracts, render these projections, and then perform
+keyboard, screen-reader, 320px overflow, and mobile-browser QA.
 
 ## Trust boundary
 

@@ -565,6 +565,10 @@ const moduleInterfaces = await readFile(
   resolve("docs/MODULE_INTERFACES.md"),
   "utf8",
 );
+const webExperience = await readFile(
+  resolve("docs/WEB_EXPERIENCE.md"),
+  "utf8",
+);
 const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
@@ -780,6 +784,35 @@ assert.match(
 assert.match(
   decisionLog,
   /## U-014 - U1 compatibility contract 1\.0\.0 freeze[\s\S]*13 selected shared contract tokens[\s\S]*eight[\s\S]*dish-match\/0\.1\.0[\s\S]*dish-profile\/0\.1\.0[\s\S]*Issue #17[\s\S]*e6307d3f2b7bb59680575a5cbb9c99862b8642be[\s\S]*fe57602e0ded09c0899c5babf18d64e6d8d6e03e[\s\S]*e01a67306e319f9aec4b050477eacfbca99ffb31[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+const mergedWebExperienceEvidence =
+  /^(?=[\s\S]*Issue #21)(?=[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34)(?=[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f)(?=[\s\S]*status:merged)(?=[\s\S]*closed)/;
+for (const [name, documentation] of [
+  ["shared contracts", sharedContracts],
+  ["module interfaces", moduleInterfaces],
+  ["web experience", webExperience],
+] as const) {
+  assert.match(
+    documentation,
+    mergedWebExperienceEvidence,
+    `${name} must record the merged Issue #21 exact-HEAD evidence`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-015 - Sensitive intake and UI-safe acquisition progress candidate[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+assert.match(
+  contractsPackage,
+  /Merged Issue #21[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f[\s\S]*available/,
+);
+assert.match(
+  webPackage,
+  /Issue #21's exact PR #30[\s\S]*merged to `main`[\s\S]*available/,
+);
+assert.match(
+  restaurantPackage,
+  /merged Issue #21[\s\S]*`@foodseyo\/contracts\/web-experience`/,
 );
 assert.match(
   contractChangeQueue,
@@ -1276,7 +1309,11 @@ assert.match(webFoundation, /Issue #21/);
 assert.match(webFoundation, /all-owner proposal approval/);
 assert.match(
   webFoundation,
-  /feature code still\s+cannot consume it before the exact contract PR is approved and merged/,
+  /PR #30 is merged[\s\S]+web-experience\/0\.1\.0[\s\S]+available to dependent feature code/,
+);
+assert.match(
+  webFoundation,
+  /platform candidate[\s\S]+cannot consume that platform candidate before the exact contract PR is[\s\S]+approved and merged/,
 );
 assertTaskStatus(
   taskMaster,
@@ -1296,43 +1333,37 @@ const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
+assert.match(immediateNextAction, /current platform-contract action is Issue #20/i);
 assert.match(immediateNextAction, /U2 Core Integration is complete\./);
-assert.match(immediateNextAction, /current contract action is Issue #21/i);
 assert.match(
   immediateNextAction,
-  /`contracts\/issue-21-web-experience`[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
+  /`contracts\/issue-20-web-platform`[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
 );
 assert.match(
   immediateNextAction,
-  /`web-experience\/0\.1\.0` candidate remains unavailable[\s\S]+exact-HEAD contract PR receives all-owner approval and merges/,
-);
-assertOrdered(immediateNextAction, "post-U2 contract order", [
-  "current contract action is Issue #21",
-  "following contract action is the Issue #20",
-]);
-assert.match(
-  immediateNextAction,
-  /Issues #21 and #20 are `status:approved`/i,
+  /Next\.js `16\.2\.10`[\s\S]+React `19\.2\.7`[\s\S]+React DOM `19\.2\.7` candidate remains unavailable/,
 );
 assert.match(
   immediateNextAction,
-  /candidate\s+shapes remain unavailable[\s\S]+respective exact contract PRs receive[\s\S]+all-owner approval and merge/i,
+  /PR #30 exact HEAD[\s\S]+`913458fcb2497bf424c3a330826e131101fcfc34`[\s\S]+merged to canonical `main` as[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
 );
-assert.match(immediateNextAction, /Issue #20 remains a separate platform contract/);
+assert.match(
+  immediateNextAction,
+  /`web-experience\/0\.1\.0` candidate is\s+available to dependent feature code/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #28's docs-only S1\.6 policy approval remains merged[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #31 receives exact-HEAD all-owner[\s\S]+approval and merges/,
+);
 assert.match(immediateNextAction, /S1 implementation has not started\./);
 assert.match(
   immediateNextAction,
-  /PR #28's docs-only S1\.6 policy approval is merged[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
-);
-assert.match(
-  immediateNextAction,
   /does not authorize UI code or[\s\S]+production explanation-renderer integration/i,
-);
-assertOrdered(immediateNextAction, "contract review order", [
-  "current contract action is Issue #21",
-  "following contract action is the Issue #20",
-]);
-assert.doesNotMatch(
+);assert.doesNotMatch(
   immediateNextAction,
   /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,
 );

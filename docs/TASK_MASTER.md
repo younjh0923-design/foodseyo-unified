@@ -288,12 +288,12 @@ marked `DONE`.
   presentation projections, evidence/unknown labeling, safe outcome/error
   handling, accessibility requirements, and deterministic fake-port tests are
   implemented on `ui/result-experience-foundation`.
-- **Current blockers:** rendered components and browser QA wait for platform
-  contract Issue #20; server-bound photo/link intake plus official-source and
-  Web Search progress wait for cross-workstream boundary Issue #21. Issue #21
-  has all-owner proposal approval and its `web-experience/0.1.0` candidate is
-  being implemented on `contracts/issue-21-web-experience`; feature code still
-  cannot consume it before the exact contract PR is approved and merged.
+- **Current blockers:** Issue #21 exact contract PR #30 is merged to `main`, so
+  its `web-experience/0.1.0` candidate is available to dependent feature code.
+  Issue #20 retains all-owner proposal approval and its exact Next.js/React
+  platform candidate is under review on PR #31; rendered components and browser
+  QA cannot consume that platform candidate before the exact contract PR is
+  approved and merged.
 - **Completion evidence:** PR #24 feature HEAD
   `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
   `952b357fba526068a11597f490eea61fcccbba58`.
@@ -565,20 +565,21 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U2 Core Integration is complete. The current contract action is Issue #21 on
-`contracts/issue-21-web-experience`, rebased onto canonical `main` at
-`142330f5b0cb7b10f820614cd76a8d01a2643ffa`. The approved-direction
-`web-experience/0.1.0` candidate remains unavailable to feature code until
-its dedicated exact-HEAD contract PR receives all-owner approval and merges.
+U2 Core Integration is complete. The Issue #21 contract action on
+`contracts/issue-21-web-experience` is complete: PR #30 exact HEAD
+`913458fcb2497bf424c3a330826e131101fcfc34` merged to canonical `main` as
+`c04305e421657863d3c0c06fdfe3f90192a1593f`; Issue #21 then moved to
+`status:merged` and closed. The approved `web-experience/0.1.0` candidate is
+available to dependent feature code.
 
-PR #28's docs-only S1.6 policy approval is merged in canonical `main` at
+PR #28's docs-only S1.6 policy approval remains merged in canonical `main` at
 `142330f5b0cb7b10f820614cd76a8d01a2643ffa`. It does not authorize UI code or
 production explanation-renderer integration before the remaining contract and
 canonical-fixture gates complete.
 
-After Issue #21 merges, the following contract action is the Issue #20
-platform contract PR. Issues #21 and #20 are `status:approved`; their candidate
-shapes remain unavailable until their respective exact contract PRs receive
-all-owner approval and merge. Issue #20 remains a separate platform contract
-and does not authorize framework implementation before its own exact contract
-PR merges. S1 implementation has not started.
+The current platform-contract action is Issue #20 on
+`contracts/issue-20-web-platform`, synchronized with canonical `main` at
+`c04305e421657863d3c0c06fdfe3f90192a1593f`. Its exact Next.js `16.2.10`,
+React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
+dependent framework implementation until PR #31 receives exact-HEAD all-owner
+approval and merges. S1 implementation has not started.

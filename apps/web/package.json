@@ -11,7 +11,10 @@
     "test": "tsx tests/foundation.test.ts"
   },
   "dependencies": {
-    "@foodseyo/contracts": "workspace:*"
+    "@foodseyo/contracts": "workspace:*",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
   },
   "devDependencies": {
     "@foodseyo/menu-analysis": "workspace:*",

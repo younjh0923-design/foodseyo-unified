@@ -294,10 +294,7 @@ assert(
   ),
 );
 assert.deepEqual(
-  [
-    BLOCKED_UI_BINDINGS.framework.issue,
-    BLOCKED_UI_BINDINGS.intakeAndProgress.issue,
-  ],
+  [BLOCKED_UI_BINDINGS.framework.issue],
   webFixture.blockedContractIssues,
 );
 

@@ -2,15 +2,16 @@
 
 ## Status and authority
 
-Issue #21 received all-owner proposal approval and is labeled
-`status:approved`. This document and
-`@foodseyo/contracts/web-experience` define the exact candidate contract for
-the dedicated contract PR.
+All owners approved exact PR #30 HEAD
+`913458fcb2497bf424c3a330826e131101fcfc34`; it merged to `main` as
+`c04305e421657863d3c0c06fdfe3f90192a1593f`. Issue #21 then moved to
+`status:merged` and closed. This document and
+`@foodseyo/contracts/web-experience` define the merged contract.
 
 The candidate version is `web-experience/0.1.0` with status `candidate`.
 It is deliberately separate from the frozen U1 `1.0.0` registry. No feature
-may consume it until the exact contract PR receives all three owner approvals,
-merges to `main`, and Issue #21 moves to `status:merged`.
+may reinterpret the frozen registry through this entry point; dependent
+feature code may consume this reviewed, separately versioned contract.
 
 ## Sensitive intake request
 
@@ -68,8 +69,8 @@ The frozen `module-interfaces/1.0.0` `UiSafeOperationalEvent`,
 `UiWorkflowProgress` and remain unchanged. This candidate entry point instead
 exports `WebExperienceUiSafeOperationalEvent`,
 `WebExperienceUiOperationalEventPort`, and their runtime schema. Consumers opt
-into that candidate-only union after this contract PR merges, so exhaustive
-consumers of the frozen union do not change meaning without a version update.
+into that candidate-only union through the merged public entry point, so
+exhaustive consumers of the frozen union do not change meaning without a version update.
 The progress event carries its own candidate version token while reusing the
 frozen `PortInvocationContext`.
 
