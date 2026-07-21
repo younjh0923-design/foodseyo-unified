@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "validate:foundation": "tsx scripts/validate-foundation.ts",
+    "validate:foundation": "tsx scripts/validate-foundation.ts && tsx scripts/validate-google-places-thin-path.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
