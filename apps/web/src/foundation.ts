@@ -15,6 +15,7 @@ import {
   type PortInvocationContext,
   type PublicErrorEnvelope,
   type PublicOutcome,
+  type RestaurantMatchSignal,
   type RestaurantResolution,
 } from "@foodseyo/contracts";
 
@@ -61,6 +62,7 @@ export interface RestaurantCandidateRowView {
   readonly candidateId: string;
   readonly name: string;
   readonly address: string;
+  readonly matchReasons: readonly string[];
   readonly rank: number;
   readonly isSelected: boolean;
   readonly canSelect: boolean;
@@ -170,12 +172,7 @@ export const MOBILE_ACCESSIBILITY_REQUIREMENTS = Object.freeze({
   imageInputsRequireTextLabels: true,
 });
 
-export const BLOCKED_UI_BINDINGS = Object.freeze({
-  framework: {
-    issue: 20,
-    capability: "browser shell and rendered components",
-  },
-});
+export const BLOCKED_UI_BINDINGS = Object.freeze({});
 
 const SAFETY_NOTICE =
   "Ingredient and sensory information does not confirm allergen or dietary safety. Ask the restaurant when safety matters.";
@@ -260,6 +257,14 @@ const RESTAURANT_RESOLUTION_COPY = {
     { readonly title: string; readonly description: string }
   >
 >;
+
+const RESTAURANT_MATCH_SIGNAL_COPY = {
+  name: "Name matches",
+  address: "Address matches",
+  location: "Location matches",
+  user_link: "Matches your link",
+  visual_text: "Matches text in your photo",
+} as const satisfies Readonly<Record<RestaurantMatchSignal, string>>;
 
 const cloneDraft = (draft: LocalInputDraft): LocalInputDraft => ({
   linkInput: draft.linkInput,
@@ -426,6 +431,9 @@ export const buildRestaurantSelectionScreen = (
       name: candidate.displayName,
       address:
         candidate.fullAddress ?? candidate.shortAddress ?? "Address not available",
+      matchReasons: candidate.matchSignals.map(
+        (signal) => RESTAURANT_MATCH_SIGNAL_COPY[signal],
+      ),
       rank: candidate.rank,
       isSelected: candidate.candidateId === parsed.selectedCandidateId,
       canSelect: canSelectCandidate,

@@ -126,6 +126,11 @@ for (const screen of [
 
 assert.equal(restaurantScreen.candidates.length, 1);
 assert.equal(restaurantScreen.candidates[0]?.name, "Fixture Restaurant");
+assert.deepEqual(restaurantScreen.candidates[0]?.matchReasons, [
+  "Name matches",
+  "Address matches",
+  "Matches your link",
+]);
 assert.equal("googlePlaceId" in (restaurantScreen.candidates[0] ?? {}), false);
 
 const secondCandidate = {
@@ -294,7 +299,7 @@ assert(
   ),
 );
 assert.deepEqual(
-  [BLOCKED_UI_BINDINGS.framework.issue],
+  Object.values(BLOCKED_UI_BINDINGS),
   webFixture.blockedContractIssues,
 );
 

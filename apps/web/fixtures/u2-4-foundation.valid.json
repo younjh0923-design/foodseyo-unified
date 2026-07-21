@@ -44,5 +44,5 @@
       "controlIds": ["retry-restaurant-matching", "continue-menu-only"]
     }
   ],
-  "blockedContractIssues": [20]
+  "blockedContractIssues": []
 }

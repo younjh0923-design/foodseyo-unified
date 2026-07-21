@@ -1,4 +1,4 @@
-# U2.4 framework-neutral web foundation
+# U2.4 web foundation
 
 ## Implemented in this slice
 
@@ -28,12 +28,11 @@ The app-private models in `src/foundation.ts` are presentation projections.
 They are not shared DTOs, transport contracts, provider DTOs, canonical data,
 database rows, or cache shapes.
 
-## Deliberately blocked
+## Platform and integration status
 
-Issue #20 has all-owner proposal approval. Its contract-only candidate freezes
-Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7` as exact
-`apps/web` dependencies. No component, route, browser build, or rendered shell
-is included until the exact contract PR is approved and merged.
+Issue #20 / PR #31 merged the exact Next.js App Router `16.2.10`, React
+`19.2.7`, and React DOM `19.2.7` platform boundary. Rendered components and
+routes may now use that approved boundary.
 
 The frozen U1 registry does not contain the initial sensitive browser-to-server
 photo/link intake request or UI-safe official-source/Web Search progress event.
@@ -42,10 +41,11 @@ Issue #21 `@foodseyo/contracts/web-experience` entry point. This completed
 foundation slice did not invent or implement a local progress enum, request DTO,
 or fake success state.
 
-Because the Issue #20 platform contract remains pending, browser visual QA is
-not yet truthful or executable. After that contract merges, the next UI slice
-must consume both merged contracts, render these projections, and then perform
-keyboard, screen-reader, 320px overflow, and mobile-browser QA.
+Restaurant matching remains fixture-driven until PR #27 merges. The UI may
+render frozen `RestaurantResolution` projections, but it must not import PR #27
+internals, claim server confirmation, or call Google, OpenAI, a database, or a
+server-only package from the browser. Browser visual QA covers the local states;
+actual adapter integration and end-to-end confirmation are deferred.
 
 ## Trust boundary
 
