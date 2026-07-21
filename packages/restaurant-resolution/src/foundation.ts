@@ -173,6 +173,7 @@ export class DeterministicFakeGooglePlacesAdapter
 }
 
 const PROVIDER_RECORD_KEYS = new Set([
+  "requestCorrelationId",
   "requestCandidateId",
   "placeId",
   "primaryText",
@@ -187,10 +188,15 @@ const PROVIDER_RECORD_KEYS = new Set([
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const parseProviderRecord = (value: unknown): RestaurantCandidate | null => {
+const parseProviderRecord = (
+  value: unknown,
+  requestCorrelationId: string,
+): RestaurantCandidate | null => {
   if (
     !isRecord(value) ||
     Object.keys(value).some((key) => !PROVIDER_RECORD_KEYS.has(key)) ||
+    (value.requestCorrelationId !== undefined &&
+      value.requestCorrelationId !== requestCorrelationId) ||
     typeof value.requestCandidateId !== "string" ||
     typeof value.placeId !== "string" ||
     typeof value.primaryText !== "string" ||
@@ -295,7 +301,9 @@ export class GooglePlacesCandidateFinder {
         error: publicError("INVALID_UPSTREAM_RESULT", context),
       };
     }
-    const candidates = providerResult.value.map(parseProviderRecord);
+    const candidates = providerResult.value.map((candidate) =>
+      parseProviderRecord(candidate, context.correlationId),
+    );
     if (candidates.some((candidate) => candidate === null)) {
       return {
         status: "error",

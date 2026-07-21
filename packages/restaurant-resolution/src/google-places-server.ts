@@ -46,6 +46,7 @@ interface GooglePlacesAdapterDependencies {
 }
 
 interface ProviderCandidateRecord {
+  readonly requestCorrelationId: string;
   readonly requestCandidateId: string;
   readonly placeId: string;
   readonly primaryText: string;
@@ -107,20 +108,44 @@ const assertServerRuntime = (): void => {
   }
 };
 
-const buildSearchSignals = (
+const normalizeEvidenceText = (value: string): string =>
+  value.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+
+const evidenceTextMatches = (
+  candidateValue: string | null,
+  clueValue: string | null,
+): boolean =>
+  candidateValue !== null &&
+  clueValue !== null &&
+  normalizeEvidenceText(candidateValue) === normalizeEvidenceText(clueValue);
+
+const buildCandidateSignals = (
   clues: NormalizedServerRestaurantClues,
+  candidate: {
+    readonly name: string;
+    readonly address: string | null;
+    readonly latitude: number | null;
+    readonly longitude: number | null;
+  },
 ): readonly RestaurantMatchSignal[] => {
   const signals: RestaurantMatchSignal[] = [];
-  if (clues.name !== null) {
+  if (evidenceTextMatches(candidate.name, clues.name)) {
     signals.push("name");
   }
-  if (clues.address !== null) {
+  if (evidenceTextMatches(candidate.address, clues.address)) {
     signals.push("address");
   }
-  if (clues.location !== null) {
+  if (
+    clues.location !== null &&
+    candidate.latitude === clues.location.latitude &&
+    candidate.longitude === clues.location.longitude
+  ) {
     signals.push("location");
   }
-  if (clues.visualText !== null) {
+  if (
+    evidenceTextMatches(candidate.name, clues.visualText) ||
+    evidenceTextMatches(candidate.address, clues.visualText)
+  ) {
     signals.push("visual_text");
   }
   return signals;
@@ -147,7 +172,7 @@ const buildTextQuery = (
 const mapProviderPlace = (
   value: unknown,
   rank: number,
-  signals: readonly RestaurantMatchSignal[],
+  clues: NormalizedServerRestaurantClues,
   context: PortInvocationContext,
   candidateIdFactory: GooglePlacesAdapterDependencies["candidateIdFactory"],
 ): ProviderCandidateRecord | null => {
@@ -156,29 +181,32 @@ const mapProviderPlace = (
     typeof value.id !== "string" ||
     !isRecord(value.displayName) ||
     typeof value.displayName.text !== "string" ||
-    (value.formattedAddress !== undefined &&
-      typeof value.formattedAddress !== "string")
+    typeof value.formattedAddress !== "string" ||
+    !isRecord(value.location) ||
+    typeof value.location.latitude !== "number" ||
+    !Number.isFinite(value.location.latitude) ||
+    value.location.latitude < -90 ||
+    value.location.latitude > 90 ||
+    typeof value.location.longitude !== "number" ||
+    !Number.isFinite(value.location.longitude) ||
+    value.location.longitude < -180 ||
+    value.location.longitude > 180
   ) {
     return null;
   }
 
-  let latitude: number | null = null;
-  let longitude: number | null = null;
-  if (value.location !== undefined) {
-    if (
-      !isRecord(value.location) ||
-      typeof value.location.latitude !== "number" ||
-      !Number.isFinite(value.location.latitude) ||
-      typeof value.location.longitude !== "number" ||
-      !Number.isFinite(value.location.longitude)
-    ) {
-      return null;
-    }
-    latitude = value.location.latitude;
-    longitude = value.location.longitude;
-  }
+  const latitude = value.location.latitude;
+  const longitude = value.location.longitude;
+
+  const signals = buildCandidateSignals(clues, {
+    name: value.displayName.text,
+    address: value.formattedAddress ?? null,
+    latitude,
+    longitude,
+  });
 
   return {
+    requestCorrelationId: context.correlationId,
     requestCandidateId: candidateIdFactory(
       value.id,
       rank,
@@ -235,8 +263,7 @@ export class GooglePlacesTextSearchAdapter
     }
 
     const textQuery = buildTextQuery(clues);
-    const signals = buildSearchSignals(clues);
-    if (textQuery === null || signals.length === 0) {
+    if (textQuery === null) {
       return { status: "success", value: [] };
     }
 
@@ -270,28 +297,27 @@ export class GooglePlacesTextSearchAdapter
     const providerResult = this.requestCandidates(
       clues,
       textQuery,
-      signals,
       context,
       providerController.signal,
     );
-    const result = await Promise.race([providerResult, interruption]);
-
-    context.signal.removeEventListener("abort", cancelProvider);
-    this.#dependencies.clearScheduledTimeout(timeoutHandle);
-
-    if (deadlineExpired) {
-      return timeoutResult(context);
+    try {
+      const result = await Promise.race([providerResult, interruption]);
+      if (deadlineExpired) {
+        return timeoutResult(context);
+      }
+      if (context.signal.aborted) {
+        return interruptedResult(context);
+      }
+      return result;
+    } finally {
+      context.signal.removeEventListener("abort", cancelProvider);
+      this.#dependencies.clearScheduledTimeout(timeoutHandle);
     }
-    if (context.signal.aborted) {
-      return interruptedResult(context);
-    }
-    return result;
   }
 
   private async requestCandidates(
     clues: NormalizedServerRestaurantClues,
     textQuery: string,
-    signals: readonly RestaurantMatchSignal[],
     context: PortInvocationContext,
     signal: AbortSignal,
   ): Promise<PortResult<readonly unknown[]>> {
@@ -372,7 +398,7 @@ export class GooglePlacesTextSearchAdapter
         mapProviderPlace(
           place,
           index + 1,
-          signals,
+          clues,
           context,
           this.#dependencies.candidateIdFactory,
         ),
@@ -383,9 +409,18 @@ export class GooglePlacesTextSearchAdapter
         error: publicError("INVALID_UPSTREAM_RESULT", context),
       };
     }
+    const validRecords = records as readonly ProviderCandidateRecord[];
+    if (new Set(validRecords.map((record) => record.placeId)).size !== validRecords.length) {
+      return {
+        status: "error",
+        error: publicError("INVALID_UPSTREAM_RESULT", context),
+      };
+    }
     return {
       status: "success",
-      value: records as readonly ProviderCandidateRecord[],
+      value: validRecords.filter(
+        (record) => record.signals.length > 0,
+      ),
     };
   }
 }

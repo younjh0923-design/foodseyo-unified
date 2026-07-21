@@ -57,6 +57,21 @@ bounded timeout race the whole provider response/parsing operation, so a late
 success or rejection after cancellation/deadline cannot expose candidate
 identity.
 
+The Google adapter and its normalized provider records are package-internal
+server composition details, not public persistence or publication contracts.
+Only the finder's frozen `RestaurantCandidate` projection is UI-safe:
+`candidateId` is request-scoped, while `googlePlaceId` is only a Google external
+reference. Neither value, candidate creation, nor provider rank establishes a
+canonical restaurant identity. Confirmation remains independent of persistence
+and may validly produce a confirmed resolution with `restaurantId: null`.
+
+Any approved UI composition that displays these projected Google candidates is
+responsible for presenting the attribution required by Google Places policies.
+It must consume only the UI-safe projection and must not receive the adapter's
+normalized records or raw Google response. This package does not create a
+durable Google candidate, persistence, publication, database, cache, or UI
+contract.
+
 `validate-google-places-thin-path.ts` is network-free. It injects deterministic
 fetch, ID, timeout, success, failure, late-settlement, and provider-internal
 field fixtures; no automated test calls Google. No provider response is cached,
