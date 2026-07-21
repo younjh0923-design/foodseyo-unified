@@ -314,7 +314,7 @@
       "mustNotSay": ["점수만으로 확인된 식당 또는 지점이라고 표현", "점수를 확인 확률이나 확정 사실로 표현"],
       "uncertaintyLanguage": ["후보 점수는 지점 확인이 아니에요."],
       "expectedUserValue": "후보 점수와 식당 확인을 구분한다.",
-      "prohibitedHallucination": ["score-confirmed restaurant", "confirmation probability"],
+      "prohibitedHallucination": ["score-confirmed restaurant", "confirmation probability", "Restaurant- or branch-specific facts authorized by candidate score"],
       "futureCanonicalInformationRequired": ["unresolved: safe candidate-score signal", "unresolved: Restaurant confirmation state"]
     },
     {
