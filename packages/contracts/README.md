@@ -20,3 +20,11 @@ rows, migrations, UI models with provider internals, or secrets. The selected
 contracts and this package manifest are `1.0.0`/`frozen`; U2 feature packages
 may consume them from the completed U1.6 baseline. Later feature consumption
 must preserve these frozen boundaries.
+
+Issue #21 adds the separately versioned `web-experience/0.1.0` candidate at
+`@foodseyo/contracts/web-experience`. It defines sensitive intake and UI-safe
+non-terminal acquisition progress without promoting or reinterpreting the
+frozen U1 registry. Its candidate-only UI-safe event union and port opt into
+progress while the frozen `module-interfaces/1.0.0` event union, port, and
+runtime schema remain unchanged. The candidate cannot be consumed by feature
+code before its exact contract PR receives all-owner approval and merges.
