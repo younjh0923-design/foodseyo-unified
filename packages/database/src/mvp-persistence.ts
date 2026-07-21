@@ -75,11 +75,16 @@ export type WaitResult =
     }
   | { readonly status: "busy" };
 
-export type SafeAnalysisErrorCode =
-  | "ANALYSIS_TEMPORARILY_UNAVAILABLE"
-  | "INTERNAL_ERROR"
-  | "INVALID_UPSTREAM_RESULT"
-  | "UPSTREAM_TIMEOUT";
+const safeAnalysisErrorCodes = [
+  "ANALYSIS_TEMPORARILY_UNAVAILABLE",
+  "INTERNAL_ERROR",
+  "INVALID_UPSTREAM_RESULT",
+  "UPSTREAM_TIMEOUT",
+] as const;
+
+export type SafeAnalysisErrorCode = (typeof safeAnalysisErrorCodes)[number];
+
+const safeAnalysisErrorCodeSet = new Set<string>(safeAnalysisErrorCodes);
 
 export interface AcquireOwnerRequest {
   readonly identity: ExactAnalysisIdentity;
@@ -293,6 +298,16 @@ const requireNonblank = (value: string, name: string): void => {
   }
 };
 
+const parseSafeAnalysisErrorCode = (
+  value: unknown,
+  name = "safeErrorCode",
+): SafeAnalysisErrorCode => {
+  if (typeof value !== "string" || !safeAnalysisErrorCodeSet.has(value)) {
+    throw new PersistenceContractError(`${name} must be an allowlisted safe code`);
+  }
+  return value as SafeAnalysisErrorCode;
+};
+
 const requireTimestamp = (value: string, name: string): number => {
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) {
@@ -331,7 +346,7 @@ interface RunRow extends QueryResultRow {
   readonly id: string;
   readonly attempt_number: number;
   readonly lease_expires_at: string;
-  readonly safe_error_code: SafeAnalysisErrorCode | null;
+  readonly safe_error_code: string | null;
   readonly status: "failed_terminal" | "processing";
 }
 
@@ -572,12 +587,24 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
     }
 
     return this.sql.transaction(async (executor) => {
+      const transactionReusable = await findReusable(
+        executor,
+        request.identity,
+        request.startedAt,
+      );
+      if (transactionReusable) {
+        return { status: "reusable", analysis: transactionReusable };
+      }
+
       const blocking = await readBlockingRun(executor, request.identity);
       if (blocking?.status === "failed_terminal") {
-        if (!blocking.safe_error_code) {
-          throw new PersistenceContractError("terminal run lacks safe error code");
-        }
-        return { status: "terminal", safeErrorCode: blocking.safe_error_code };
+        return {
+          status: "terminal",
+          safeErrorCode: parseSafeAnalysisErrorCode(
+            blocking.safe_error_code,
+            "stored safeErrorCode",
+          ),
+        };
       }
       if (blocking?.status === "processing") {
         if (Date.parse(blocking.lease_expires_at) > startedAt) {
@@ -620,14 +647,55 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
       );
       const newOwner = inserted.rows[0];
       if (newOwner) {
+        const committedWhileInserting = await findReusable(
+          executor,
+          request.identity,
+          request.startedAt,
+        );
+        if (committedWhileInserting) {
+          const released = await executor.query(
+            `update analysis_runs
+                set status = 'failed_retryable', lease_expires_at = null,
+                    finished_at = $4, safe_error_code = 'ANALYSIS_TEMPORARILY_UNAVAILABLE',
+                    updated_at = $4
+              where id = $1 and evidence_set_id = $2 and analysis_contract_id = $3
+                and status = 'processing'`,
+            [
+              request.runId,
+              request.identity.evidenceSetId,
+              request.identity.analysisContractId,
+              request.startedAt,
+            ],
+          );
+          if (released.rowCount !== 1) {
+            throw new PersistenceContractError(
+              "redundant analysis owner could not be released",
+            );
+          }
+          return { status: "reusable", analysis: committedWhileInserting };
+        }
         return { status: "owner", owner: runRowToOwner(newOwner) };
+      }
+      const committedWhileWaiting = await findReusable(
+        executor,
+        request.identity,
+        request.startedAt,
+      );
+      if (committedWhileWaiting) {
+        return { status: "reusable", analysis: committedWhileWaiting };
       }
       const winner = await readBlockingRun(executor, request.identity);
       if (winner?.status === "processing") {
         return { status: "waiting", owner: runRowToOwner(winner) };
       }
       if (winner?.status === "failed_terminal" && winner.safe_error_code) {
-        return { status: "terminal", safeErrorCode: winner.safe_error_code };
+        return {
+          status: "terminal",
+          safeErrorCode: parseSafeAnalysisErrorCode(
+            winner.safe_error_code,
+            "stored safeErrorCode",
+          ),
+        };
       }
       throw new PersistenceContractError("owner acquisition conflict was unresolved");
     });
@@ -651,7 +719,13 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
       }
       const blocking = await readBlockingRun(this.sql, identity);
       if (blocking?.status === "failed_terminal" && blocking.safe_error_code) {
-        return { status: "terminal", safeErrorCode: blocking.safe_error_code };
+        return {
+          status: "terminal",
+          safeErrorCode: parseSafeAnalysisErrorCode(
+            blocking.safe_error_code,
+            "stored safeErrorCode",
+          ),
+        };
       }
     }
     return { status: "busy" };
@@ -662,6 +736,7 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
   ): Promise<void> {
     validateIdentity(request.identity);
     requireUuid(request.runId, "runId");
+    parseSafeAnalysisErrorCode(request.safeErrorCode);
     requireTimestamp(request.finishedAt, "finishedAt");
     const result = await this.sql.query(
       `update analysis_runs
@@ -1329,6 +1404,7 @@ export class DeterministicMvpAnalysisRepository
   async markAnalysisFailure(request: MarkAnalysisFailureRequest): Promise<void> {
     validateIdentity(request.identity);
     requireUuid(request.runId, "runId");
+    parseSafeAnalysisErrorCode(request.safeErrorCode);
     const finishedAt = requireTimestamp(request.finishedAt, "finishedAt");
     const run = this.#runs.find(
       (candidate) =>

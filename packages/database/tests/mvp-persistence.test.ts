@@ -8,15 +8,20 @@ import {
   PublicationEligibleAnalysisSchema,
   RestaurantResolutionSchema,
 } from "@foodseyo/contracts";
+import type { QueryResultRow } from "pg";
 
 import {
   DeterministicMvpAnalysisRepository,
   InjectedPublicationFailure,
+  PostgresMvpAnalysisRepository,
   PersistenceContractError,
   StaleAnalysisOwnerError,
   type ExactIdentityRequest,
-  type SemanticVersionVector,
   type PublicationFaultPoint,
+  type SemanticVersionVector,
+  type SqlExecutor,
+  type SqlQueryResult,
+  type SqlTransactionRunner,
 } from "../src/mvp-persistence.js";
 
 type JsonRecord = Record<string, unknown>;
@@ -260,6 +265,105 @@ assert.deepEqual(terminal, {
   safeErrorCode: "INVALID_UPSTREAM_RESULT",
   status: "terminal",
 });
+
+class ReadyDuringOwnerInsertSqlRunner implements SqlTransactionRunner {
+  reusableReadCount = 0;
+  insertedOwnerCount = 0;
+  releasedOwnerCount = 0;
+
+  query<Row extends QueryResultRow>(
+    text: string,
+    _values: readonly unknown[] = [],
+  ): Promise<SqlQueryResult<Row>> {
+    if (text.includes("from canonical_analyses ca")) {
+      this.reusableReadCount += 1;
+      const rows =
+        this.reusableReadCount === 3
+          ? [{ canonical_analysis_json: analysisOnly }]
+          : [];
+      return Promise.resolve({
+        rowCount: rows.length,
+        rows: rows as readonly Row[],
+      });
+    }
+    if (
+      text.includes("from analysis_runs") &&
+      text.includes("status in ('processing', 'failed_terminal')")
+    ) {
+      return Promise.resolve({ rowCount: 0, rows: [] });
+    }
+    if (text.includes("insert into analysis_runs")) {
+      this.insertedOwnerCount += 1;
+      const rows = [
+        {
+          attempt_number: 2,
+          id: "12121212-1212-4212-8212-121212121212",
+          lease_expires_at: "2026-07-21T18:10:00.000Z",
+          safe_error_code: null,
+          status: "processing",
+        },
+      ];
+      return Promise.resolve({
+        rowCount: rows.length,
+        rows: rows as readonly Row[],
+      });
+    }
+    if (
+      text.includes("safe_error_code = 'ANALYSIS_TEMPORARILY_UNAVAILABLE'") &&
+      text.includes("and status = 'processing'")
+    ) {
+      this.releasedOwnerCount += 1;
+      return Promise.resolve({ rowCount: 1, rows: [] });
+    }
+    return Promise.reject(new Error(`unexpected SQL in race test: ${text}`));
+  }
+
+  transaction<T>(operation: (executor: SqlExecutor) => Promise<T>): Promise<T> {
+    return operation(this);
+  }
+}
+
+const raceRunner = new ReadyDuringOwnerInsertSqlRunner();
+const raceRepository = new PostgresMvpAnalysisRepository(raceRunner);
+const raceResult = await raceRepository.acquireAnalysisOwner({
+  identity,
+  leaseExpiresAt: "2026-07-21T18:10:00.000Z",
+  runId: "12121212-1212-4212-8212-121212121212",
+  startedAt: "2026-07-21T18:01:00.000Z",
+});
+assert.deepEqual(raceResult, {
+  analysis: analysisOnly,
+  status: "reusable",
+});
+assert.equal(raceRunner.insertedOwnerCount, 1);
+assert.equal(raceRunner.releasedOwnerCount, 1);
+
+class RejectUnexpectedSqlRunner implements SqlTransactionRunner {
+  queryCount = 0;
+
+  query<Row extends QueryResultRow>(): Promise<SqlQueryResult<Row>> {
+    this.queryCount += 1;
+    return Promise.reject(new Error("invalid safe error code reached SQL"));
+  }
+
+  transaction<T>(_operation: (executor: SqlExecutor) => Promise<T>): Promise<T> {
+    return Promise.reject(new Error("invalid safe error code reached transaction"));
+  }
+}
+
+const safeErrorRunner = new RejectUnexpectedSqlRunner();
+const safeErrorRepository = new PostgresMvpAnalysisRepository(safeErrorRunner);
+await assert.rejects(
+  safeErrorRepository.markAnalysisFailure({
+    finishedAt: "2026-07-21T18:02:00.000Z",
+    identity,
+    kind: "terminal",
+    runId: "13131313-1313-4313-8313-131313131313",
+    safeErrorCode: "provider-secret-detail" as never,
+  }),
+  PersistenceContractError,
+);
+assert.equal(safeErrorRunner.queryCount, 0);
 
 const buildEligibleAnalysis = (restaurantId: string) =>
   PublicationEligibleAnalysisSchema.parse({
