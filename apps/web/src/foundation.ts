@@ -63,7 +63,6 @@ export interface RestaurantCandidateRowView {
   readonly name: string;
   readonly address: string;
   readonly matchReasons: readonly string[];
-  readonly rank: number;
   readonly isSelected: boolean;
   readonly canSelect: boolean;
   readonly confirmLabel: string | null;
@@ -229,27 +228,27 @@ const OUTCOME_COPY = {
 
 const RESTAURANT_RESOLUTION_COPY = {
   candidate: {
-    title: "Choose the restaurant",
-    description: "Select the location that matches your visit.",
+    title: "어느 식당인가요?",
+    description: "가능한 식당 후보예요. 후보 정보만으로 지점이 확정되지 않으니 직접 선택해 주세요.",
   },
   conflicting: {
-    title: "Restaurant details conflict",
+    title: "식당 단서가 서로 달라요",
     description:
-      "The available clues point to different locations. Choose the correct one or continue with menu-only analysis.",
+      "확인된 단서가 서로 다른 지점을 가리켜요. 올바른 지점을 선택하거나 메뉴 사진만으로 계속할 수 있어요.",
   },
   user_confirmed: {
-    title: "Restaurant confirmed",
-    description: "Your restaurant choice is confirmed. Menu analysis can continue.",
+    title: "선택한 식당",
+    description: "사용자가 이 지점을 선택했어요. 메뉴 분석을 계속할 수 있어요.",
   },
   externally_verified: {
-    title: "Restaurant verified",
+    title: "확인된 식당",
     description:
-      "This restaurant was verified from external evidence. Menu analysis can continue.",
+      "외부 확인 정보로 이 지점이 확인됐어요. 메뉴 분석을 계속할 수 있어요.",
   },
   rejected: {
-    title: "Restaurant not confirmed",
+    title: "식당을 확인하지 못했어요",
     description:
-      "Try restaurant matching again or continue with menu-photo-only analysis.",
+      "식당 찾기를 다시 시도하거나 메뉴 사진만으로 계속할 수 있어요.",
   },
 } as const satisfies Readonly<
   Record<
@@ -259,11 +258,11 @@ const RESTAURANT_RESOLUTION_COPY = {
 >;
 
 const RESTAURANT_MATCH_SIGNAL_COPY = {
-  name: "Name matches",
-  address: "Address matches",
-  location: "Location matches",
-  user_link: "Matches your link",
-  visual_text: "Matches text in your photo",
+  name: "식당 이름 단서",
+  address: "주소 단서",
+  location: "위치 단서",
+  user_link: "입력한 링크 단서",
+  visual_text: "사진 속 글자 단서",
 } as const satisfies Readonly<Record<RestaurantMatchSignal, string>>;
 
 const cloneDraft = (draft: LocalInputDraft): LocalInputDraft => ({
@@ -396,8 +395,8 @@ export const buildRestaurantSelectionScreen = (
   if (parsed.state === "rejected") {
     controls.push({
       id: "retry-restaurant-matching",
-      label: "Try restaurant matching again",
-      ariaLabel: "Try restaurant matching again",
+      label: "식당 다시 찾기",
+      ariaLabel: "식당 후보를 다시 찾아보기",
       keyboardAction: "activate",
     });
   }
@@ -405,15 +404,15 @@ export const buildRestaurantSelectionScreen = (
   if (parsed.state === "user_confirmed" || parsed.state === "externally_verified") {
     controls.push({
       id: "continue-analysis",
-      label: "Continue to menu analysis",
-      ariaLabel: "Continue to menu analysis with the confirmed restaurant",
+      label: "메뉴 분석 계속",
+      ariaLabel: "확인된 식당으로 메뉴 분석 계속하기",
       keyboardAction: "activate",
     });
   } else {
     controls.push({
       id: "continue-menu-only",
-      label: "Continue with menu photos only",
-      ariaLabel: "Continue without confirming a restaurant",
+      label: "메뉴 사진만으로 계속",
+      ariaLabel: "식당을 확정하지 않고 메뉴 사진만으로 계속하기",
       keyboardAction: "activate",
     });
   }
@@ -430,20 +429,19 @@ export const buildRestaurantSelectionScreen = (
       candidateId: candidate.candidateId,
       name: candidate.displayName,
       address:
-        candidate.fullAddress ?? candidate.shortAddress ?? "Address not available",
+        candidate.fullAddress ?? candidate.shortAddress ?? "주소 정보 미확인",
       matchReasons: candidate.matchSignals.map(
         (signal) => RESTAURANT_MATCH_SIGNAL_COPY[signal],
       ),
-      rank: candidate.rank,
       isSelected: candidate.candidateId === parsed.selectedCandidateId,
       canSelect: canSelectCandidate,
-      confirmLabel: canSelectCandidate ? "Choose this restaurant" : null,
+      confirmLabel: canSelectCandidate ? "이 식당 선택" : null,
       confirmAriaLabel: canSelectCandidate
-        ? `Choose ${candidate.displayName} at ${
+        ? `${candidate.displayName}, ${
             candidate.fullAddress ??
             candidate.shortAddress ??
-            "the displayed location"
-          }`
+            "표시된 주소"
+          } 선택`
         : null,
     })),
     controls,

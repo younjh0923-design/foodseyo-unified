@@ -134,8 +134,8 @@ a:focus-visible {
 
 .preview-options {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  overflow-x: auto;
   padding: 0.2rem 0.1rem 0.4rem;
 }
 
@@ -198,6 +198,13 @@ a:focus-visible {
   font-weight: 700;
 }
 
+.candidate-notice {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 .candidate-list {
   display: grid;
   gap: 0.75rem;
@@ -223,17 +230,18 @@ a:focus-visible {
   cursor: default;
 }
 
+article.candidate-card {
+  cursor: default;
+}
+
 .candidate-card.is-selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(214, 81, 45, 0.14);
 }
 
-.candidate-rank {
-  color: var(--accent-dark);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.candidate-name,
+.candidate-address {
+  overflow-wrap: anywhere;
 }
 
 .candidate-name {
