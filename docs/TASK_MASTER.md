@@ -202,6 +202,9 @@ Execution order:
 U2 starts only after U1.6 is `DONE`. U2.1, U2.2, U2.3, and U2.4 then run in
 parallel against the frozen interfaces and deterministic fakes.
 
+U2 Core Integration is complete. U2.1 through U2.5 are merged into `main` and
+marked `DONE`.
+
 ### U2.1 Data and pipeline foundation
 
 - **Owner:** Youn
@@ -298,7 +301,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Youn
 - **Branch:** `ci/u2-validation-foundation`
 - **Dependency:** U1.6
-- **Status:** REVIEW
+- **Status:** DONE
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
@@ -308,6 +311,9 @@ parallel against the frozen interfaces and deterministic fakes.
   fixture, security, workflow, and network-denial checks are executable.
   Lint and Production build remain explicitly deferred because the repository
   has no approved command for either on the U1.6 baseline.
+- **Completion evidence:** PR #26 feature HEAD
+  `e0a0ed6fae816e373efbc3afdb09f7ac4b79fc1b` merged to `main` as
+  `da66876fa5026db80921f50b50987361f7040fed`.
 
 ## Milestone S1 - Submission vertical slice
 
@@ -557,10 +563,8 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The current integration target is PR #26 for the U2.5 continuous integration
-foundation. PR #24 feature HEAD
-`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
-`952b357fba526068a11597f490eea61fcccbba58`. U2.5 remains in review until PR
-#26 is approved and merged. Independent work continues only against merged
-frozen contracts; proposed Issue #20 and #21 shapes remain unavailable and
-unused.
+U2 Core Integration is complete. The next work is the Issue #21
+intake/progress contract PR. After it merges, the following work is the Issue
+#20 platform contract PR. Issue #21 remains `status:proposed`; Issue #20 remains
+`status:proposed`. Their proposed types and shapes remain unimplemented and unused.
+S1 implementation has not started.
