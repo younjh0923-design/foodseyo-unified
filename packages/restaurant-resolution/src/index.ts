@@ -19,7 +19,6 @@ export {
   FoundationRestaurantResolutionPort,
   RestaurantResolutionCoordinator,
 } from "./foundation.js";
-export { GooglePlacesTextSearchAdapter } from "./google-places-adapter.js";
 export {
   rankRestaurantCandidates,
   type RestaurantCandidateRankingClues,
