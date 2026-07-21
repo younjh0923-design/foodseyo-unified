@@ -1,0 +1,24 @@
+{
+  "name": "@foodseyo/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx tests/foundation.test.ts"
+  },
+  "dependencies": {
+    "@foodseyo/contracts": "workspace:*",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@foodseyo/menu-analysis": "workspace:*",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

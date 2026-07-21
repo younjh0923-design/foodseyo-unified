@@ -13,12 +13,26 @@
     "validate:boundary-dtos": "tsx scripts/validate-boundary-dtos.ts",
     "validate:contracts": "tsx scripts/validate-contracts.ts",
     "validate:module-interfaces": "tsx scripts/validate-module-interfaces.ts",
+    "validate:web-experience": "tsx scripts/validate-web-experience.ts",
     "validate:restaurant-resolution": "pnpm --filter @foodseyo/restaurant-resolution validate:foundation",
     "validate:source-acquisition": "pnpm --filter @foodseyo/source-acquisition validate:foundation",
+    "validate:u2-data-pipeline": "tsx scripts/validate-u2-data-pipeline.ts",
+    "validate:web-foundation": "pnpm --filter @foodseyo/web test",
+    "validate:web-platform": "tsx scripts/validate-web-platform.ts",
+    "test:unit": "pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:web-experience",
+    "test:integration": "pnpm validate:module-interfaces",
+    "test:workspace": "pnpm --recursive --if-present test",
+    "test": "pnpm test:unit && pnpm test:integration && pnpm test:workspace",
+    "validate:ci": "tsx scripts/validate-ci-foundation.ts",
+    "validate:network-boundary": "node scripts/validate-network-boundary.mjs",
     "validate:security": "tsx scripts/validate-repository-security.ts",
-    "verify": "pnpm typecheck && pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:module-interfaces && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:security"
+    "verify": "pnpm typecheck && pnpm test && pnpm validate:source-acquisition && pnpm validate:restaurant-resolution && pnpm validate:u2-data-pipeline && pnpm validate:web-foundation && pnpm validate:web-platform && pnpm validate:security && pnpm validate:ci && pnpm validate:network-boundary"
   },
   "devDependencies": {
+    "@foodseyo/contracts": "workspace:*",
+    "@foodseyo/database": "workspace:*",
+    "@foodseyo/menu-analysis": "workspace:*",
+    "@foodseyo/merge-policy": "workspace:*",
     "tsx": "4.20.6",
     "typescript": "5.9.3"
   }

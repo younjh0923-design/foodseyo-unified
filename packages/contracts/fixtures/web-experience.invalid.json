@@ -1,0 +1,805 @@
+[
+  {
+    "case": "empty_submission",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakeLinkOnly",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "userSuppliedLink"
+        ],
+        "value": null
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "submission_input_required",
+        "path": [
+          "submissionIntakeRequest"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "duplicate_correlation_id",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakeLinkOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "correlationId"
+        ],
+        "value": "fixture-correlation"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "correlationId"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "image_bytes_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "imageBytes"
+        ],
+        "value": [
+          137,
+          80,
+          78,
+          71
+        ]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "imageBytes"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "base64_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "base64Image"
+        ],
+        "value": "fixture-encoded-payload"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "base64Image"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "filename_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "filename"
+        ],
+        "value": "fixture-menu.png"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "filename"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "provider_reference_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "providerReference"
+        ],
+        "value": "provider.fixture-ref"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "providerReference"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "provider_response_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "providerResponse"
+        ],
+        "value": {
+          "status": "ok"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "providerResponse"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "credential_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "credential"
+        ],
+        "value": "fixture-secret"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "credential"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "source_body_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakeLinkOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "sourceBody"
+        ],
+        "value": "fixture source body"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "sourceBody"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "menu_meaning_forbidden",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakeLinkOnly",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "menuMeaning"
+        ],
+        "value": {
+          "dish": "fixture"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "menuMeaning"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "duplicate_photo_handle",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "uploadedPhotoHandles"
+        ],
+        "value": [
+          "upload.fixture-photo-01",
+          "upload.fixture-photo-01"
+        ]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "duplicate_array_value",
+        "path": [
+          "uploadedPhotoHandles"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "unsafe_photo_handle_shape",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakePhotoOnly",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "uploadedPhotoHandles",
+          0
+        ],
+        "value": "not opaque / handle"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_string_format",
+        "path": [
+          "uploadedPhotoHandles",
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "case": "invalid_requested_at",
+    "schema": "SubmissionIntakeRequest",
+    "fixture": "intakeLinkOnly",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "requestedAt"
+        ],
+        "value": "2026-07-21 14:00"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "string_too_short",
+        "path": [
+          "requestedAt"
+        ]
+      },
+      {
+        "code": "expected_utc_iso_timestamp",
+        "path": [
+          "requestedAt"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_raw_url_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "rawUrl"
+        ],
+        "value": "https://fixture.example/menu"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "rawUrl"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_raw_image_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "rawImage"
+        ],
+        "value": [
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "rawImage"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_content_handle_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "contentHandle"
+        ],
+        "value": "upload.fixture-photo-01"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "contentHandle"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_source_body_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "sourceBody"
+        ],
+        "value": "fixture source body"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "sourceBody"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_menu_text_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "menuText"
+        ],
+        "value": "fixture menu text"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "menuText"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_source_fingerprint_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "sourceFingerprint"
+        ],
+        "value": "fixture:fingerprint"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "sourceFingerprint"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_extracted_claim_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "extractedClaim"
+        ],
+        "value": {
+          "kind": "heat",
+          "value": "hot"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "extractedClaim"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_provider_state_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "providerState"
+        ],
+        "value": "running"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "providerState"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_provider_response_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "providerResponse"
+        ],
+        "value": {
+          "status": "ok"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "providerResponse"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_provider_error_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "providerErrorDetail"
+        ],
+        "value": "fixture provider detail"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "providerErrorDetail"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_credential_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "credential"
+        ],
+        "value": "fixture-secret"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "credential"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_database_row_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "databaseRow"
+        ],
+        "value": {
+          "id": "fixture"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "databaseRow"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_orm_type_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "ormType"
+        ],
+        "value": "FixtureRow"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "ormType"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_confirmation_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "requiresUserConfirmation"
+        ],
+        "value": true
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "requiresUserConfirmation"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_user_action_phase_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "phase"
+        ],
+        "value": "user_action_needed"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_enum_value",
+        "path": [
+          "phase"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_failure_state_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "state"
+        ],
+        "value": "failed"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_enum_value",
+        "path": [
+          "state"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_timeout_state_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "state"
+        ],
+        "value": "timeout"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_enum_value",
+        "path": [
+          "state"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_canonical_stage_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "stage"
+        ],
+        "value": "canonical_validation"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_literal",
+        "path": [
+          "stage"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_publication_success_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "state"
+        ],
+        "value": "published"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_enum_value",
+        "path": [
+          "state"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_final_result_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "finalResult"
+        ],
+        "value": {
+          "status": "success"
+        }
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "finalResult"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "progress_correlation_forbidden",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "add",
+        "path": [
+          "correlationId"
+        ],
+        "value": "fixture-correlation"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "unexpected_field",
+        "path": [
+          "correlationId"
+        ]
+      }
+    ]
+  },
+  {
+    "case": "wrong_candidate_version",
+    "schema": "UiWorkflowProgress",
+    "fixture": "progressOfficialInProgress",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": [
+          "contractVersion"
+        ],
+        "value": "module-interfaces/1.0.0"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_literal",
+        "path": [
+          "contractVersion"
+        ]
+      }
+    ]
+  }
+]

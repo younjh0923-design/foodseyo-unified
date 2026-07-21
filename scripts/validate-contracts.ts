@@ -565,6 +565,10 @@ const moduleInterfaces = await readFile(
   resolve("docs/MODULE_INTERFACES.md"),
   "utf8",
 );
+const webExperience = await readFile(
+  resolve("docs/WEB_EXPERIENCE.md"),
+  "utf8",
+);
 const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
@@ -780,6 +784,35 @@ assert.match(
 assert.match(
   decisionLog,
   /## U-014 - U1 compatibility contract 1\.0\.0 freeze[\s\S]*13 selected shared contract tokens[\s\S]*eight[\s\S]*dish-match\/0\.1\.0[\s\S]*dish-profile\/0\.1\.0[\s\S]*Issue #17[\s\S]*e6307d3f2b7bb59680575a5cbb9c99862b8642be[\s\S]*fe57602e0ded09c0899c5babf18d64e6d8d6e03e[\s\S]*e01a67306e319f9aec4b050477eacfbca99ffb31[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+const mergedWebExperienceEvidence =
+  /^(?=[\s\S]*Issue #21)(?=[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34)(?=[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f)(?=[\s\S]*status:merged)(?=[\s\S]*closed)/;
+for (const [name, documentation] of [
+  ["shared contracts", sharedContracts],
+  ["module interfaces", moduleInterfaces],
+  ["web experience", webExperience],
+] as const) {
+  assert.match(
+    documentation,
+    mergedWebExperienceEvidence,
+    `${name} must record the merged Issue #21 exact-HEAD evidence`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-015 - Sensitive intake and UI-safe acquisition progress candidate[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+assert.match(
+  contractsPackage,
+  /Merged Issue #21[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f[\s\S]*available/,
+);
+assert.match(
+  webPackage,
+  /Issue #21's exact PR #30[\s\S]*merged to `main`[\s\S]*available/,
+);
+assert.match(
+  restaurantPackage,
+  /merged Issue #21[\s\S]*`@foodseyo\/contracts\/web-experience`/,
 );
 assert.match(
   contractChangeQueue,
@@ -1188,13 +1221,29 @@ assertTaskStatus(
   "### U1.6 Approve and publish compatibility contract 1.0.0",
   "DONE",
 );
-for (const heading of [
+assertTaskStatus(
+  taskMaster,
   "### U2.1 Data and pipeline foundation",
-  "### U2.4 Web and result-experience foundation",
-  "### U2.5 Continuous integration",
-]) {
-  assertTaskStatus(taskMaster, heading, "READY");
-}
+  "DONE",
+);
+const dataPipelineFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.1 Data and pipeline foundation",
+);
+assert.match(dataPipelineFoundation, /PR #25 feature HEAD/);
+assert.match(
+  dataPipelineFoundation,
+  /7453b7f99f701c482ada7e4b7897fad71fa4306f/,
+);
+assert.match(
+  dataPipelineFoundation,
+  /47c6a61e0a38397c5bc881e38872764e978013ed/,
+);
+assert.match(
+  dataPipelineFoundation,
+  /PR #25 feature HEAD\s+`7453b7f99f701c482ada7e4b7897fad71fa4306f` merged to `main` as\s+`47c6a61e0a38397c5bc881e38872764e978013ed`\./,
+  "U2.1 must record the approved PR #25 feature HEAD as merged to main",
+);
 assertTaskStatus(
   taskMaster,
   "### U2.2 Source acquisition foundation",
@@ -1203,8 +1252,32 @@ assertTaskStatus(
 assertTaskStatus(
   taskMaster,
   "### U2.3 Restaurant-resolution foundation",
-  "BLOCKED",
+  "DONE",
 );
+const restaurantResolutionFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.3 Restaurant-resolution foundation",
+);
+assert.match(
+  restaurantResolutionFoundation,
+  /7de54ac08fbfb4f0e56f8cb5cf0cfdf02af4a454/,
+);
+assert.match(
+  restaurantResolutionFoundation,
+  /0f47531a837ef6854e8831a570966b09dd207d81/,
+);
+assert.doesNotMatch(restaurantResolutionFoundation, /\*\*Blocked by:\*\*/);
+assertTaskStatus(
+  taskMaster,
+  "### S1.1 Restaurant resolution",
+  "READY",
+);
+const restaurantResolutionSlice = markdownTaskSection(
+  taskMaster,
+  "### S1.1 Restaurant resolution",
+);
+assert.match(restaurantResolutionSlice, /\*\*Dependency:\*\* U2\.3/);
+assert.doesNotMatch(restaurantResolutionSlice, /\*\*Blocked by:\*\*/);
 assertTaskStatus(
   taskMaster,
   "### S1.2 Official menu-source acquisition",
@@ -1216,22 +1289,94 @@ const officialSourceAcquisition = markdownTaskSection(
 );
 assert.match(officialSourceAcquisition, /\*\*Dependency:\*\* U2\.2/);
 assert.doesNotMatch(officialSourceAcquisition, /\*\*Blocked by:\*\*/);
-const immediateNextAction = markdownTaskSection(
+assertTaskStatus(
   taskMaster,
-  "## Immediate next action",
+  "### U2.4 Web and result-experience foundation",
+  "DONE",
 );
-assert.match(immediateNextAction, /Finish PR #23 review and integration/);
-assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bU2\.2\b/);
-const sourceFoundation = markdownTaskSection(
-  taskMaster,
-  "### U2.2 Source acquisition foundation",
-);
-assert.match(sourceFoundation, /\*\*Owner:\*\* YTW/);
 const webFoundation = markdownTaskSection(
   taskMaster,
   "### U2.4 Web and result-experience foundation",
 );
 assert.match(webFoundation, /\*\*Owner:\*\* Juhyung/);
+assert.match(
+  webFoundation,
+  /PR #24 feature HEAD\s+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as\s+`952b357fba526068a11597f490eea61fcccbba58`\./,
+  "U2.4 must record the approved PR #24 feature HEAD as merged to main",
+);
+assert.match(webFoundation, /Issue #20/);
+assert.match(webFoundation, /Issue #21/);
+assert.match(webFoundation, /all-owner proposal approval/);
+assert.match(
+  webFoundation,
+  /PR #30 is merged[\s\S]+web-experience\/0\.1\.0[\s\S]+available to dependent feature code/,
+);
+assert.match(
+  webFoundation,
+  /platform candidate[\s\S]+cannot consume that platform candidate before the exact contract PR is[\s\S]+approved and merged/,
+);
+assertTaskStatus(
+  taskMaster,
+  "### U2.5 Continuous integration",
+  "DONE",
+);
+const continuousIntegrationFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.5 Continuous integration",
+);
+assert.match(
+  continuousIntegrationFoundation,
+  /PR #26 feature HEAD\s+`e0a0ed6fae816e373efbc3afdb09f7ac4b79fc1b` merged to `main` as\s+`da66876fa5026db80921f50b50987361f7040fed`\./,
+  "U2.5 must record the approved PR #26 feature HEAD as merged to main",
+);
+const immediateNextAction = markdownTaskSection(
+  taskMaster,
+  "## Immediate next action",
+);
+assert.match(immediateNextAction, /current platform-contract action is Issue #20/i);
+assert.match(immediateNextAction, /U2 Core Integration is complete\./);
+assert.match(
+  immediateNextAction,
+  /`contracts\/issue-20-web-platform`[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
+);
+assert.match(
+  immediateNextAction,
+  /Next\.js `16\.2\.10`[\s\S]+React `19\.2\.7`[\s\S]+React DOM `19\.2\.7` candidate remains unavailable/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #30 exact HEAD[\s\S]+`913458fcb2497bf424c3a330826e131101fcfc34`[\s\S]+merged to canonical `main` as[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
+);
+assert.match(
+  immediateNextAction,
+  /`web-experience\/0\.1\.0` candidate is\s+available to dependent feature code/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #28's docs-only S1\.6 policy approval remains merged[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #31 receives exact-HEAD all-owner[\s\S]+approval and merges/,
+);
+assert.match(immediateNextAction, /S1 implementation has not started\./);
+assert.match(
+  immediateNextAction,
+  /does not authorize UI code or[\s\S]+production explanation-renderer integration/i,
+);assert.doesNotMatch(
+  immediateNextAction,
+  /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,
+);
+assert.doesNotMatch(immediateNextAction, /PR #26/i);
+assert.doesNotMatch(immediateNextAction, /U2\.5 remains in review/i);
+assert.doesNotMatch(immediateNextAction, /current integration target is PR #24/i);
+assert.doesNotMatch(immediateNextAction, /next integration target is PR #26/i);
+assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bS1\./);
+const sourceFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.2 Source acquisition foundation",
+);
+assert.match(sourceFoundation, /\*\*Owner:\*\* YTW/);
 for (const heading of [
   "### S1.2 Official menu-source acquisition",
   "### S1.3 OpenAI Web Search menu fallback",

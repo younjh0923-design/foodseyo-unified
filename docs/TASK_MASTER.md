@@ -202,17 +202,28 @@ Execution order:
 U2 starts only after U1.6 is `DONE`. U2.1, U2.2, U2.3, and U2.4 then run in
 parallel against the frozen interfaces and deterministic fakes.
 
+U2 Core Integration is complete. U2.1 through U2.5 are merged into `main` and
+marked `DONE`.
+
 ### U2.1 Data and pipeline foundation
 
 - **Owner:** Youn
 - **Branch:** `data/pipeline-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** application service interfaces, canonical validator, deterministic
   merge-policy skeleton, fake repositories, transaction boundary.
 - **No:** Neon migration or connection, live database, provider call, UI.
 - **Acceptance:** network-free tests prove source precedence, unknown handling,
   rollback semantics through fakes, and stable public errors.
+- **Evidence:** frozen `1.0.0` ports, schemas, publication guard,
+  outcomes, and errors are consumed without a contracts-package change;
+  `pnpm validate:u2-data-pipeline` covers canonical binding, precedence,
+  conflict rejection, branch/source isolation, unknown preservation,
+  eligible-only publication, transaction commit, and rollback.
+- **Completion evidence:** PR #25 feature HEAD
+  `7453b7f99f701c482ada7e4b7897fad71fa4306f` merged to `main` as
+  `47c6a61e0a38397c5bc881e38872764e978013ed`.
 
 ### U2.2 Source acquisition foundation
 
@@ -240,9 +251,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `restaurant/resolution-foundation`
 - **Dependency:** U1.6
-- **Status:** BLOCKED
-- **Blocked by:** proposed contract-change Issue #21 for sensitive photo/link
-  intake and UI-safe workflow progress. No proposed shape is consumed.
+- **Status:** DONE
 - **Scope:** server-side intake contract, restaurant candidate and confirmation
   service, fake Google Places adapter, confirmation evidence, and UI-safe
   candidate/progress/action/outcome data.
@@ -254,14 +263,18 @@ parallel against the frozen interfaces and deterministic fakes.
   no UI-safe DTO contains provider internals or unvalidated menu meaning.
 - **Evidence:** frozen-port resolution, confirmation evidence, strict fake
   Places normalization, typed outcomes, and network-free fixtures are ready in
-  `packages/restaurant-resolution`. Raw intake and progress remain blocked.
+  `packages/restaurant-resolution`. Proposed Issue #21 raw-intake and progress
+  shapes were not consumed.
+- **Completion evidence:** PR #23 feature HEAD
+  `7de54ac08fbfb4f0e56f8cb5cf0cfdf02af4a454` merged to `main` as
+  `0f47531a837ef6854e8831a570966b09dd207d81`.
 
 ### U2.4 Web and result-experience foundation
 
 - **Owner:** Juhyung
 - **Branch:** `ui/result-experience-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** mobile shell, photo/link input, upload review, restaurant
   candidate and confirmation presentation, progress and retry states, plus
   result screens driven by frozen fake application view models.
@@ -271,16 +284,38 @@ parallel against the frozen interfaces and deterministic fakes.
   confirmation, official-source progress, fallback progress, safe errors,
   source/general/unknown presentation, input preservation, and no horizontal
   overflow.
+- **Current slice:** framework-neutral local input preservation, frozen-contract
+  presentation projections, evidence/unknown labeling, safe outcome/error
+  handling, accessibility requirements, and deterministic fake-port tests are
+  implemented on `ui/result-experience-foundation`.
+- **Current blockers:** Issue #21 exact contract PR #30 is merged to `main`, so
+  its `web-experience/0.1.0` candidate is available to dependent feature code.
+  Issue #20 retains all-owner proposal approval and its exact Next.js/React
+  platform candidate is under review on PR #31; rendered components and browser
+  QA cannot consume that platform candidate before the exact contract PR is
+  approved and merged.
+- **Completion evidence:** PR #24 feature HEAD
+  `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
+  `952b357fba526068a11597f490eea61fcccbba58`.
 
 ### U2.5 Continuous integration
 
 - **Owner:** Youn
+- **Branch:** `ci/u2-validation-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
   tests.
+- **Review evidence:** one least-privilege pull-request workflow reuses
+  `pnpm verify`; workspace, package-boundary, cycle, duplicate-contract,
+  fixture, security, workflow, and network-denial checks are executable.
+  Lint and Production build remain explicitly deferred because the repository
+  has no approved command for either on the U1.6 baseline.
+- **Completion evidence:** PR #26 feature HEAD
+  `e0a0ed6fae816e373efbc3afdb09f7ac4b79fc1b` merged to `main` as
+  `da66876fa5026db80921f50b50987361f7040fed`.
 
 ## Milestone S1 - Submission vertical slice
 
@@ -289,8 +324,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.3
-- **Status:** BLOCKED
-- **Blocked by:** U2.3
+- **Status:** READY
 - **Scope:** photo/context plus restaurant/map/official-link intake, server-side
   Google Places adapter, bounded candidates, user confirmation,
   evidence-backed status, and official website/source clues.
@@ -531,7 +565,21 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-Finish PR #23 review and integration for the current U2.3 foundation without
-consuming the proposed Issue #21 shapes. Independent U2 work may continue
-against the frozen contracts and deterministic fakes. Shared-contract changes
-still use the contract-change queue and their impact-based approval tier.
+U2 Core Integration is complete. The Issue #21 contract action on
+`contracts/issue-21-web-experience` is complete: PR #30 exact HEAD
+`913458fcb2497bf424c3a330826e131101fcfc34` merged to canonical `main` as
+`c04305e421657863d3c0c06fdfe3f90192a1593f`; Issue #21 then moved to
+`status:merged` and closed. The approved `web-experience/0.1.0` candidate is
+available to dependent feature code.
+
+PR #28's docs-only S1.6 policy approval remains merged in canonical `main` at
+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`. It does not authorize UI code or
+production explanation-renderer integration before the remaining contract and
+canonical-fixture gates complete.
+
+The current platform-contract action is Issue #20 on
+`contracts/issue-20-web-platform`, synchronized with canonical `main` at
+`c04305e421657863d3c0c06fdfe3f90192a1593f`. Its exact Next.js `16.2.10`,
+React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
+dependent framework implementation until PR #31 receives exact-HEAD all-owner
+approval and merges. S1 implementation has not started.

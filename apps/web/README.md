@@ -11,5 +11,18 @@ It consumes `@foodseyo/contracts` plus approved application services and view
 models. It must not call Google/OpenAI providers directly, import database rows
 or provider DTOs, or present unvalidated extraction as final analysis.
 
-Implementation starts only after U1.6 merges to `main` and is recorded
-`DONE`.
+U1.6 is `DONE`, so U2.4 framework-neutral work has started. The current slice
+contains app-private input preservation and presentation projections driven by
+frozen runtime-validated DTOs plus deterministic network-free tests. See
+`FOUNDATION_REQUIREMENTS.md`.
+
+Issue #20 has all-owner proposal approval. Its contract-only candidate records
+Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7` as exact
+`apps/web` dependencies, but adds no route or rendered component. Dependent
+framework implementation remains blocked until the exact contract PR is
+approved and merged.
+
+Server-bound photo/link intake and UI-safe official-source/Web Search progress
+are defined by `@foodseyo/contracts/web-experience`. Issue #21's exact PR #30
+merged to `main`, so this boundary is available to the next dependent feature
+slice; this platform-contract PR adds no intake or progress implementation.

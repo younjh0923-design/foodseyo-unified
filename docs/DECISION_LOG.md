@@ -311,3 +311,54 @@
   `status:merged` and closed.
 - **Status:** Accepted
 - **Date:** 2026-07-19
+
+## U-015 - Sensitive intake and UI-safe acquisition progress candidate
+
+- **Decision:** Add a dedicated `web-experience/0.1.0` candidate
+  with `SubmissionIntakeRequest` and `UiWorkflowProgress`.
+- **Sensitive boundary:** Intake permits a user link, opaque transient photo
+  handles, or both, rejects empty input, and leaves correlation solely in
+  `PortInvocationContext`. Raw input cannot enter logs, errors, persistence,
+  cache identity, observability content, progress, or UI responses.
+- **Progress boundary:** UI progress is limited to official-source lookup or
+  Web Search fallback within `source_acquisition`, using only `in_progress`
+  or phase-local `complete`. It cannot duplicate confirmation, failure,
+  timeout, canonical success, publication, or final workflow result meaning.
+- **Compatibility:** The dedicated public entry point adds a candidate-only
+  UI-safe event union and port. Frozen `module-interfaces/1.0.0`
+  `UiSafeOperationalEvent`, `UiOperationalEventPort`, and their runtime schema
+  remain unchanged, as do frozen DTO, error, outcome, invocation, persistence,
+  cache, environment, and provider meanings.
+- **Operational scope:** Network-free schemas, fixtures, and fakes only. No
+  provider, database, migration, Preview, Production, Vercel, or deployment
+  action is authorized.
+- **Approval evidence:** Youn, YTW, and Juhyung approved the complete revised
+  Issue #21 direction and exact PR #30 HEAD
+  `913458fcb2497bf424c3a330826e131101fcfc34`. PR #30 merged to `main` as
+  `c04305e421657863d3c0c06fdfe3f90192a1593f`; Issue #21 then moved to
+  `status:merged` and closed.
+- **Status:** Accepted
+- **Date:** 2026-07-21
+
+## U-016 - Next.js web application platform candidate
+
+- **Decision direction:** Freeze the `apps/web` application baseline as
+  Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7`.
+- **Package boundary:** Install those exact dependencies only in `apps/web`.
+  The pnpm monorepo, Node `>=20.19.0`, TypeScript `5.9.3`, Vercel target, and
+  framework-neutral shared/server packages remain unchanged.
+- **Trust boundary:** Browser code consumes only approved UI-safe operational
+  data and application view models derived from validated canonical contracts.
+  Google, OpenAI, source acquisition, database access, provider DTOs, raw
+  source content, credentials, database rows, and ORM types remain server-only.
+- **Compatibility:** No shared DTO, vocabulary, state, outcome, public error,
+  environment name, persistence/cache meaning, provider permission, migration,
+  or deployment behavior changes.
+- **Rollout:** This contract-only candidate adds the exact manifest and
+  lockfile baseline while explicitly disabling the optional `sharp` install
+  script. It authorizes no route, component, Preview, Production, Vercel
+  configuration, or deployment before exact-HEAD approval and merge.
+- **Approval evidence:** Youn, YTW, and Juhyung approved the complete Issue #20
+  direction. Exact contract PR approval and merge remain required.
+- **Status:** Candidate - exact contract PR approval pending
+- **Date:** 2026-07-21

@@ -219,7 +219,10 @@ await uiEventFake.emit(publicOutcome, context);
 await uiEventFake.emit(publicOutcome, abortedContext);
 await uiEventFake.emit(publicOutcome, timedOutContext);
 assert.equal(uiEventFake.callCount, 4);
-assert.deepEqual(uiEventFake.events, [restaurantResolution, publicOutcome]);
+assert.deepEqual(uiEventFake.events, [
+  restaurantResolution,
+  publicOutcome,
+]);
 
 const sourceFake = new FakeMenuSourceAcquisitionPort(plan(menuSourceInput));
 assertResultStatus(

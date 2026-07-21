@@ -23,8 +23,10 @@ provider-to-candidate normalization.
 The original deterministic fake remains available for parallel consumers.
 
 Raw photo/link intake and new progress events are not implemented here. They
-require the still-proposed contract in Issue #21; this package does not create
-a temporary intake DTO or progress enum while that proposal is unmerged.
+are now defined by merged Issue #21 at
+`@foodseyo/contracts/web-experience`; dependent implementation must consume
+that reviewed public entry point. This package still does not create a local
+intake DTO or progress enum.
 Server-internal clue fixtures contain no raw URL, upload bytes, filename,
 provider response, or menu meaning. A first-ranked candidate always remains
 unconfirmed until user-action or valid external evidence is supplied.

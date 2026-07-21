@@ -26,6 +26,14 @@ Development database checkpoint.
 U1.5 public surface: `AnalysisPublicationPort` and
 `FakeAnalysisPublicationPort`. This package exists as the sole publication
 side-effect boundary; it accepts only publication-eligible canonical analysis
-and prevents database rows or ORM types from coupling other workstreams. No
-database implementation is present in U1.5; the exported class is a
-deterministic fake only.
+and prevents database rows or ORM types from coupling other workstreams. The
+U1.5 deterministic fake remains available for configured boundary tests.
+
+U2.1 adds `TransactionalAnalysisPublicationService` and
+`DeterministicFakeAnalysisRepository`. The service reuses the frozen
+publication guard and runtime schemas, creates only the frozen receipt, and
+commits the canonical analysis, menu version, menu items, effective profiles,
+and receipt as one fake transaction. Deterministic write-failure injection
+proves rollback and prevents partial publication. This foundation contains no
+Drizzle schema, migration, credential, live adapter, or database connection;
+those remain gated by S2.1.

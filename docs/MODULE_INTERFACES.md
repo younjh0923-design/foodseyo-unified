@@ -10,6 +10,28 @@ feature code may consume it from that frozen baseline.
 U1.5 adds no provider, database, UI, transport, deployment, or feature
 implementation. It wraps the existing U1.3 DTOs; it does not redefine them.
 
+## Web-experience extension
+
+Issue #21 leaves the frozen `module-interfaces/1.0.0`
+`UiSafeOperationalEvent`, `UiOperationalEventPort`, and runtime schema
+unchanged. The separate `@foodseyo/contracts/web-experience` entry point
+defines a separately versioned `WebExperienceUiSafeOperationalEvent` union and
+`WebExperienceUiOperationalEventPort` that opt into `UiWorkflowProgress`.
+All owners approved exact PR #30 HEAD
+`913458fcb2497bf424c3a330826e131101fcfc34`; it merged to `main` as
+`c04305e421657863d3c0c06fdfe3f90192a1593f`, after which Issue #21 moved to
+`status:merged` and closed.
+The existing invocation, result, restaurant confirmation, outcome, error,
+analysis, and publication meanings remain unchanged.
+
+The progress member is limited to non-terminal `source_acquisition` phases.
+Confirmation remains in `RestaurantResolution`/`PublicOutcome`; failures remain
+`PublicOutcome` or `PublicErrorEnvelope`; correlation, cancellation, and
+timeout remain in `PortInvocationContext` and `UPSTREAM_TIMEOUT`.
+
+The extension is available to dependent feature code through its reviewed
+public entry point. See `WEB_EXPERIENCE.md`.
+
 ## Shared invocation and result discipline
 
 Every server-side port receives `PortInvocationContext` with:
