@@ -271,7 +271,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Juhyung
 - **Branch:** `ui/result-experience-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** mobile shell, photo/link input, upload review, restaurant
   candidate and confirmation presentation, progress and retry states, plus
   result screens driven by frozen fake application view models.
@@ -289,16 +289,25 @@ parallel against the frozen interfaces and deterministic fakes.
   contract Issue #20; server-bound photo/link intake plus official-source and
   Web Search progress wait for cross-workstream boundary Issue #21. Proposed
   shapes are not consumed before their contract PRs merge.
+- **Completion evidence:** PR #24 feature HEAD
+  `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
+  `952b357fba526068a11597f490eea61fcccbba58`.
 
 ### U2.5 Continuous integration
 
 - **Owner:** Youn
+- **Branch:** `ci/u2-validation-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** REVIEW
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
   tests.
+- **Review evidence:** one least-privilege pull-request workflow reuses
+  `pnpm verify`; workspace, package-boundary, cycle, duplicate-contract,
+  fixture, security, workflow, and network-denial checks are executable.
+  Lint and Production build remain explicitly deferred because the repository
+  has no approved command for either on the U1.6 baseline.
 
 ## Milestone S1 - Submission vertical slice
 
@@ -548,8 +557,10 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The current integration target is PR #24 for the U2.4 web and result-experience
-foundation. The next integration target is PR #26 for the U2.5 continuous
-integration foundation after PR #24 is approved and merged. Independent work
-continues only against merged frozen contracts; proposed Issue #20 and #21
-shapes remain unavailable.
+The current integration target is PR #26 for the U2.5 continuous integration
+foundation. PR #24 feature HEAD
+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
+`952b357fba526068a11597f490eea61fcccbba58`. U2.5 remains in review until PR
+#26 is approved and merged. Independent work continues only against merged
+frozen contracts; proposed Issue #20 and #21 shapes remain unavailable and
+unused.
