@@ -39,23 +39,27 @@ const dependencySections = [
   "optionalDependencies",
   "peerDependencies",
 ] as const;
+const isolatedManifestPaths = [resolve("package.json")];
 for (const workspaceRoot of ["apps", "packages"] as const) {
   for (const entry of await readdir(resolve(workspaceRoot), {
     withFileTypes: true,
   })) {
     if (!entry.isDirectory()) continue;
     const manifestPath = resolve(workspaceRoot, entry.name, "package.json");
-    const manifest = await readJson<Manifest>(manifestPath);
-    if (manifest.name === "@foodseyo/web") continue;
-    for (const section of dependencySections) {
-      for (const dependency of Object.keys(WEB_PLATFORM)) {
-        assert.equal(
-          manifest[section]?.[dependency],
-          undefined,
-          relative(process.cwd(), manifestPath) +
-            " must remain framework-neutral",
-        );
-      }
+    isolatedManifestPaths.push(manifestPath);
+  }
+}
+for (const manifestPath of isolatedManifestPaths) {
+  const manifest = await readJson<Manifest>(manifestPath);
+  if (manifest.name === "@foodseyo/web") continue;
+  for (const section of dependencySections) {
+    for (const dependency of Object.keys(WEB_PLATFORM)) {
+      assert.equal(
+        manifest[section]?.[dependency],
+        undefined,
+        relative(process.cwd(), manifestPath) +
+          " must remain framework-neutral",
+      );
     }
   }
 }
@@ -113,16 +117,20 @@ assert.match(
 assert.match(decisionLog, /Candidate - exact contract PR approval pending/u);
 
 const sourceFiles: string[] = [];
+const ignoredSourceDirectories = new Set([".next", "node_modules"]);
 const collectSourceFiles = async (directory: string): Promise<void> => {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
-    if (entry.isDirectory()) await collectSourceFiles(path);
-    else if (/\.(?:js|jsx|ts|tsx)$/u.test(entry.name)) sourceFiles.push(path);
+    if (entry.isDirectory() && !ignoredSourceDirectories.has(entry.name)) {
+      await collectSourceFiles(path);
+    } else if (/\.(?:[cm]?[jt]sx?)$/u.test(entry.name)) {
+      sourceFiles.push(path);
+    }
   }
 };
-await collectSourceFiles(resolve("apps/web/src"));
-for (const file of sourceFiles) {
-  const source = await readFile(file, "utf8");
+const forbiddenServerImport =
+  /\b(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)["'](?:openai(?:\/|["'])|@google|@neondatabase|drizzle|@foodseyo\/database)/u;
+const assertBrowserBoundary = (file: string, source: string): void => {
   assert.doesNotMatch(
     source,
     /NEXT_PUBLIC_/u,
@@ -130,9 +138,29 @@ for (const file of sourceFiles) {
   );
   assert.doesNotMatch(
     source,
-    /\b(?:from|import\()\s*["'](?:openai|@google|@neondatabase|drizzle|@foodseyo\/database)/u,
+    forbiddenServerImport,
     file + " must preserve the server-only provider and database boundary",
   );
+};
+
+for (const [file, source] of [
+  ["apps/web/app/page.tsx", 'import OpenAI from "openai";'],
+  ["apps/web/pages/index.tsx", 'import "@foodseyo/database";'],
+  ["apps/web/middleware.ts", 'const db = require("drizzle-orm");'],
+] as const) {
+  assert.throws(
+    () => assertBrowserBoundary(file, source),
+    /must preserve the server-only provider and database boundary/u,
+    file + " must be covered by the browser-boundary validator",
+  );
+}
+
+// Scanning the complete app root covers both src/ and root-level Next.js
+// conventions such as app/, pages/, middleware.*, proxy.*, and config files.
+await collectSourceFiles(resolve("apps/web"));
+for (const file of sourceFiles) {
+  const source = await readFile(file, "utf8");
+  assertBrowserBoundary(file, source);
 }
 
 console.log("Foodseyo Issue #20 web platform contract validation passed.");

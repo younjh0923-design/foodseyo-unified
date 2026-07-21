@@ -23,4 +23,6 @@ framework implementation remains blocked until the exact contract PR is
 approved and merged.
 
 Server-bound photo/link intake and UI-safe official-source/Web Search progress
-remain separately gated by Issue #21 and its exact contract PR.
+are defined by `@foodseyo/contracts/web-experience`. Issue #21's exact PR #30
+merged to `main`, so this boundary is available to the next dependent feature
+slice; this platform-contract PR adds no intake or progress implementation.

@@ -31,12 +31,16 @@ merges to `main`.
 
 ## Contract groups
 
-### Web-experience candidate
+### Web-experience contract
 
 `WEB_EXPERIENCE.md` and
-`@foodseyo/contracts/web-experience` define the approved-direction Issue #21
-candidate at `web-experience/0.1.0`. It adds a sensitive request-only
-`SubmissionIntakeRequest` and a UI-safe non-terminal `UiWorkflowProgress`.
+`@foodseyo/contracts/web-experience` define the separately versioned Issue #21
+contract at `web-experience/0.1.0`. All owners approved exact PR #30 HEAD
+`913458fcb2497bf424c3a330826e131101fcfc34`; it merged to `main` as
+`c04305e421657863d3c0c06fdfe3f90192a1593f`. Issue #21 then moved to
+`status:merged` and closed. The contract adds a sensitive request-only
+`SubmissionIntakeRequest` and a UI-safe non-terminal `UiWorkflowProgress` and
+is available to dependent feature code.
 
 The intake supports link-only, photo-only, or combined submissions while
 rejecting empty input and keeping correlation exclusively in
@@ -50,8 +54,8 @@ The frozen `module-interfaces/1.0.0` `UiSafeOperationalEvent`,
 `UiOperationalEventPort`, and runtime schema remain unchanged. The candidate
 does not reinterpret the frozen restaurant, outcome, error, canonical,
 publication, persistence, cache, environment, or provider contracts. It
-remains unavailable to feature code until the exact contract PR receives
-all-owner approval and merges to `main`.
+may now be consumed through its reviewed public entry point without changing
+the meaning of the frozen module-interface contract.
 
 ### Module interfaces
 

@@ -565,6 +565,10 @@ const moduleInterfaces = await readFile(
   resolve("docs/MODULE_INTERFACES.md"),
   "utf8",
 );
+const webExperience = await readFile(
+  resolve("docs/WEB_EXPERIENCE.md"),
+  "utf8",
+);
 const contractChangeGuide = await readFile(
   resolve("docs/CONTRACT_CHANGE_GUIDE.md"),
   "utf8",
@@ -780,6 +784,35 @@ assert.match(
 assert.match(
   decisionLog,
   /## U-014 - U1 compatibility contract 1\.0\.0 freeze[\s\S]*13 selected shared contract tokens[\s\S]*eight[\s\S]*dish-match\/0\.1\.0[\s\S]*dish-profile\/0\.1\.0[\s\S]*Issue #17[\s\S]*e6307d3f2b7bb59680575a5cbb9c99862b8642be[\s\S]*fe57602e0ded09c0899c5babf18d64e6d8d6e03e[\s\S]*e01a67306e319f9aec4b050477eacfbca99ffb31[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+const mergedWebExperienceEvidence =
+  /^(?=[\s\S]*Issue #21)(?=[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34)(?=[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f)(?=[\s\S]*status:merged)(?=[\s\S]*closed)/;
+for (const [name, documentation] of [
+  ["shared contracts", sharedContracts],
+  ["module interfaces", moduleInterfaces],
+  ["web experience", webExperience],
+] as const) {
+  assert.match(
+    documentation,
+    mergedWebExperienceEvidence,
+    `${name} must record the merged Issue #21 exact-HEAD evidence`,
+  );
+}
+assert.match(
+  decisionLog,
+  /## U-015 - Sensitive intake and UI-safe acquisition progress candidate[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f[\s\S]*status:merged[\s\S]*\*\*Status:\*\* Accepted/,
+);
+assert.match(
+  contractsPackage,
+  /Merged Issue #21[\s\S]*913458fcb2497bf424c3a330826e131101fcfc34[\s\S]*c04305e421657863d3c0c06fdfe3f90192a1593f[\s\S]*available/,
+);
+assert.match(
+  webPackage,
+  /Issue #21's exact PR #30[\s\S]*merged to `main`[\s\S]*available/,
+);
+assert.match(
+  restaurantPackage,
+  /merged Issue #21[\s\S]*`@foodseyo\/contracts\/web-experience`/,
 );
 assert.match(
   contractChangeQueue,
@@ -1316,7 +1349,7 @@ assert.match(
 );
 assert.match(
   immediateNextAction,
-  /`web-experience\/0\.1\.0` candidate is available to dependent feature code/,
+  /`web-experience\/0\.1\.0` candidate is\s+available to dependent feature code/,
 );
 assert.match(
   immediateNextAction,

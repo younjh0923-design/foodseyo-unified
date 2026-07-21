@@ -568,8 +568,9 @@ already in S1-S3. The items below extend its breadth after submission.
 U2 Core Integration is complete. The Issue #21 contract action on
 `contracts/issue-21-web-experience` is complete: PR #30 exact HEAD
 `913458fcb2497bf424c3a330826e131101fcfc34` merged to canonical `main` as
-`c04305e421657863d3c0c06fdfe3f90192a1593f`, so the approved
-`web-experience/0.1.0` candidate is available to dependent feature code.
+`c04305e421657863d3c0c06fdfe3f90192a1593f`; Issue #21 then moved to
+`status:merged` and closed. The approved `web-experience/0.1.0` candidate is
+available to dependent feature code.
 
 PR #28's docs-only S1.6 policy approval remains merged in canonical `main` at
 `142330f5b0cb7b10f820614cd76a8d01a2643ffa`. It does not authorize UI code or

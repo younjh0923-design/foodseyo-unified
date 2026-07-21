@@ -175,11 +175,6 @@ export const BLOCKED_UI_BINDINGS = Object.freeze({
     issue: 20,
     capability: "browser shell and rendered components",
   },
-  intakeAndProgress: {
-    issue: 21,
-    capability:
-      "server-bound photo/link intake plus official-source and Web Search progress events",
-  },
 });
 
 const SAFETY_NOTICE =
