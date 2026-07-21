@@ -79,6 +79,20 @@ export {
   type OfficialMenuCollector,
 } from "./official-menu-collector.js";
 export {
+  BoundedHtmlMenuPageCollector,
+  BoundedOrderPageCollector,
+  BoundedPdfMenuCollector,
+  RequestScopedOfficialMenuContentStore,
+  type BoundedOfficialMenuCollectorDependencies,
+  type OfficialMenuContentStoreInput,
+  type OfficialMenuDnsResolver,
+  type OfficialMenuHttpTransport,
+  type OfficialMenuRetrievalLimits,
+  type OfficialMenuTransientContentStore,
+  type OfficialMenuTransportRequest,
+  type OfficialMenuTransportResponse,
+} from "./official-menu-bounded-retrieval.js";
+export {
   OfficialMenuSourceAcquisitionOrchestrator,
   type OfficialMenuSourceAcquisitionOrchestrationInput,
 } from "./official-menu-source-acquisition-orchestrator.js";
