@@ -19,6 +19,14 @@ release checkpoints.
 This package does not accept unvalidated provider DTOs, expose ORM types or
 database rows to the UI, or implement provider and presentation behavior.
 
+The DB-1 through DB-4 MVP persistence boundary is specified in
+`docs/MVP_PERSISTENCE.md`. It contains exactly eleven tables, preserves the
+frozen five-field `PublicationReceipt`, permits menu-only `analysis_only`
+persistence, and requires eligible restaurant publication plus its receipt to
+commit atomically. Migration files may be generated and reviewed locally, but
+DB-5 explicit owner authorization is required before any Neon Development
+migration or test-row mutation.
+
 The package manifest is frozen at `1.0.0`. Real implementation starts only
 after U1.6 merges to `main` and is recorded `DONE`, and it requires a
 Development database checkpoint.

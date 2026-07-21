@@ -288,12 +288,11 @@ marked `DONE`.
   presentation projections, evidence/unknown labeling, safe outcome/error
   handling, accessibility requirements, and deterministic fake-port tests are
   implemented on `ui/result-experience-foundation`.
-- **Current blockers:** Issue #21 exact contract PR #30 is merged to `main`, so
-  its `web-experience/0.1.0` candidate is available to dependent feature code.
-  Issue #20 retains all-owner proposal approval and its exact Next.js/React
-  platform candidate is under review on PR #31; rendered components and browser
-  QA cannot consume that platform candidate before the exact contract PR is
-  approved and merged.
+- **Current blockers:** Issue #21 exact contract PR #30 is merged to `main`;
+  its reviewed `web-experience/0.1.0` baseline is available to dependent feature
+  code. Issue #20 exact platform PR #31 is merged to `main`; its reviewed
+  Next.js/React platform baseline is available to dependent feature code.
+  Remaining S1 implementation dependencies are tracked in the S1 tasks below.
 - **Completion evidence:** PR #24 feature HEAD
   `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
   `952b357fba526068a11597f490eea61fcccbba58`.
@@ -425,18 +424,41 @@ marked `DONE`.
 
 ## Milestone S2 - Required database persistence and reuse
 
+The owner-authorized one-day MVP persistence implementation runs on
+`feat/mvp-persistence` in one Draft PR. DB-1 through DB-5 are checkpoint
+commits/gates inside this implementation, not separate PRs. PR #27 is not a
+dependency for the core database work: confirmed restaurant resolution uses
+approved contract-shaped fixtures until the adapter and database work share a
+common `main`.
+
+Checkpoint state:
+
+- **DB-1:** DONE - eleven-table persistence and physical contract;
+- **DB-2:** IN PROGRESS - Drizzle schema, reviewed migration, and static
+  parity validation;
+- **DB-3:** BLOCKED by DB-2 - exact cache, ownership, bounded waiting, and
+  `analysis_only` persistence;
+- **DB-4:** BLOCKED by DB-3 - Google Place convergence and atomic eligible
+  publication;
+- **DB-5:** BLOCKED by explicit owner authorization - Neon Development
+  migration and real test-row mutation.
+
+The implementation stops before DB-5. Preview and Production remain outside
+this authorization.
+
 ### S2.1 Development database contract
 
 - **Owner:** Youn
-- **Dependency:** S1.5
-- **Status:** BLOCKED
-- **Blocked by:** S1.5
-- **Scope:** smallest Development schema needed for exact snapshot reuse and
-  atomic structured menu persistence on an isolated Neon Development branch,
-  using the Youn data contracts as the integration source of truth.
+- **Dependency:** U2.1 and merged PR #31 platform gate
+- **Status:** IN PROGRESS
+- **Scope:** the approved eleven-table MVP schema needed for exact snapshot
+  reuse, menu-only canonical persistence, restaurant convergence, and atomic
+  eligible publication. Approved contract-shaped fixtures stand in for the
+  unmerged PR #27 adapter.
 - **Acceptance:** Neon runtime shape and connection method verified; Drizzle/SQL
   reviewed before execution; pooled least-privilege runtime and direct migrator
-  roles separate; Preview/Production unchanged; no Supabase dependency.
+  roles separate; no Neon mutation before DB-5; Preview/Production unchanged;
+  no Supabase dependency.
 
 ### S2.2 Exact cache and ownership
 
@@ -453,9 +475,9 @@ marked `DONE`.
 
 - **Owner:** Youn
 - **Reviewer:** YTW
-- **Dependency:** S2.1, S1.1
+- **Dependency:** S2.1 and approved restaurant-resolution fixtures
 - **Status:** BLOCKED
-- **Blocked by:** S2.1 and S1.1
+- **Blocked by:** S2.1
 - **Scope:** confirmed restaurant plus menu scope plus freshness.
 - **Acceptance:** no unconfirmed restaurant publishes a shared menu; stale
   versions are retained and never silently overwritten; acquired official and
@@ -577,9 +599,9 @@ PR #28's docs-only S1.6 policy approval remains merged in canonical `main` at
 production explanation-renderer integration before the remaining contract and
 canonical-fixture gates complete.
 
-The current platform-contract action is Issue #20 on
-`contracts/issue-20-web-platform`, synchronized with canonical `main` at
-`c04305e421657863d3c0c06fdfe3f90192a1593f`. Its exact Next.js `16.2.10`,
-React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
-dependent framework implementation until PR #31 receives exact-HEAD all-owner
-approval and merges. S1 implementation has not started.
+Issue #20 and PR #31 are merged. The current canonical `main` is
+`045b42b0da419e96366488380e5a953f28c11b06`, containing approved exact PR #31
+HEAD `9ef6b510c1ad8ab4465b59044913723ff11d8742`. The active Youn-owned action is
+the one-Draft-PR DB-1 through DB-4 MVP persistence implementation on
+`feat/mvp-persistence`; DB-5 Neon Development mutation remains explicitly
+gated.

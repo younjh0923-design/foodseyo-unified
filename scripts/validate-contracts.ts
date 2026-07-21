@@ -578,6 +578,10 @@ const contractChangeQueue = await readFile(
   "utf8",
 );
 const taskMaster = await readFile(resolve("docs/TASK_MASTER.md"), "utf8");
+const mvpPersistence = await readFile(
+  resolve("docs/MVP_PERSISTENCE.md"),
+  "utf8",
+);
 const integrationProtocol = await readFile(
   resolve("docs/INTEGRATION_PROTOCOL.md"),
   "utf8",
@@ -629,6 +633,52 @@ const observabilityPackage = await readFile(
   resolve("packages/observability/README.md"),
   "utf8",
 );
+
+const mvpPersistenceTables = [
+  "analysis_contracts",
+  "menu_evidence_sets",
+  "analysis_runs",
+  "canonical_analyses",
+  "restaurants",
+  "restaurant_external_references",
+  "restaurant_menu_versions",
+  "menu_items",
+  "dishes",
+  "menu_item_dish_matches",
+  "publication_receipts",
+] as const;
+for (const tableName of mvpPersistenceTables) {
+  assert(
+    mvpPersistence.includes(`\`${tableName}\``),
+    `MVP persistence contract is missing ${tableName}`,
+  );
+}
+assert.match(
+  mvpPersistence,
+  /physical schema contains exactly these eleven application tables/i,
+);
+assert.match(
+  mvpPersistence,
+  /`PublicationReceipt` remains exactly:[\s\S]*`contractVersion`[\s\S]*`analysisId`[\s\S]*`menuVersionId`[\s\S]*`status: "published"`[\s\S]*`publishedAt`/,
+);
+assert.match(mvpPersistence, /`UNIQUE \(id, restaurant_id\)`/);
+assert.match(
+  mvpPersistence,
+  /DB-3 may persist only a validated `analysis_only` canonical analysis/,
+);
+assert.match(
+  mvpPersistence,
+  /PR #27 is not a dependency for this slice/,
+);
+assert.match(
+  mvpPersistence,
+  /DB-5 begins only after an explicit owner instruction/,
+);
+assert.match(
+  mvpPersistence,
+  /Only `canonical_analyses\.canonical_analysis_json` uses `jsonb`/,
+);
+assert.match(mvpPersistence, /No numeric confidence column exists/i);
 const rootManifest = JSON.parse(
   await readFile(resolve("package.json"), "utf8"),
 ) as { readonly version?: unknown };
@@ -1306,14 +1356,13 @@ assert.match(
 );
 assert.match(webFoundation, /Issue #20/);
 assert.match(webFoundation, /Issue #21/);
-assert.match(webFoundation, /all-owner proposal approval/);
 assert.match(
   webFoundation,
   /PR #30 is merged[\s\S]+web-experience\/0\.1\.0[\s\S]+available to dependent feature code/,
 );
 assert.match(
   webFoundation,
-  /platform candidate[\s\S]+cannot consume that platform candidate before the exact contract PR is[\s\S]+approved and merged/,
+  /platform PR #31 is merged[\s\S]+available to dependent feature code/,
 );
 assertTaskStatus(
   taskMaster,
@@ -1333,15 +1382,14 @@ const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
-assert.match(immediateNextAction, /current platform-contract action is Issue #20/i);
 assert.match(immediateNextAction, /U2 Core Integration is complete\./);
 assert.match(
   immediateNextAction,
-  /`contracts\/issue-20-web-platform`[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
+  /Issue #20 and PR #31 are merged[\s\S]+`045b42b0da419e96366488380e5a953f28c11b06`/,
 );
 assert.match(
   immediateNextAction,
-  /Next\.js `16\.2\.10`[\s\S]+React `19\.2\.7`[\s\S]+React DOM `19\.2\.7` candidate remains unavailable/,
+  /approved exact PR #31[\s\S]+`9ef6b510c1ad8ab4465b59044913723ff11d8742`/,
 );
 assert.match(
   immediateNextAction,
@@ -1357,9 +1405,12 @@ assert.match(
 );
 assert.match(
   immediateNextAction,
-  /PR #31 receives exact-HEAD all-owner[\s\S]+approval and merges/,
+  /DB-1 through DB-4 MVP persistence implementation[\s\S]+`feat\/mvp-persistence`/,
 );
-assert.match(immediateNextAction, /S1 implementation has not started\./);
+assert.match(
+  immediateNextAction,
+  /DB-5 Neon Development mutation remains explicitly[\s\S]+gated/,
+);
 assert.match(
   immediateNextAction,
   /does not authorize UI code or[\s\S]+production explanation-renderer integration/i,
