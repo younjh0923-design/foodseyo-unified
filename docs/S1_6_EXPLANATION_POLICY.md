@@ -16,11 +16,22 @@ preserving the meaning already selected by the canonical pipeline. The
 explanation layer may simplify wording, but it must not select truth, resolve
 conflicts, infer publication eligibility, or add facts.
 
-The future renderer may receive only a publication-eligible canonical result
-through an approved public boundary. It must not receive raw provider output,
-source bodies, extraction DTOs, database rows, ORM types, or private transport
-handles. Every factual phrase must be traceable to a selected canonical field,
-its basis, and its provenance. Missing information stays missing.
+The future renderer may receive only validated canonical analysis, or an
+approved public boundary representing validated canonical analysis. It must
+not receive raw provider output, source bodies, extraction DTOs, database rows,
+ORM types, or private transport handles. Every factual phrase must be traceable
+to a selected canonical field, its basis, and its provenance. Missing
+information stays missing.
+
+Restaurant confirmation and Restaurant-scoped publication or reuse eligibility
+are not global prerequisites for explanation. When Restaurant identity is
+unconfirmed, otherwise valid input may still produce a menu-only explanation.
+That explanation retains eligible source-stated menu facts, eligible
+inferred-from-source facts, approved reviewed culinary-baseline facts, and
+unknowns. It suppresses Restaurant- and branch-specific claims and must not
+fail merely because Restaurant identity is unresolved. This is a policy
+distinction only; it does not define a new DTO, field, enum, or publication
+state.
 
 ## 2. Evidence-language rules
 
@@ -57,6 +68,23 @@ not prove the presence of nuts or dairy. Heat and richness are independent.
 Flavor and texture values do not establish preparation, ingredients,
 allergens, dietary suitability, or safety.
 
+### Claim- and axis-local contradictions
+
+A contradiction suppresses or qualifies only the affected claim or axis for
+the current effective result. When a reviewed culinary-baseline claim conflicts
+with stronger selected menu evidence, only that baseline claim is suppressed;
+the stronger selected value remains available. If upstream canonical
+validation instead leaves the affected axis unresolved, only that axis is
+qualified or omitted. Neither outcome erases unrelated valid source-stated,
+inferred-from-source, or reviewed culinary-baseline information on another
+axis. For example, a heat conflict does not remove an independently supported
+texture or price.
+
+Conflict handling must not mutate the shared reviewed baseline, affect another
+MenuItem, Restaurant, or branch, remove an unrelated source-stated fact, or
+turn unknown into absent, false, safe, confirmed, or zero. The explanation
+layer reports the upstream conflict without choosing or averaging a value.
+
 ## 4. Restaurant-state language
 
 | Restaurant state | Safe wording |
@@ -73,6 +101,21 @@ User confirmation must never be called external verification. An unresolved or
 rejected restaurant does not automatically make a menu-photo-only analysis a
 total failure. Restaurant state must not be used to invent branch-specific
 price, ingredients, or evidence.
+
+None of the following signals, by itself, confirms a Restaurant or branch:
+
+- the first search result;
+- the nearest result;
+- provider rank;
+- candidate score;
+- the presence of a Google Place ID; or
+- the presence of a candidate object or user-facing candidate list.
+
+Those signals alone cannot authorize confirmed or branch-specific wording or
+Restaurant-specific facts. A user-selected candidate may be described only as
+user-selected unless an approved upstream boundary separately establishes
+external verification. This policy does not define the pending confirmation
+algorithm, thresholds, status machine, provider DTO, or platform contract.
 
 ## 5. Safety and prohibited assertions
 
@@ -158,7 +201,7 @@ field names or a proposed DTO shape:
 - basis and safe provenance for each selected value;
 - explicit unknown and conflict state;
 - restaurant state and branch identity when branch-specific facts are used;
-- upstream publication eligibility;
+- upstream authorization for any Restaurant-scoped publication or reuse;
 - safe user-facing operational state or warning information;
 - Dish resolution and reviewed-baseline availability where applicable.
 
@@ -168,7 +211,9 @@ approved boundary; it must not create a competing canonical shape.
 
 ## 10. Future implementation acceptance checklist
 
-- [ ] Accepts only upstream publication-eligible canonical input.
+- [ ] Accepts only validated canonical analysis through an approved public
+      boundary, including safe menu-only continuation when Restaurant identity
+      is unconfirmed.
 - [ ] Imports input and result types only from approved public entry points.
 - [ ] Receives no raw provider, source body, extraction DTO, database row, or
       ORM input.
@@ -186,8 +231,15 @@ approved boundary; it must not create a competing canonical shape.
 
 ## 11. Current blockers
 
-Production implementation must not start until PR #25 is merged, Youn provides
-the stable minimum S1.5 canonical output fixture, and the approved public
-boundary is available. Actual model-backed explanation also requires explicit
+Production connection remains gated until all of the following are complete:
+
+1. the Issue #21 intake/progress contract is merged;
+2. the Issue #20 platform contract is merged; and
+3. the S1.5 canonical fixture/public boundary is stable and approved.
+
+PR #28 is not a prerequisite for Issue #21 or Issue #20. Their implementation
+remains in separate branches and worktrees. Docs-only approval of PR #28 is not
+production-integration approval and does not freeze any still-unapproved DTO or
+public-contract shape. Actual model-backed explanation also requires explicit
 provider and environment authorization. Production S1.7 remains separately
 blocked by the result-experience and web/intake contract dependencies.

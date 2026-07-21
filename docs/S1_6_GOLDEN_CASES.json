@@ -92,10 +92,10 @@
     {
       "caseId": "S1.6-G008",
       "scenario": "restaurant unresolved and menu-only continuation",
-      "evidenceBasis": ["unknown"],
-      "mustSay": ["식당 지점을 확인하지 못했다는 점", "제공된 메뉴 정보만으로 계속 안내한다는 점"],
-      "maySay": ["사용자가 지점을 다시 확인할 수 있다는 안내"],
-      "mustNotSay": ["특정 지점으로 확정", "지점별 가격이나 재료를 표시", "전체 분석 실패로 표현"],
+      "evidenceBasis": ["source_stated", "inferred_from_source", "culinary_baseline", "unknown"],
+      "mustSay": ["식당 지점을 확인하지 못했다는 점", "검증된 메뉴 정보만으로 설명을 계속한다는 점", "허용된 메뉴 사실과 추정, 검토된 일반 정보는 근거별로 유지된다는 점", "확인되지 않은 항목은 여전히 미확인이라는 점"],
+      "maySay": ["사용자가 지점을 다시 확인할 수 있다는 안내", "지점과 무관하게 사용할 수 있는 검토된 일반 음식 정보"],
+      "mustNotSay": ["특정 지점으로 확정", "지점별 가격이나 재료를 표시", "식당 미확인만으로 전체 설명 실패로 표현", "unknown을 부재 또는 안전으로 표현"],
       "uncertaintyLanguage": ["지점 정보는 미확인이에요."],
       "expectedUserValue": "지점이 불명확해도 메뉴 사진에서 확인된 정보는 이용할 수 있다.",
       "prohibitedHallucination": ["restaurant identity", "branch-specific fact"],
@@ -103,9 +103,9 @@
     },
     {
       "caseId": "S1.6-G009",
-      "scenario": "user-confirmed restaurant",
+      "scenario": "user-selected restaurant candidate",
       "evidenceBasis": ["unknown"],
-      "mustSay": ["사용자가 해당 지점을 선택했다는 점"],
+      "mustSay": ["사용자가 해당 후보 지점을 선택했다는 점", "사용자 선택과 외부 검증은 서로 다른 상태라는 점"],
       "maySay": ["선택한 지점 기준 정보라는 안내"],
       "mustNotSay": ["외부에서 검증된 식당이라고 표현", "사용자 선택만으로 메뉴 사실을 확정"],
       "uncertaintyLanguage": ["지점 선택은 사용자 확인에 기반해요."],
@@ -127,15 +127,15 @@
     },
     {
       "caseId": "S1.6-G011",
-      "scenario": "conflicting evidence",
-      "evidenceBasis": ["source_stated", "inferred_from_source"],
-      "mustSay": ["정보가 서로 달라 확정하지 않았다는 점", "식당에 확인하라는 안내"],
-      "maySay": ["충돌하는 축의 이름만 안전하게 표시"],
-      "mustNotSay": ["임의로 한 값을 선택", "평균값 생성", "더 편리한 값을 사실로 사용"],
-      "uncertaintyLanguage": ["서로 다른 정보가 있어 이 항목은 확정하지 않았어요."],
-      "expectedUserValue": "충돌이 숨겨지지 않고 주문 전 확인 행동으로 이어진다.",
-      "prohibitedHallucination": ["resolved value", "confidence score"],
-      "futureCanonicalInformationRequired": ["unresolved: conflict state", "unresolved: affected axis", "unresolved: safe provenance summaries"]
+      "scenario": "axis-local conflicting evidence",
+      "evidenceBasis": ["source_stated", "culinary_baseline"],
+      "mustSay": ["메뉴에 직접 적힌 순한 맵기는 유지하고 충돌하는 일반 맵기 정보만 사용하지 않는다는 점", "충돌하지 않은 바삭한 식감과 현재 메뉴 가격은 계속 안내한다는 점"],
+      "maySay": ["현재 메뉴 표기와 일반 정보가 다르다는 짧은 안내"],
+      "mustNotSay": ["일반 맵기를 현재 맵기로 선택", "맵기 평균값 생성", "충돌하지 않은 식감이나 가격을 제거", "공유된 일반 음식 정보 자체를 변경", "다른 메뉴 항목이나 지점에 억제를 전파"],
+      "uncertaintyLanguage": ["일반적인 맵기와 다를 수 있지만 이 메뉴에는 순한 맛으로 적혀 있어요."],
+      "expectedUserValue": "강한 메뉴 근거를 유지하고 충돌하는 일반 정보만 억제하면서 관계없는 유효 정보도 계속 이용한다.",
+      "prohibitedHallucination": ["baseline heat as current heat", "averaged heat value", "global suppression"],
+      "futureCanonicalInformationRequired": ["unresolved: selected source-stated heat", "unresolved: suppressed conflicting baseline claim", "unresolved: retained unrelated axis values", "unresolved: current-result-only suppression"]
     },
     {
       "caseId": "S1.6-G012",
@@ -268,6 +268,78 @@
       "expectedUserValue": "한국어 사용자가 짧은 설명만으로 음식 성격과 확인할 사항을 이해한다.",
       "prohibitedHallucination": ["untraceable fact", "allergen-safe claim", "restaurant-specific baseline", "independent generated evidence"],
       "futureCanonicalInformationRequired": ["unresolved: stable analysis and MenuItem identity", "unresolved: selected axis values with basis and provenance", "unresolved: restaurant and publication state", "unresolved: unknown and conflict semantics"]
+    },
+    {
+      "caseId": "S1.6-G023",
+      "scenario": "first-result-only restaurant candidate",
+      "evidenceBasis": ["unknown"],
+      "mustSay": ["첫 번째 검색 결과일 뿐 식당이나 지점이 확인된 것은 아니라는 점", "검증된 메뉴 정보만으로 설명을 계속할 수 있다는 점"],
+      "maySay": ["사용자에게 올바른 지점을 선택해 달라는 안내"],
+      "mustNotSay": ["첫 번째 결과를 확인된 식당으로 표현", "지점별 사실을 사용", "메뉴 전용 설명을 중단"],
+      "uncertaintyLanguage": ["첫 번째 후보만으로는 지점을 확인할 수 없어요."],
+      "expectedUserValue": "검색 순서를 식당 확인으로 오해하지 않고 메뉴 정보는 계속 이용한다.",
+      "prohibitedHallucination": ["confirmed restaurant", "confirmed branch", "branch-specific fact"],
+      "futureCanonicalInformationRequired": ["unresolved: safe first-result candidate signal", "unresolved: Restaurant confirmation state", "unresolved: menu-only continuation"]
+    },
+    {
+      "caseId": "S1.6-G024",
+      "scenario": "nearest-result-only restaurant candidate",
+      "evidenceBasis": ["unknown"],
+      "mustSay": ["가장 가까운 후보일 뿐 식당이나 지점이 확인된 것은 아니라는 점", "검증된 메뉴 정보만으로 설명을 계속할 수 있다는 점"],
+      "maySay": ["사용자에게 올바른 지점을 선택해 달라는 안내"],
+      "mustNotSay": ["거리만으로 식당이나 지점을 확정", "가까운 지점의 가격이나 재료를 사용", "메뉴 전용 설명을 중단"],
+      "uncertaintyLanguage": ["거리만으로는 지점을 확인할 수 없어요."],
+      "expectedUserValue": "거리 신호를 확인 증거로 오해하지 않고 메뉴 정보는 계속 이용한다.",
+      "prohibitedHallucination": ["distance-confirmed restaurant", "branch-specific fact"],
+      "futureCanonicalInformationRequired": ["unresolved: safe nearest-candidate signal", "unresolved: Restaurant confirmation state", "unresolved: menu-only continuation"]
+    },
+    {
+      "caseId": "S1.6-G025",
+      "scenario": "provider-rank-only restaurant candidate",
+      "evidenceBasis": ["unknown"],
+      "mustSay": ["높은 제공자 순위만으로 식당이나 지점이 확인된 것은 아니라는 점"],
+      "maySay": ["후보 확인이 필요하다는 안내"],
+      "mustNotSay": ["순위만으로 확인된 식당 또는 지점이라고 표현", "순위만으로 지점별 사실을 사용"],
+      "uncertaintyLanguage": ["후보 순위는 지점 확인이 아니에요."],
+      "expectedUserValue": "제공자 순위와 식당 확인을 구분한다.",
+      "prohibitedHallucination": ["rank-confirmed restaurant", "rank-confirmed branch"],
+      "futureCanonicalInformationRequired": ["unresolved: safe provider-rank signal", "unresolved: Restaurant confirmation state"]
+    },
+    {
+      "caseId": "S1.6-G026",
+      "scenario": "candidate-score-only restaurant candidate",
+      "evidenceBasis": ["unknown"],
+      "mustSay": ["높은 후보 점수만으로 식당이나 지점이 확인된 것은 아니라는 점"],
+      "maySay": ["후보 확인이 필요하다는 안내"],
+      "mustNotSay": ["점수만으로 확인된 식당 또는 지점이라고 표현", "점수를 확인 확률이나 확정 사실로 표현"],
+      "uncertaintyLanguage": ["후보 점수는 지점 확인이 아니에요."],
+      "expectedUserValue": "후보 점수와 식당 확인을 구분한다.",
+      "prohibitedHallucination": ["score-confirmed restaurant", "confirmation probability"],
+      "futureCanonicalInformationRequired": ["unresolved: safe candidate-score signal", "unresolved: Restaurant confirmation state"]
+    },
+    {
+      "caseId": "S1.6-G027",
+      "scenario": "Google Place ID presence without confirmation",
+      "evidenceBasis": ["unknown"],
+      "mustSay": ["Google Place ID가 있어도 그 사실만으로 식당이나 지점이 확인된 것은 아니라는 점"],
+      "maySay": ["외부 식별자와 확인 상태가 다르다는 안내"],
+      "mustNotSay": ["Place ID 존재만으로 확인된 식당 또는 지점이라고 표현", "Place ID만으로 지점별 사실을 사용"],
+      "uncertaintyLanguage": ["외부 식별자만으로는 지점을 확인할 수 없어요."],
+      "expectedUserValue": "외부 식별자 존재와 식당 확인을 구분한다.",
+      "prohibitedHallucination": ["Place-ID-confirmed restaurant", "verified branch"],
+      "futureCanonicalInformationRequired": ["unresolved: safe external-reference presence signal", "unresolved: Restaurant confirmation state"]
+    },
+    {
+      "caseId": "S1.6-G028",
+      "scenario": "candidate presence without confirmation",
+      "evidenceBasis": ["unknown"],
+      "mustSay": ["후보 객체나 후보 목록이 있어도 식당이나 지점이 확인된 것은 아니라는 점", "검증된 메뉴 정보만으로 설명을 계속할 수 있다는 점"],
+      "maySay": ["사용자에게 후보를 검토해 달라는 안내"],
+      "mustNotSay": ["후보 존재만으로 확인된 식당 또는 지점이라고 표현", "후보의 지점별 사실을 사용", "메뉴 전용 설명을 중단"],
+      "uncertaintyLanguage": ["후보가 있다는 사실만으로는 지점을 확인할 수 없어요."],
+      "expectedUserValue": "후보 제시와 식당 확인을 구분하면서 메뉴 설명을 계속 이용한다.",
+      "prohibitedHallucination": ["candidate-presence confirmation", "branch-specific fact"],
+      "futureCanonicalInformationRequired": ["unresolved: safe candidate-presence signal", "unresolved: Restaurant confirmation state", "unresolved: menu-only continuation"]
     }
   ]
 }
