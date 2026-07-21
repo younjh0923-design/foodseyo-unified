@@ -1,6 +1,6 @@
 {
   "restaurantCandidate": {
-    "contractVersion": "restaurant-resolution/1.0.0",
+    "contractVersion": "restaurant-resolution/1.1.0",
     "candidateId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     "googlePlaceId": "fixture_google_place_001",
     "displayName": "Fixture Restaurant",
@@ -11,14 +11,21 @@
       "longitude": -74.006
     },
     "matchSignals": ["name", "address", "user_link"],
-    "rank": 1
+    "rank": 1,
+    "officialWebsiteUrl": "https://fixture.example/restaurant",
+    "localeEvidence": {
+      "countryCode": "US",
+      "countryBasis": "source_stated",
+      "currencyCode": "USD",
+      "currencyBasis": "inferred_from_source"
+    }
   },
   "restaurantResolution": {
-    "contractVersion": "restaurant-resolution/1.0.0",
+    "contractVersion": "restaurant-resolution/1.1.0",
     "state": "user_confirmed",
     "candidates": [
       {
-        "contractVersion": "restaurant-resolution/1.0.0",
+        "contractVersion": "restaurant-resolution/1.1.0",
         "candidateId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
         "googlePlaceId": "fixture_google_place_001",
         "displayName": "Fixture Restaurant",
@@ -112,7 +119,7 @@
     "completedAt": "2026-07-18T20:02:00.000Z"
   },
   "canonicalMenuAnalysis": {
-    "contractVersion": "boundary-dtos/1.0.0",
+    "contractVersion": "boundary-dtos/1.1.0",
     "analysisId": "99999999-9999-4999-8999-999999999999",
     "source": {
       "sourceRef": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -121,11 +128,11 @@
       "collectedAt": "2026-07-18T20:01:00.000Z"
     },
     "restaurantResolution": {
-      "contractVersion": "restaurant-resolution/1.0.0",
+      "contractVersion": "restaurant-resolution/1.1.0",
       "state": "user_confirmed",
       "candidates": [
         {
-          "contractVersion": "restaurant-resolution/1.0.0",
+          "contractVersion": "restaurant-resolution/1.1.0",
           "candidateId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
           "googlePlaceId": "fixture_google_place_001",
           "displayName": "Fixture Restaurant",
@@ -548,7 +555,7 @@
     ],
     "effectiveProfiles": [
       {
-        "contractVersion": "boundary-dtos/1.0.0",
+        "contractVersion": "boundary-dtos/1.1.0",
         "kind": "derived",
         "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
         "dishId": "22222222-2222-4222-8222-222222222222",
@@ -643,7 +650,7 @@
         "derivedAt": "2026-07-18T20:04:00.000Z"
       },
       {
-        "contractVersion": "boundary-dtos/1.0.0",
+        "contractVersion": "boundary-dtos/1.1.0",
         "kind": "derived",
         "menuItemId": "ffffffff-ffff-4fff-8fff-ffffffffffff",
         "dishId": "22222222-2222-4222-8222-222222222222",
@@ -727,7 +734,7 @@
     "validatedAt": "2026-07-18T20:05:00.000Z"
   },
   "canonicalMenuAnalysisSecondRestaurant": {
-    "contractVersion": "boundary-dtos/1.0.0",
+    "contractVersion": "boundary-dtos/1.1.0",
     "analysisId": "abababab-abab-4bab-8bab-abababababab",
     "source": {
       "sourceRef": "aeaeaeae-aeae-4eae-8eae-aeaeaeaeaeae",
@@ -736,11 +743,11 @@
       "collectedAt": "2026-07-18T21:01:00.000Z"
     },
     "restaurantResolution": {
-      "contractVersion": "restaurant-resolution/1.0.0",
+      "contractVersion": "restaurant-resolution/1.1.0",
       "state": "user_confirmed",
       "candidates": [
         {
-          "contractVersion": "restaurant-resolution/1.0.0",
+          "contractVersion": "restaurant-resolution/1.1.0",
           "candidateId": "acacacac-acac-4aca-8aca-acacacacacac",
           "googlePlaceId": "fixture_google_place_002",
           "displayName": "Fixture Restaurant Branch B",
@@ -880,7 +887,7 @@
     "dishClaims": [],
     "effectiveProfiles": [
       {
-        "contractVersion": "boundary-dtos/1.0.0",
+        "contractVersion": "boundary-dtos/1.1.0",
         "kind": "derived",
         "menuItemId": "b0b0b0b0-b0b0-40b0-80b0-b0b0b0b0b0b0",
         "dishId": "22222222-2222-4222-8222-222222222222",
@@ -977,7 +984,7 @@
     ]
   },
   "effectiveDishProfile": {
-    "contractVersion": "boundary-dtos/1.0.0",
+    "contractVersion": "boundary-dtos/1.1.0",
     "kind": "derived",
     "menuItemId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
     "dishId": "22222222-2222-4222-8222-222222222222",

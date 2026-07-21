@@ -162,6 +162,18 @@ export interface GeoPoint {
   readonly longitude: number;
 }
 
+export type RestaurantLocaleEvidenceBasis = Extract<
+  EvidenceBasis,
+  "source_stated" | "inferred_from_source"
+>;
+
+export interface RestaurantLocaleEvidence {
+  readonly countryCode: string;
+  readonly countryBasis: RestaurantLocaleEvidenceBasis;
+  readonly currencyCode: string;
+  readonly currencyBasis: RestaurantLocaleEvidenceBasis;
+}
+
 export interface RestaurantCandidate {
   readonly contractVersion: ContractVersion;
   readonly candidateId: string;
@@ -172,6 +184,8 @@ export interface RestaurantCandidate {
   readonly location: GeoPoint | null;
   readonly matchSignals: readonly RestaurantMatchSignal[];
   readonly rank: number;
+  readonly officialWebsiteUrl?: string | null;
+  readonly localeEvidence?: RestaurantLocaleEvidence | null;
 }
 
 export type RestaurantConfirmationEvidence =
@@ -498,15 +512,46 @@ export interface PublicErrorEnvelope {
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const SAFE_TOKEN_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,255}$/;
 const CORRELATION_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$/;
+const RESTAURANT_LOCALE_EVIDENCE_BASES = [
+  "source_stated",
+  "inferred_from_source",
+] as const satisfies readonly RestaurantLocaleEvidenceBasis[];
 
 const validateUuid = (
   value: unknown,
   issues: ContractValidationIssue[],
   path: readonly ContractPathSegment[],
 ) => validateString(value, issues, path, { pattern: UUID_PATTERN });
+
+const validateNullablePublicHttpsUrl = (
+  value: unknown,
+  issues: ContractValidationIssue[],
+  path: readonly ContractPathSegment[],
+) => {
+  if (value === null) {
+    return;
+  }
+  if (!validateString(value, issues, path, { maxLength: 2048 })) {
+    return;
+  }
+  try {
+    const parsed = new URL(value);
+    if (
+      parsed.protocol !== "https:" ||
+      parsed.hostname.length === 0 ||
+      parsed.username.length > 0 ||
+      parsed.password.length > 0
+    ) {
+      addContractIssue(issues, "invalid_string_format", path);
+    }
+  } catch {
+    addContractIssue(issues, "invalid_string_format", path);
+  }
+};
 
 const validateUtcTimestamp = (
   value: unknown,
@@ -732,6 +777,42 @@ const validateProvenanceReference = (
   addContractIssue(issues, "invalid_provenance_kind", [...path, "kind"]);
 };
 
+const validateRestaurantLocaleEvidence = (
+  value: unknown,
+  issues: ContractValidationIssue[],
+  path: readonly ContractPathSegment[],
+) => {
+  if (
+    !validateRecord(
+      value,
+      ["countryCode", "countryBasis", "currencyCode", "currencyBasis"],
+      [],
+      issues,
+      path,
+    )
+  ) {
+    return;
+  }
+  validateString(value.countryCode, issues, [...path, "countryCode"], {
+    pattern: COUNTRY_CODE_PATTERN,
+  });
+  validateEnumValue(
+    value.countryBasis,
+    RESTAURANT_LOCALE_EVIDENCE_BASES,
+    issues,
+    [...path, "countryBasis"],
+  );
+  validateString(value.currencyCode, issues, [...path, "currencyCode"], {
+    pattern: CURRENCY_PATTERN,
+  });
+  validateEnumValue(
+    value.currencyBasis,
+    RESTAURANT_LOCALE_EVIDENCE_BASES,
+    issues,
+    [...path, "currencyBasis"],
+  );
+};
+
 const validateRestaurantCandidate = (
   value: unknown,
   issues: ContractValidationIssue[],
@@ -751,7 +832,7 @@ const validateRestaurantCandidate = (
         "matchSignals",
         "rank",
       ],
-      [],
+      ["officialWebsiteUrl", "localeEvidence"],
       issues,
       path,
     )
@@ -793,6 +874,19 @@ const validateRestaurantCandidate = (
   );
   validateUniqueStrings(value.matchSignals, issues, [...path, "matchSignals"]);
   validateInteger(value.rank, issues, [...path, "rank"], { minimum: 1 });
+  if ("officialWebsiteUrl" in value) {
+    validateNullablePublicHttpsUrl(
+      value.officialWebsiteUrl,
+      issues,
+      [...path, "officialWebsiteUrl"],
+    );
+  }
+  if ("localeEvidence" in value && value.localeEvidence !== null) {
+    validateRestaurantLocaleEvidence(value.localeEvidence, issues, [
+      ...path,
+      "localeEvidence",
+    ]);
+  }
 };
 
 const validateConfirmationEvidence = (

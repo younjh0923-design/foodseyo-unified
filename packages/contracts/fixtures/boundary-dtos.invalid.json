@@ -617,5 +617,77 @@
         "path": ["menuItems", 0, "sourceEvidence", 0, "sourceRef"]
       }
     ]
+  },
+  {
+    "case": "official restaurant websites must use public HTTPS URLs",
+    "schema": "RestaurantCandidate",
+    "fixture": "restaurantCandidate",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["officialWebsiteUrl"],
+        "value": "http://fixture.example/restaurant"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_string_format",
+        "path": ["officialWebsiteUrl"]
+      }
+    ]
+  },
+  {
+    "case": "restaurant country evidence requires an uppercase alpha-2 code",
+    "schema": "RestaurantCandidate",
+    "fixture": "restaurantCandidate",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["localeEvidence", "countryCode"],
+        "value": "USA"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_string_format",
+        "path": ["localeEvidence", "countryCode"]
+      }
+    ]
+  },
+  {
+    "case": "restaurant currency evidence requires an uppercase alpha-3 code",
+    "schema": "RestaurantCandidate",
+    "fixture": "restaurantCandidate",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["localeEvidence", "currencyCode"],
+        "value": "US"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_string_format",
+        "path": ["localeEvidence", "currencyCode"]
+      }
+    ]
+  },
+  {
+    "case": "restaurant locale evidence cannot use culinary evidence bases",
+    "schema": "RestaurantCandidate",
+    "fixture": "restaurantCandidate",
+    "mutations": [
+      {
+        "operation": "replace",
+        "path": ["localeEvidence", "currencyBasis"],
+        "value": "culinary_baseline"
+      }
+    ],
+    "expectedIssues": [
+      {
+        "code": "invalid_enum_value",
+        "path": ["localeEvidence", "currencyBasis"]
+      }
+    ]
   }
 ]
