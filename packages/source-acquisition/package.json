@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "validate:foundation": "tsx scripts/validate-foundation.ts && tsx scripts/validate-official-menu-bounded-retrieval.ts",
+    "validate:foundation": "tsx scripts/validate-foundation.ts && tsx scripts/validate-official-menu-bounded-retrieval.ts && tsx scripts/validate-official-menu-proof-integrity.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

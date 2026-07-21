@@ -39,6 +39,7 @@ export interface OfficialMenuSourceDiscovery {
 }
 
 const VERIFIED_DISCOVERY = Symbol("verifiedOfficialMenuSourceDiscovery");
+const issuedVerifiedDiscoveries = new WeakSet<object>();
 
 export interface VerifiedOfficialMenuSourceDiscovery {
   readonly request: OfficialMenuSourceDiscoveryRequest;
@@ -90,7 +91,9 @@ const verifiedDiscovery = (
     configurable: false,
     writable: false,
   });
-  return Object.freeze(value) as VerifiedOfficialMenuSourceDiscovery;
+  const proof = Object.freeze(value) as VerifiedOfficialMenuSourceDiscovery;
+  issuedVerifiedDiscoveries.add(proof);
+  return proof;
 };
 
 export const isVerifiedOfficialMenuSourceDiscovery = (
@@ -99,6 +102,7 @@ export const isVerifiedOfficialMenuSourceDiscovery = (
   typeof value === "object" &&
   value !== null &&
   !Array.isArray(value) &&
+  issuedVerifiedDiscoveries.has(value) &&
   Object.hasOwn(value, VERIFIED_DISCOVERY) &&
   Object.isFrozen(value) &&
   Reflect.get(value, VERIFIED_DISCOVERY) === true;

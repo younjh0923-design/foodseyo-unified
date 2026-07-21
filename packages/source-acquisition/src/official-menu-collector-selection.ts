@@ -16,6 +16,7 @@ import {
 } from "./official-menu-source-discovery.js";
 
 const VERIFIED_SELECTION = Symbol("verifiedOfficialMenuCollectorSelection");
+const issuedVerifiedSelections = new WeakSet<object>();
 
 export enum OfficialMenuCollectorKind {
   HTML_MENU_PAGE = "HTML_MENU_PAGE",
@@ -127,7 +128,7 @@ export const selectOfficialMenuCollectors = (
 
 /**
  * Binds one exact candidate snapshot to the discovery request that produced
- * it. The private symbol prevents callers from fabricating this proof object.
+ * it. Only the exact object identity registered here is accepted as proof.
  */
 export const verifyOfficialMenuCollectorSelection = (
   discovery: VerifiedOfficialMenuSourceDiscovery,
@@ -189,9 +190,13 @@ export const verifyOfficialMenuCollectorSelection = (
     configurable: false,
     writable: false,
   });
+  const proof = Object.freeze(
+    verified,
+  ) as VerifiedOfficialMenuCollectorSelection;
+  issuedVerifiedSelections.add(proof);
   return {
     status: "success",
-    value: Object.freeze(verified) as VerifiedOfficialMenuCollectorSelection,
+    value: proof,
   };
 };
 
@@ -201,6 +206,7 @@ export const isVerifiedOfficialMenuCollectorSelection = (
   typeof value === "object" &&
   value !== null &&
   !Array.isArray(value) &&
+  issuedVerifiedSelections.has(value) &&
   Object.hasOwn(value, VERIFIED_SELECTION) &&
   Object.isFrozen(value) &&
   Reflect.get(value, VERIFIED_SELECTION) === true;
