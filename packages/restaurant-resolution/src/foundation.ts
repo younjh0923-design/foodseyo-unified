@@ -195,8 +195,9 @@ const parseProviderRecord = (
   if (
     !isRecord(value) ||
     Object.keys(value).some((key) => !PROVIDER_RECORD_KEYS.has(key)) ||
-    (value.requestCorrelationId !== undefined &&
-      value.requestCorrelationId !== requestCorrelationId) ||
+    typeof value.requestCorrelationId !== "string" ||
+    value.requestCorrelationId.length === 0 ||
+    value.requestCorrelationId !== requestCorrelationId ||
     typeof value.requestCandidateId !== "string" ||
     typeof value.placeId !== "string" ||
     typeof value.primaryText !== "string" ||

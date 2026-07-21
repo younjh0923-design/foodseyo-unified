@@ -806,11 +806,15 @@ await test("provider_internal_fields_excluded", async () => {
     "https://places.googleapis.com/v1/places:searchText",
   );
   assert.equal(capturedInit?.method, "POST");
-  assert.deepEqual(JSON.parse(String(capturedInit?.body)), {
+  const requestBody = JSON.parse(String(capturedInit?.body)) as Record<
+    string,
+    unknown
+  >;
+  assert.deepEqual(requestBody, {
     textQuery: "Fixture Alpha 10 Alpha Street, New York, NY",
     includedType: "restaurant",
     strictTypeFiltering: true,
-    maxResultCount: 10,
+    pageSize: 10,
     locationBias: {
       circle: {
         center: { latitude: 40.743, longitude: -73.949 },
@@ -818,6 +822,8 @@ await test("provider_internal_fields_excluded", async () => {
       },
     },
   });
+  assert.equal(requestBody.pageSize, 10);
+  assert.equal(Object.hasOwn(requestBody, "maxResultCount"), false);
   assert.equal(
     headers.get("X-Goog-FieldMask"),
     "places.id,places.displayName,places.formattedAddress,places.location",

@@ -325,7 +325,7 @@ export class GooglePlacesTextSearchAdapter
       textQuery,
       includedType: "restaurant",
       strictTypeFiltering: true,
-      maxResultCount: MAX_CANDIDATES,
+      pageSize: MAX_CANDIDATES,
       ...(clues.location === null
         ? {}
         : {
