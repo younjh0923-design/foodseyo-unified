@@ -29,8 +29,22 @@ U2.2 adds a foundation implementation of `MenuSourceAcquisitionPort` with:
 - deterministic, network-free fixtures for supported, unsupported, duplicate,
   conflict, timeout, unsafe, and no-source cases.
 
-The discovery ports are intentionally dependency-injected and perform no
-network access themselves. Bounded retrieval, DNS/IP verification, redirect
-revalidation, and provider-specific Web Search are separate S1.2/S1.3 work.
-This package never returns source bodies, raw provider responses, or raw URLs
-through the frozen shared port.
+The discovery ports remain dependency-injected and perform no network access
+themselves. S1.2 adds one server-only bounded retrieval boundary for official
+HTML, PDF, and ordering-page collectors. It requires an injected DNS resolver
+and a transport that pins connections to the verified addresses, disables
+automatic redirects, revalidates every redirect hop, enforces the invocation
+deadline and streaming byte limit, and accepts only the collector's approved
+MIME types. Redirects stay on the exact normalized hostname unless a future
+authoritative policy supplies an explicit alternate-host allowlist; hostname
+suffixes never imply authorization. IPv4 and IPv6 decisions conservatively
+reject the IANA special-purpose ranges, including translation, discard,
+benchmarking, documentation, ORCHID, local, and multicast space. Retrieved
+bytes remain in a correlation-bound transient store behind an opaque
+`TransientMenuContent` handle; normalized and final URLs stay inside that
+package-owned provenance boundary, and every unconsumed response is explicitly
+cancelled. A non-forgeable package-local discovery proof binds each selected
+source to the confirmed restaurant IDs and menu scope before collection.
+Provider-specific Web Search remains separate S1.3 work. This package never
+returns source bodies, raw provider responses, or raw URLs through the frozen
+shared port or package entry point.

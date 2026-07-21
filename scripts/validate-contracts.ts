@@ -1281,7 +1281,7 @@ assert.doesNotMatch(restaurantResolutionSlice, /\*\*Blocked by:\*\*/);
 assertTaskStatus(
   taskMaster,
   "### S1.2 Official menu-source acquisition",
-  "READY",
+  "REVIEW",
 );
 const officialSourceAcquisition = markdownTaskSection(
   taskMaster,
@@ -1359,7 +1359,10 @@ assert.match(
   immediateNextAction,
   /PR #31 receives exact-HEAD all-owner[\s\S]+approval and merges/,
 );
-assert.match(immediateNextAction, /S1 implementation has not started\./);
+assert.match(
+  immediateNextAction,
+  /S1\.2 is in review on Draft PR #34; S1\.3 remains blocked[\s\S]+S1\.2 is approved and merged as `DONE`\./,
+);
 assert.match(
   immediateNextAction,
   /does not authorize UI code or[\s\S]+production explanation-renderer integration/i,

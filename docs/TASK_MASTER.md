@@ -339,7 +339,7 @@ marked `DONE`.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.2
-- **Status:** READY
+- **Status:** REVIEW
 - **Scope:** bounded retrieval from the confirmed restaurant's official
   website, menu page, PDF, or ordering page; URL normalization, SSRF defense,
   redirect revalidation, content/type/size limits, provenance, and typed
@@ -348,6 +348,12 @@ marked `DONE`.
   every accepted source produces a validated `MenuSourceInput`; unsafe,
   conflicting, oversized, unsupported, timeout, and missing-source cases fail
   safely without logging content.
+- **Review evidence:** one injected bounded retrieval boundary validates every
+  DNS answer and redirect hop, requires address-pinned manual-redirect
+  transport, enforces invocation timeout and streaming byte limits, validates
+  HTML/PDF/text MIME, and keeps bytes plus URL evidence in a request-scoped
+  transient store. Network-free validators cover safe retrieval, SSRF,
+  redirect, timeout, MIME, size, no-source, provenance, and orchestration.
 
 ### S1.3 OpenAI Web Search menu fallback
 
@@ -582,4 +588,5 @@ The current platform-contract action is Issue #20 on
 `c04305e421657863d3c0c06fdfe3f90192a1593f`. Its exact Next.js `16.2.10`,
 React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
 dependent framework implementation until PR #31 receives exact-HEAD all-owner
-approval and merges. S1 implementation has not started.
+approval and merges. S1.2 is in review on Draft PR #34; S1.3 remains blocked
+until S1.2 is approved and merged as `DONE`.
