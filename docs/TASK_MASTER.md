@@ -207,22 +207,37 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Youn
 - **Branch:** `data/pipeline-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** application service interfaces, canonical validator, deterministic
   merge-policy skeleton, fake repositories, transaction boundary.
 - **No:** Neon migration or connection, live database, provider call, UI.
 - **Acceptance:** network-free tests prove source precedence, unknown handling,
   rollback semantics through fakes, and stable public errors.
+- **Evidence:** frozen `1.0.0` ports, schemas, publication guard,
+  outcomes, and errors are consumed without a contracts-package change;
+  `pnpm validate:u2-data-pipeline` covers canonical binding, precedence,
+  conflict rejection, branch/source isolation, unknown preservation,
+  eligible-only publication, transaction commit, and rollback.
+- **Completion evidence:** PR #25 feature HEAD
+  `7453b7f99f701c482ada7e4b7897fad71fa4306f` merged to `main` as
+  `47c6a61e0a38397c5bc881e38872764e978013ed`.
 
 ### U2.2 Source acquisition foundation
 
 - **Owner:** YTW
 - **Branch:** `sources/acquisition-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** uploaded-menu adapter and interface-only adapters for official web,
   PDF, ordering page, and Web Search discovery; source classification and
   normalized `MenuSourceInput`.
+- **Evidence:** foundation adapters and coordinator live in
+  `packages/source-acquisition`; deterministic network-free fixtures cover
+  supported, unsupported, duplicate, conflict, timeout, unsafe, and no-source
+  behavior. Real retrieval and provider adapters remain in S1.2/S1.3.
+- **Completion evidence:** PR #22 feature HEAD
+  `33ab501809652f85f2147f5a2652e2d8a495700f` merged to `main` as
+  `1c89c121d0cd819889dc7b7c4bbd70f75eccaf0d`.
 - **No:** unrestricted crawling, provider call in tests, source-body logging,
   canonical persistence.
 - **Acceptance:** deterministic fixtures cover supported, unsupported,
@@ -233,7 +248,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Branch:** `restaurant/resolution-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** server-side intake contract, restaurant candidate and confirmation
   service, fake Google Places adapter, confirmation evidence, and UI-safe
   candidate/progress/action/outcome data.
@@ -243,13 +258,20 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Acceptance:** deterministic fixtures cover candidate, confirmed,
   conflicting, rejected, location-unavailable, and menu-only fallback cases;
   no UI-safe DTO contains provider internals or unvalidated menu meaning.
+- **Evidence:** frozen-port resolution, confirmation evidence, strict fake
+  Places normalization, typed outcomes, and network-free fixtures are ready in
+  `packages/restaurant-resolution`. Proposed Issue #21 raw-intake and progress
+  shapes were not consumed.
+- **Completion evidence:** PR #23 feature HEAD
+  `7de54ac08fbfb4f0e56f8cb5cf0cfdf02af4a454` merged to `main` as
+  `0f47531a837ef6854e8831a570966b09dd207d81`.
 
 ### U2.4 Web and result-experience foundation
 
 - **Owner:** Juhyung
 - **Branch:** `ui/result-experience-foundation`
 - **Dependency:** U1.6
-- **Status:** READY
+- **Status:** DONE
 - **Scope:** mobile shell, photo/link input, upload review, restaurant
   candidate and confirmation presentation, progress and retry states, plus
   result screens driven by frozen fake application view models.
@@ -259,6 +281,17 @@ parallel against the frozen interfaces and deterministic fakes.
   confirmation, official-source progress, fallback progress, safe errors,
   source/general/unknown presentation, input preservation, and no horizontal
   overflow.
+- **Current slice:** framework-neutral local input preservation, frozen-contract
+  presentation projections, evidence/unknown labeling, safe outcome/error
+  handling, accessibility requirements, and deterministic fake-port tests are
+  implemented on `ui/result-experience-foundation`.
+- **Current blockers:** rendered components and browser QA wait for platform
+  contract Issue #20; server-bound photo/link intake plus official-source and
+  Web Search progress wait for cross-workstream boundary Issue #21. Proposed
+  shapes are not consumed before their contract PRs merge.
+- **Completion evidence:** PR #24 feature HEAD
+  `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
+  `952b357fba526068a11597f490eea61fcccbba58`.
 
 ### U2.5 Continuous integration
 
@@ -283,8 +316,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.3
-- **Status:** BLOCKED
-- **Blocked by:** U2.3
+- **Status:** READY
 - **Scope:** photo/context plus restaurant/map/official-link intake, server-side
   Google Places adapter, bounded candidates, user confirmation,
   evidence-backed status, and official website/source clues.
@@ -299,8 +331,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** YTW
 - **Reviewer:** Youn
 - **Dependency:** U2.2
-- **Status:** BLOCKED
-- **Blocked by:** U2.2
+- **Status:** READY
 - **Scope:** bounded retrieval from the confirmed restaurant's official
   website, menu page, PDF, or ordering page; URL normalization, SSRF defense,
   redirect revalidation, content/type/size limits, provenance, and typed
@@ -526,7 +557,10 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-Start U2.1, U2.2, U2.3, U2.4, and U2.5 from current `main` on their documented
-feature branches. U2.1 through U2.4 may proceed in parallel against the frozen
-contracts and deterministic fakes. Shared-contract changes still use the
-contract-change queue and their impact-based approval tier.
+The current integration target is PR #26 for the U2.5 continuous integration
+foundation. PR #24 feature HEAD
+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
+`952b357fba526068a11597f490eea61fcccbba58`. U2.5 remains in review until PR
+#26 is approved and merged. Independent work continues only against merged
+frozen contracts; proposed Issue #20 and #21 shapes remain unavailable and
+unused.

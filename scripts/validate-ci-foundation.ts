@@ -86,6 +86,13 @@ assert(rootManifest.scripts, "root scripts are required");
 
 const requiredRootScripts = [
   "typecheck",
+  "validate:contracts",
+  "validate:boundary-dtos",
+  "validate:module-interfaces",
+  "validate:source-acquisition",
+  "validate:restaurant-resolution",
+  "validate:u2-data-pipeline",
+  "validate:web-foundation",
   "test:unit",
   "test:integration",
   "test:workspace",
@@ -104,6 +111,10 @@ for (const scriptName of requiredRootScripts) {
 for (const requiredInvocation of [
   "pnpm typecheck",
   "pnpm test",
+  "pnpm validate:source-acquisition",
+  "pnpm validate:restaurant-resolution",
+  "pnpm validate:u2-data-pipeline",
+  "pnpm validate:web-foundation",
   "pnpm validate:security",
   "pnpm validate:ci",
   "pnpm validate:network-boundary",
@@ -117,6 +128,16 @@ assert.equal(
   rootManifest.scripts.verify?.includes("--if-present"),
   false,
   "pnpm verify must not silently skip a required U2.5 validation",
+);
+assert.equal(
+  rootManifest.scripts["test:unit"],
+  "pnpm validate:contracts && pnpm validate:boundary-dtos",
+  "unit validation must preserve contracts and boundary DTO checks",
+);
+assert.equal(
+  rootManifest.scripts["test:integration"],
+  "pnpm validate:module-interfaces",
+  "integration validation must preserve module-interface checks",
 );
 
 for (const optionalCommand of ["lint", "build"] as const) {

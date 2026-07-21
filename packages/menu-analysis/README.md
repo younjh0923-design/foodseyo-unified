@@ -20,5 +20,14 @@ after U1.6 merges to `main` and is recorded `DONE`.
 U1.5 keeps extraction, canonical validation, constrained explanation, and
 application orchestration in this single package because they form one ordered
 analysis trust sequence rather than four independently deployable features.
-It exposes the four approved ports and matching deterministic fakes; it adds
-no provider, transport, UI, persistence, or retry implementation.
+It exposes the four approved ports and matching deterministic fakes.
+
+U2.1 adds `CanonicalMenuValidationService` and
+`AnalysisApplicationService` behind those frozen ports. The validator accepts
+an untrusted normalizer result, applies the exported
+`CanonicalMenuAnalysisSchema`, and binds the canonical result back to the exact
+extraction source, branch resolution, scope, menu-item facts, evidence, and
+warnings. The application service preserves the extraction -> validation ->
+explanation -> eligible-only publication order and never returns a partial
+publication result. Both implementations return only frozen outcomes and
+public errors and perform no provider, transport, UI, or database work.

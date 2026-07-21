@@ -1,0 +1,203 @@
+{
+  "matches": [
+    {
+      "matchId": "77777777-7777-4777-8777-777777777771",
+      "menuItemId": "88888888-8888-4888-8888-888888888881",
+      "dishCandidateId": "99999999-9999-4999-8999-999999999991",
+      "dishId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "matched",
+      "decision": {
+        "kind": "deterministic_rule",
+        "reviewerRef": null,
+        "ruleVersion": "fixture-rule/1.0.0",
+        "decidedAt": "2026-07-19T19:00:00.000Z"
+      },
+      "sourceEvidence": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+          "sourceIndexes": [0]
+        }
+      ]
+    },
+    {
+      "matchId": "77777777-7777-4777-8777-777777777772",
+      "menuItemId": "88888888-8888-4888-8888-888888888882",
+      "dishCandidateId": "99999999-9999-4999-8999-999999999992",
+      "dishId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "state": "matched",
+      "decision": {
+        "kind": "deterministic_rule",
+        "reviewerRef": null,
+        "ruleVersion": "fixture-rule/1.0.0",
+        "decidedAt": "2026-07-19T19:00:01.000Z"
+      },
+      "sourceEvidence": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+          "sourceIndexes": [0]
+        }
+      ]
+    }
+  ],
+  "menuItemClaims": [
+    {
+      "claimId": "cccccccc-cccc-4ccc-8ccc-ccccccccccc1",
+      "menuItemId": "88888888-8888-4888-8888-888888888881",
+      "claim": {
+        "kind": "heat",
+        "value": "medium"
+      },
+      "basis": "source_stated",
+      "provenance": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+          "sourceIndexes": [1]
+        }
+      ],
+      "recordedAt": "2026-07-19T19:01:00.000Z"
+    },
+    {
+      "claimId": "cccccccc-cccc-4ccc-8ccc-ccccccccccc2",
+      "menuItemId": "88888888-8888-4888-8888-888888888881",
+      "claim": {
+        "kind": "heat",
+        "value": "hot"
+      },
+      "basis": "inferred_from_source",
+      "provenance": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+          "sourceIndexes": [2]
+        }
+      ],
+      "recordedAt": "2026-07-19T19:01:01.000Z"
+    },
+    {
+      "claimId": "cccccccc-cccc-4ccc-8ccc-ccccccccccc3",
+      "menuItemId": "88888888-8888-4888-8888-888888888881",
+      "claim": {
+        "kind": "ingredient",
+        "ingredientRef": null,
+        "ingredientName": "Synthetic chili",
+        "role": "core"
+      },
+      "basis": "source_stated",
+      "provenance": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+          "sourceIndexes": [3]
+        }
+      ],
+      "recordedAt": "2026-07-19T19:01:02.000Z"
+    },
+    {
+      "claimId": "cccccccc-cccc-4ccc-8ccc-ccccccccccc4",
+      "menuItemId": "88888888-8888-4888-8888-888888888882",
+      "claim": {
+        "kind": "heat",
+        "value": "mild"
+      },
+      "basis": "source_stated",
+      "provenance": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+          "sourceIndexes": [1]
+        }
+      ],
+      "recordedAt": "2026-07-19T19:01:03.000Z"
+    },
+    {
+      "claimId": "cccccccc-cccc-4ccc-8ccc-ccccccccccc5",
+      "menuItemId": "88888888-8888-4888-8888-888888888882",
+      "claim": {
+        "kind": "ingredient",
+        "ingredientRef": null,
+        "ingredientName": "Synthetic tofu",
+        "role": "core"
+      },
+      "basis": "source_stated",
+      "provenance": [
+        {
+          "kind": "menu_source",
+          "sourceRef": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+          "sourceIndexes": [2]
+        }
+      ],
+      "recordedAt": "2026-07-19T19:01:04.000Z"
+    }
+  ],
+  "dishClaims": [
+    {
+      "claimId": "dddddddd-dddd-4ddd-8ddd-ddddddddddd1",
+      "dishId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "claim": {
+        "kind": "heat",
+        "value": "very_hot"
+      },
+      "basis": "culinary_baseline",
+      "originKind": "human_authored",
+      "reviewState": "reviewed",
+      "profileVersion": "fixture-profile/1.0.0",
+      "provenance": [
+        {
+          "kind": "knowledge_source",
+          "sourceRef": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          "sourceLabel": "Reviewed synthetic baseline"
+        }
+      ],
+      "recordedAt": "2026-07-18T19:00:00.000Z",
+      "reviewedAt": "2026-07-18T20:00:00.000Z",
+      "supersedesClaimId": null
+    },
+    {
+      "claimId": "dddddddd-dddd-4ddd-8ddd-ddddddddddd2",
+      "dishId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "claim": {
+        "kind": "richness",
+        "value": "rich"
+      },
+      "basis": "culinary_baseline",
+      "originKind": "human_authored",
+      "reviewState": "reviewed",
+      "profileVersion": "fixture-profile/1.0.0",
+      "provenance": [
+        {
+          "kind": "knowledge_source",
+          "sourceRef": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          "sourceLabel": "Reviewed synthetic baseline"
+        }
+      ],
+      "recordedAt": "2026-07-18T19:00:01.000Z",
+      "reviewedAt": "2026-07-18T20:00:00.000Z",
+      "supersedesClaimId": null
+    },
+    {
+      "claimId": "dddddddd-dddd-4ddd-8ddd-ddddddddddd3",
+      "dishId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "claim": {
+        "kind": "textures",
+        "values": ["tender"]
+      },
+      "basis": "culinary_baseline",
+      "originKind": "human_authored",
+      "reviewState": "reviewed",
+      "profileVersion": "fixture-profile/1.0.0",
+      "provenance": [
+        {
+          "kind": "knowledge_source",
+          "sourceRef": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1",
+          "sourceLabel": "Reviewed synthetic baseline"
+        }
+      ],
+      "recordedAt": "2026-07-18T19:00:02.000Z",
+      "reviewedAt": "2026-07-18T20:00:00.000Z",
+      "supersedesClaimId": null
+    }
+  ]
+}

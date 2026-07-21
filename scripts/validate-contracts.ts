@@ -1188,29 +1188,123 @@ assertTaskStatus(
   "### U1.6 Approve and publish compatibility contract 1.0.0",
   "DONE",
 );
-for (const heading of [
-  "### U2.1 Data and pipeline foundation",
-  "### U2.2 Source acquisition foundation",
-  "### U2.3 Restaurant-resolution foundation",
-  "### U2.4 Web and result-experience foundation",
-]) {
-  assertTaskStatus(taskMaster, heading, "READY");
-}
 assertTaskStatus(
   taskMaster,
-  "### U2.5 Continuous integration",
-  "REVIEW",
+  "### U2.1 Data and pipeline foundation",
+  "DONE",
 );
-const sourceFoundation = markdownTaskSection(
+const dataPipelineFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.1 Data and pipeline foundation",
+);
+assert.match(dataPipelineFoundation, /PR #25 feature HEAD/);
+assert.match(
+  dataPipelineFoundation,
+  /7453b7f99f701c482ada7e4b7897fad71fa4306f/,
+);
+assert.match(
+  dataPipelineFoundation,
+  /47c6a61e0a38397c5bc881e38872764e978013ed/,
+);
+assert.match(
+  dataPipelineFoundation,
+  /PR #25 feature HEAD\s+`7453b7f99f701c482ada7e4b7897fad71fa4306f` merged to `main` as\s+`47c6a61e0a38397c5bc881e38872764e978013ed`\./,
+  "U2.1 must record the approved PR #25 feature HEAD as merged to main",
+);
+assertTaskStatus(
   taskMaster,
   "### U2.2 Source acquisition foundation",
+  "DONE",
 );
-assert.match(sourceFoundation, /\*\*Owner:\*\* YTW/);
+assertTaskStatus(
+  taskMaster,
+  "### U2.3 Restaurant-resolution foundation",
+  "DONE",
+);
+const restaurantResolutionFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.3 Restaurant-resolution foundation",
+);
+assert.match(
+  restaurantResolutionFoundation,
+  /7de54ac08fbfb4f0e56f8cb5cf0cfdf02af4a454/,
+);
+assert.match(
+  restaurantResolutionFoundation,
+  /0f47531a837ef6854e8831a570966b09dd207d81/,
+);
+assert.doesNotMatch(restaurantResolutionFoundation, /\*\*Blocked by:\*\*/);
+assertTaskStatus(
+  taskMaster,
+  "### S1.1 Restaurant resolution",
+  "READY",
+);
+const restaurantResolutionSlice = markdownTaskSection(
+  taskMaster,
+  "### S1.1 Restaurant resolution",
+);
+assert.match(restaurantResolutionSlice, /\*\*Dependency:\*\* U2\.3/);
+assert.doesNotMatch(restaurantResolutionSlice, /\*\*Blocked by:\*\*/);
+assertTaskStatus(
+  taskMaster,
+  "### S1.2 Official menu-source acquisition",
+  "READY",
+);
+const officialSourceAcquisition = markdownTaskSection(
+  taskMaster,
+  "### S1.2 Official menu-source acquisition",
+);
+assert.match(officialSourceAcquisition, /\*\*Dependency:\*\* U2\.2/);
+assert.doesNotMatch(officialSourceAcquisition, /\*\*Blocked by:\*\*/);
+assertTaskStatus(
+  taskMaster,
+  "### U2.4 Web and result-experience foundation",
+  "DONE",
+);
 const webFoundation = markdownTaskSection(
   taskMaster,
   "### U2.4 Web and result-experience foundation",
 );
 assert.match(webFoundation, /\*\*Owner:\*\* Juhyung/);
+assert.match(
+  webFoundation,
+  /PR #24 feature HEAD\s+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as\s+`952b357fba526068a11597f490eea61fcccbba58`\./,
+  "U2.4 must record the approved PR #24 feature HEAD as merged to main",
+);
+assert.match(webFoundation, /Issue #20/);
+assert.match(webFoundation, /Issue #21/);
+assert.match(webFoundation, /Proposed\s+shapes are not consumed/);
+assertTaskStatus(
+  taskMaster,
+  "### U2.5 Continuous integration",
+  "REVIEW",
+);
+const immediateNextAction = markdownTaskSection(
+  taskMaster,
+  "## Immediate next action",
+);
+assert.match(immediateNextAction, /current integration target is PR #26/i);
+assert.match(immediateNextAction, /U2\.5 remains in review until PR\s+#26/);
+assert.match(
+  immediateNextAction,
+  /PR #24 feature HEAD\s+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as\s+`952b357fba526068a11597f490eea61fcccbba58`\./,
+);
+assert.match(
+  immediateNextAction,
+  /proposed Issue #20 and #21 shapes remain unavailable and\s+unused/i,
+);
+assert.doesNotMatch(
+  immediateNextAction,
+  /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,
+);
+assert.doesNotMatch(immediateNextAction, /current integration target is PR #24/i);
+assert.doesNotMatch(immediateNextAction, /next integration target is PR #26/i);
+assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bS1\./);
+const sourceFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.2 Source acquisition foundation",
+);
+assert.match(sourceFoundation, /\*\*Owner:\*\* YTW/);
 for (const heading of [
   "### S1.2 Official menu-source acquisition",
   "### S1.3 OpenAI Web Search menu fallback",
