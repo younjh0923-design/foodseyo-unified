@@ -434,9 +434,9 @@ common `main`.
 Checkpoint state:
 
 - **DB-1:** DONE - eleven-table persistence and physical contract;
-- **DB-2:** IN PROGRESS - Drizzle schema, reviewed migration, and static
+- **DB-2:** DONE - Drizzle schema, reviewed migration, and static
   parity validation;
-- **DB-3:** BLOCKED by DB-2 - exact cache, ownership, bounded waiting, and
+- **DB-3:** IN PROGRESS - exact cache, ownership, bounded waiting, and
   `analysis_only` persistence;
 - **DB-4:** BLOCKED by DB-3 - Google Place convergence and atomic eligible
   publication;
@@ -464,8 +464,7 @@ this authorization.
 
 - **Owner:** Youn
 - **Dependency:** S2.1
-- **Status:** BLOCKED
-- **Blocked by:** S2.1
+- **Status:** IN PROGRESS
 - **Scope:** version-complete key, one owner, bounded duplicate wait,
   owner-only persistence, expired lease recovery.
 - **Acceptance:** real Development PostgreSQL concurrency tests produce one

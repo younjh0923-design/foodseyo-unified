@@ -396,5 +396,11 @@
 - **Rollout:** DB-2 may generate but not apply the migration. DB-5 Neon
   Development migration and test-row mutation require a separate explicit
   owner instruction. Preview and Production remain unauthorized.
+- **DB-2 evidence:** The Drizzle schema and generated migration contain exactly
+  the eleven approved tables, one JSONB canonical payload, application-supplied
+  UUIDs, closed text checks, the required menu-version composite uniqueness,
+  both receipt integrity foreign keys, and an exact frozen receipt-version
+  check. Static parity validation runs in the repository integration suite; the
+  migration remains unapplied.
 - **Status:** Accepted implementation baseline
 - **Date:** 2026-07-21

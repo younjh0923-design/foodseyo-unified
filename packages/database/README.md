@@ -27,9 +27,10 @@ commit atomically. Migration files may be generated and reviewed locally, but
 DB-5 explicit owner authorization is required before any Neon Development
 migration or test-row mutation.
 
-The package manifest is frozen at `1.0.0`. Real implementation starts only
-after U1.6 merges to `main` and is recorded `DONE`, and it requires a
-Development database checkpoint.
+The package manifest remains `1.0.0`. DB-2 adds the exact eleven-table Drizzle
+schema, generated SQL migration, and static schema/migration parity validator.
+The migration is an unapplied artifact: no database connection or Neon
+environment mutation occurs before the separate DB-5 gate.
 
 U1.5 public surface: `AnalysisPublicationPort` and
 `FakeAnalysisPublicationPort`. This package exists as the sole publication
@@ -37,11 +38,11 @@ side-effect boundary; it accepts only publication-eligible canonical analysis
 and prevents database rows or ORM types from coupling other workstreams. The
 U1.5 deterministic fake remains available for configured boundary tests.
 
-U2.1 adds `TransactionalAnalysisPublicationService` and
+The earlier U2.1 foundation adds `TransactionalAnalysisPublicationService` and
 `DeterministicFakeAnalysisRepository`. The service reuses the frozen
 publication guard and runtime schemas, creates only the frozen receipt, and
 commits the canonical analysis, menu version, menu items, effective profiles,
 and receipt as one fake transaction. Deterministic write-failure injection
-proves rollback and prevents partial publication. This foundation contains no
-Drizzle schema, migration, credential, live adapter, or database connection;
-those remain gated by S2.1.
+proves rollback and prevents partial publication. DB-3 and DB-4 replace that
+foundation with the authorized exact-cache and publication repository APIs;
+runtime credentials and live database application remain gated by DB-5.

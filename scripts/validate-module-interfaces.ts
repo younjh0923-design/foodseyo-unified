@@ -747,9 +747,18 @@ for (const packageName of owningPackages) {
   ) as JsonObject;
   assert.equal(manifest.name, `@foodseyo/${packageName}`);
   assert.equal(manifest.version, "1.0.0");
-  assert.deepEqual(manifest.dependencies, {
-    "@foodseyo/contracts": "workspace:*",
-  });
+  assert.deepEqual(
+    manifest.dependencies,
+    packageName === "database"
+      ? {
+          "@foodseyo/contracts": "workspace:*",
+          "drizzle-orm": "0.45.2",
+          pg: "8.22.0",
+        }
+      : {
+          "@foodseyo/contracts": "workspace:*",
+        },
+  );
 
   const source = await readFile(
     resolve(`packages/${packageName}/src/index.ts`),
