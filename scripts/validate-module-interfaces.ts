@@ -755,6 +755,11 @@ for (const packageName of owningPackages) {
           "drizzle-orm": "0.45.2",
           pg: "8.22.0",
         }
+      : packageName === "menu-analysis"
+        ? {
+            "@foodseyo/contracts": "workspace:*",
+            "@foodseyo/database": "workspace:*",
+          }
       : {
           "@foodseyo/contracts": "workspace:*",
         },

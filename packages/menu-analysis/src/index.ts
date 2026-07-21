@@ -34,6 +34,8 @@ import {
   type RestaurantResolution,
 } from "@foodseyo/contracts";
 
+export * from "./canonical-pipeline.js";
+
 const contractValuesEqual = (left: unknown, right: unknown): boolean => {
   if (Object.is(left, right)) {
     return true;
