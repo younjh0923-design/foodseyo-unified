@@ -1331,7 +1331,7 @@ assert.doesNotMatch(restaurantResolutionSlice, /\*\*Blocked by:\*\*/);
 assertTaskStatus(
   taskMaster,
   "### S1.2 Official menu-source acquisition",
-  "READY",
+  "REVIEW",
 );
 const officialSourceAcquisition = markdownTaskSection(
   taskMaster,
