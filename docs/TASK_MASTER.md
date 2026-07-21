@@ -285,10 +285,13 @@ parallel against the frozen interfaces and deterministic fakes.
   presentation projections, evidence/unknown labeling, safe outcome/error
   handling, accessibility requirements, and deterministic fake-port tests are
   implemented on `ui/result-experience-foundation`.
-- **Current blockers:** rendered components and browser QA wait for platform
-  contract Issue #20; server-bound photo/link intake plus official-source and
-  Web Search progress wait for cross-workstream boundary Issue #21. Proposed
-  shapes are not consumed before their contract PRs merge.
+- **Current blockers:** Issue #20 has all-owner proposal approval and its exact
+  Next.js/React platform candidate is being implemented on
+  `contracts/issue-20-web-platform`; rendered components and browser QA still
+  cannot consume it before the exact contract PR is approved and merged.
+  Server-bound photo/link intake plus official-source and Web Search progress
+  remain separately gated by the Issue #21 candidate and its own exact contract
+  PR.
 - **Completion evidence:** PR #24 feature HEAD
   `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
   `952b357fba526068a11597f490eea61fcccbba58`.
@@ -557,10 +560,13 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The current integration target is PR #26 for the U2.5 continuous integration
-foundation. PR #24 feature HEAD
-`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
-`952b357fba526068a11597f490eea61fcccbba58`. U2.5 remains in review until PR
-#26 is approved and merged. Independent work continues only against merged
-frozen contracts; proposed Issue #20 and #21 shapes remain unavailable and
-unused.
+The current platform-contract action is Issue #20 on
+`contracts/issue-20-web-platform`, created from current `main` at
+`da66876fa5026db80921f50b50987361f7040fed`. Its exact Next.js `16.2.10`,
+React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
+dependent framework implementation until its dedicated exact-HEAD contract PR
+receives all-owner approval and merges.
+
+Draft PR #28 remains preserved on `design/s1-6-explanation-policy` and is not
+a dependency for Issue #20. Draft PR #30 remains a separate Issue #21 contract
+candidate; neither draft is completed before this platform-contract work.

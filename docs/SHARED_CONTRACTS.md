@@ -14,9 +14,20 @@ frozen contracts; later shared changes still require the contract-change
 process.
 
 Platform choices are frozen separately in `TECH_STACK.md`. The unified
-application uses Vercel with Neon Serverless Postgres. Supabase names, SDKs,
+application uses Vercel with Neon Serverless Postgres. The approved-direction
+Issue #20 candidate freezes the `apps/web` application baseline as Next.js App
+Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7`; those exact
+dependencies do not enter shared or server packages. Supabase names, SDKs,
 service-role credentials, migrations, Auth, and Storage are not approved
 runtime dependencies.
+
+The platform candidate changes no shared DTO, vocabulary, state, outcome,
+error, environment name, persistence/cache meaning, provider permission,
+migration, or deployment behavior. Browser code may consume only approved
+UI-safe operational data and application view models derived from validated
+canonical contracts. The versions remain unavailable to dependent framework
+implementation until the exact contract PR receives all-owner approval and
+merges to `main`.
 
 ## Contract groups
 

@@ -30,10 +30,10 @@ database rows, or cache shapes.
 
 ## Deliberately blocked
 
-The repository still marks the web framework and exact React/framework
-versions as pending. Issue #20 proposes the minimum platform choice. No
-framework dependency, component, route, browser build, or rendered shell is
-included until its contract PR is approved and merged.
+Issue #20 has all-owner proposal approval. Its contract-only candidate freezes
+Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7` as exact
+`apps/web` dependencies. No component, route, browser build, or rendered shell
+is included until the exact contract PR is approved and merged.
 
 The frozen contracts also lack the initial sensitive browser-to-server
 photo/link intake request and an approved UI-safe official-source/Web Search

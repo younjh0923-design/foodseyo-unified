@@ -16,7 +16,11 @@ contains app-private input preservation and presentation projections driven by
 frozen runtime-validated DTOs plus deterministic network-free tests. See
 `FOUNDATION_REQUIREMENTS.md`.
 
-Rendered framework components remain blocked by platform proposal Issue #20.
+Issue #20 has all-owner proposal approval. Its contract-only candidate records
+Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7` as exact
+`apps/web` dependencies, but adds no route or rendered component. Dependent
+framework implementation remains blocked until the exact contract PR is
+approved and merged.
+
 Server-bound photo/link intake and UI-safe official-source/Web Search progress
-remain blocked by boundary proposal Issue #21. Neither proposed shape is used
-before its contract PR is approved and merged.
+remain separately gated by Issue #21 and its exact contract PR.

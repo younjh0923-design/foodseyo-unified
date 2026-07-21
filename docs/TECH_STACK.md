@@ -29,6 +29,7 @@ entry and contract PR.
 | Package manager | pnpm `11.9.0` | Do not add npm, Yarn, or Bun lockfiles. |
 | Node.js | `>=20.19.0` | Enforced by root `package.json`. |
 | TypeScript | `5.9.3` | Shared contracts must typecheck before dependent work. |
+| Web application framework | Next.js App Router `16.2.10` with React `19.2.7` and React DOM `19.2.7` | Exact dependencies are installed only in `apps/web`. Shared and server packages remain framework-neutral, and browser code consumes only approved UI-safe operational data and application view models. |
 | Uploaded images | Transient analysis input | No permanent image or Base64 storage in Git, logs, or the database. |
 | User authentication | None in the submission scope | Neon Auth and Supabase Auth are not enabled by this repository. |
 
@@ -99,7 +100,6 @@ These choices are intentionally unresolved and must not be guessed:
 
 | Choice | Freeze point |
 | --- | --- |
-| Web framework and exact React/framework versions | U2.4 web-foundation contract and PR |
 | Neon/Postgres runtime driver and connection-pool implementation | S2.1 after the Vercel runtime shape is verified |
 | Exact OpenAI model values | Authorized provider configuration task |
 | Upload byte/count limits | U1 boundary contract, preserving the agreed product limits |

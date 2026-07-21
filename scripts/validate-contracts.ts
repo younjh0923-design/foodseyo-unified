@@ -1273,7 +1273,11 @@ assert.match(
 );
 assert.match(webFoundation, /Issue #20/);
 assert.match(webFoundation, /Issue #21/);
-assert.match(webFoundation, /Proposed\s+shapes are not consumed/);
+assert.match(webFoundation, /all-owner proposal approval/);
+assert.match(
+  webFoundation,
+  /cannot consume it before the exact contract PR is approved and merged/,
+);
 assertTaskStatus(
   taskMaster,
   "### U2.5 Continuous integration",
@@ -1283,16 +1287,17 @@ const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
-assert.match(immediateNextAction, /current integration target is PR #26/i);
-assert.match(immediateNextAction, /U2\.5 remains in review until PR\s+#26/);
+assert.match(immediateNextAction, /current platform-contract action is Issue #20/i);
 assert.match(
   immediateNextAction,
-  /PR #24 feature HEAD\s+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as\s+`952b357fba526068a11597f490eea61fcccbba58`\./,
+  /`contracts\/issue-20-web-platform`[\s\S]+`da66876fa5026db80921f50b50987361f7040fed`/,
 );
 assert.match(
   immediateNextAction,
-  /proposed Issue #20 and #21 shapes remain unavailable and\s+unused/i,
+  /Next\.js `16\.2\.10`[\s\S]+React `19\.2\.7`[\s\S]+React DOM `19\.2\.7` candidate remains unavailable/,
 );
+assert.match(immediateNextAction, /Draft PR #28 remains preserved/);
+assert.match(immediateNextAction, /Draft PR #30 remains a separate Issue #21/);
 assert.doesNotMatch(
   immediateNextAction,
   /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,

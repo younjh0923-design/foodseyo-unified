@@ -311,3 +311,26 @@
   `status:merged` and closed.
 - **Status:** Accepted
 - **Date:** 2026-07-19
+
+## U-015 - Next.js web application platform candidate
+
+- **Decision direction:** Freeze the `apps/web` application baseline as
+  Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7`.
+- **Package boundary:** Install those exact dependencies only in `apps/web`.
+  The pnpm monorepo, Node `>=20.19.0`, TypeScript `5.9.3`, Vercel target, and
+  framework-neutral shared/server packages remain unchanged.
+- **Trust boundary:** Browser code consumes only approved UI-safe operational
+  data and application view models derived from validated canonical contracts.
+  Google, OpenAI, source acquisition, database access, provider DTOs, raw
+  source content, credentials, database rows, and ORM types remain server-only.
+- **Compatibility:** No shared DTO, vocabulary, state, outcome, public error,
+  environment name, persistence/cache meaning, provider permission, migration,
+  or deployment behavior changes.
+- **Rollout:** This contract-only candidate adds the exact manifest and
+  lockfile baseline while explicitly disabling the optional `sharp` install
+  script. It authorizes no route, component, Preview, Production, Vercel
+  configuration, or deployment before exact-HEAD approval and merge.
+- **Approval evidence:** Youn, YTW, and Juhyung approved the complete Issue #20
+  direction. Exact contract PR approval and merge remain required.
+- **Status:** Candidate - exact contract PR approval pending
+- **Date:** 2026-07-21
