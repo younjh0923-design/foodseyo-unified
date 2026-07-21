@@ -1,0 +1,48 @@
+{
+  "linkInput": "https://example.invalid/fixture-restaurant",
+  "photos": [
+    {
+      "clientId": "local-photo-1",
+      "byteCount": 2048
+    },
+    {
+      "clientId": "local-photo-2",
+      "byteCount": 4096
+    }
+  ],
+  "viewportWidths": [320, 375, 430],
+  "requiredEvidenceLabels": [
+    "Menu says",
+    "Inferred from menu",
+    "General dish guidance",
+    "Not confirmed"
+  ],
+  "restaurantResolutionStates": [
+    {
+      "state": "candidate",
+      "selectable": true,
+      "controlIds": ["continue-menu-only"]
+    },
+    {
+      "state": "conflicting",
+      "selectable": true,
+      "controlIds": ["continue-menu-only"]
+    },
+    {
+      "state": "user_confirmed",
+      "selectable": false,
+      "controlIds": ["continue-analysis"]
+    },
+    {
+      "state": "externally_verified",
+      "selectable": false,
+      "controlIds": ["continue-analysis"]
+    },
+    {
+      "state": "rejected",
+      "selectable": false,
+      "controlIds": ["retry-restaurant-matching", "continue-menu-only"]
+    }
+  ],
+  "blockedContractIssues": [20, 21]
+}
