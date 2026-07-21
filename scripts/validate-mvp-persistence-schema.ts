@@ -6,9 +6,6 @@ import {
   MODULE_INTERFACE_VERSION,
   PublicationReceiptSchema,
 } from "@foodseyo/contracts";
-import { getTableName } from "drizzle-orm";
-
-import { MVP_PERSISTENCE_TABLES } from "../packages/database/src/schema.js";
 
 const expectedTables = [
   "analysis_contracts",
@@ -24,10 +21,17 @@ const expectedTables = [
   "restaurants",
 ] as const;
 
+const drizzleSchema = await readFile(
+  resolve("packages/database/src/schema.ts"),
+  "utf8",
+);
+const schemaTables = [...drizzleSchema.matchAll(/pgTable\(\s*"([^"]+)"/gu)]
+  .map((match) => match[1]!)
+  .sort();
 assert.deepEqual(
-  MVP_PERSISTENCE_TABLES.map((table) => getTableName(table)).sort(),
+  schemaTables,
   [...expectedTables],
-  "Drizzle schema must expose exactly the approved eleven application tables",
+  "Drizzle schema must declare exactly the approved eleven application tables",
 );
 
 const migrationsDirectory = resolve("packages/database/migrations");

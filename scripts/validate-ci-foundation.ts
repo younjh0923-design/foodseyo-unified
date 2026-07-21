@@ -149,8 +149,8 @@ assert.equal(
 );
 assert.equal(
   rootManifest.scripts["test:integration"],
-  "pnpm validate:module-interfaces",
-  "integration validation must preserve module-interface checks",
+  "pnpm validate:module-interfaces && pnpm validate:mvp-persistence-schema",
+  "integration validation must preserve module-interface and persistence-schema checks",
 );
 
 for (const optionalCommand of ["lint", "build"] as const) {

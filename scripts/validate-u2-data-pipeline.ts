@@ -696,9 +696,18 @@ for (const packageName of ["menu-analysis", "merge-policy", "database"]) {
   const manifest = JSON.parse(
     await readFile(resolve(`packages/${packageName}/package.json`), "utf8"),
   ) as JsonRecord;
-  assert.deepEqual(manifest.dependencies, {
-    "@foodseyo/contracts": "workspace:*",
-  });
+  assert.deepEqual(
+    manifest.dependencies,
+    packageName === "database"
+      ? {
+          "@foodseyo/contracts": "workspace:*",
+          "drizzle-orm": "0.45.2",
+          pg: "8.22.0",
+        }
+      : {
+          "@foodseyo/contracts": "workspace:*",
+        },
+  );
 }
 assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/1.0.0");
 assert.equal(CONTRACT_VERSIONS.mergePolicy, "merge-policy/1.0.0");
