@@ -65,6 +65,23 @@ export {
   OfficialMenuSourceAcquisitionOrchestrator,
   type OfficialMenuSourceAcquisitionOrchestrationInput,
 } from "./official-menu-source-acquisition-orchestrator.js";
+export {
+  WebSearchMenuFallbackService,
+  type MenuSourceFallbackState,
+  type WebSearchCandidateCollectionResult,
+  type WebSearchMenuSourceCandidate,
+  type WebSearchMenuSourceCollectorPort,
+  type WebSearchMenuSourceDiscoveryPort,
+} from "./web-search-fallback.js";
+export {
+  OpenAIWebSearchMenuSourceDiscovery,
+  createOpenAIWebSearchMenuSourceDiscoveryFromEnvironment,
+} from "./openai-web-search-server.js";
+export {
+  createBoundedWebSearchFallbackRuntime,
+  type BoundedWebSearchFallbackDependencies,
+  type BoundedWebSearchFallbackRuntime,
+} from "./bounded-web-search-fallback.js";
 
 export class FakeMenuSourceAcquisitionPort
   implements MenuSourceAcquisitionPort
