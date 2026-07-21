@@ -52,6 +52,27 @@ runtime. Exact approved, prohibited, and still-pending choices live in
 `docs/TECH_STACK.md`; legacy environment names must not be copied into this
 repository.
 
+## GPT-5.6 및 Codex를 활용한 개발
+
+Foodseyo는 설계, 구현, 검토 및 통합 전반에 걸쳐 GPT-5.6과 Codex의 지원을 받으며 우리 팀이 개발했습니다.
+
+### GPT-5.6
+
+- 백엔드 아키텍처 설계 논의를 지원
+- 식당 식별(restaurant resolution) 워크플로우 개선 지원
+- 메뉴 추출 요구사항 정의 및 프롬프트 설계 지원
+- API 계약 및 통합 관련 의사결정 검토 지원
+
+### Codex
+
+- TypeScript 코드 구현 및 코드 리뷰 지원
+- 백엔드 컴포넌트 통합 지원
+- 필요한 검증(Validation) 코드 추가 및 실행 지원
+- 구현 과정과 CI(지속적 통합) 이슈 진단 지원
+- Build Week 기간 동안 Pull Request 작성 및 반복 개선 지원
+
+모든 제품 관련 의사결정, 보안 검토 및 최종 코드 변경 사항은 Foodseyo 팀이 직접 검토하고 승인했습니다.
+
 ## Start here
 
 1. [Approved technology stack](docs/TECH_STACK.md)
