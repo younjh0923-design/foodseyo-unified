@@ -302,7 +302,7 @@ export interface SourceAcquisitionDependencies {
   readonly webSearch: MenuSourceCandidateAdapter;
 }
 
-const restaurantContextFrom = (
+export const restaurantContextFromMenuSourceRequest = (
   request: MenuSourceAcquisitionRequest,
 ): MenuSourceInput["restaurantContext"] => {
   const resolution = request.restaurantResolution;
@@ -454,7 +454,7 @@ export class FoundationMenuSourceAcquisitionPort
       return uploadResult;
     }
 
-    if (restaurantContextFrom(requestResult.data) !== null) {
+    if (restaurantContextFromMenuSourceRequest(requestResult.data) !== null) {
       const officialSettled = await Promise.allSettled(
         this.dependencies.official.map((adapter) =>
           adapter.probe(requestResult.data, context),
@@ -533,7 +533,7 @@ export class FoundationMenuSourceAcquisitionPort
         value: MenuSourceInputSchema.parse({
           contractVersion: CONTRACT_VERSIONS.menuSource,
           source,
-          restaurantContext: restaurantContextFrom(request),
+          restaurantContext: restaurantContextFromMenuSourceRequest(request),
           menuScope: request.menuScope,
           content: candidate.content,
           requestedAt: request.requestedAt,

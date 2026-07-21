@@ -79,6 +79,10 @@ export {
   type OfficialMenuCollector,
 } from "./official-menu-collector.js";
 export {
+  OfficialMenuSourceAcquisitionOrchestrator,
+  type OfficialMenuSourceAcquisitionOrchestrationInput,
+} from "./official-menu-source-acquisition-orchestrator.js";
+export {
   FakeUploadedImageClassifier,
   MIN_UPLOADED_IMAGE_CLASSIFICATION_CONFIDENCE,
   UPLOADED_IMAGE_CROP_COMPLETENESS,
