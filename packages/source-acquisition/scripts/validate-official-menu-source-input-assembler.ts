@@ -46,8 +46,6 @@ const confirmedRequest = MenuSourceAcquisitionRequestSchema.parse({
         location: { latitude: 40.7128, longitude: -74.006 },
         matchSignals: ["name", "address"],
         rank: 1,
-        officialWebsiteUrl: null,
-        localeEvidence: null,
       },
     ],
     selectedCandidateId: candidateId,

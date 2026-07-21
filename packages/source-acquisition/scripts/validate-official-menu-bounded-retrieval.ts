@@ -826,8 +826,6 @@ for (const [name, dnsResolver, transport, scheduler, expectedCode] of [
             location: { latitude: 40.7, longitude: -74 },
             matchSignals: ["name", "address"],
             rank: 1,
-            officialWebsiteUrl: "https://menu.fixture.example/start",
-            localeEvidence: null,
           },
         ],
         selectedCandidateId: candidateId,

@@ -53,7 +53,7 @@ const assertExactValues = (
 };
 
 assert.equal(CONTRACT_STATUS, "frozen");
-assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/1.1.0");
+assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/1.0.0");
 assert.deepEqual(Object.keys(BOUNDARY_DTO_SCHEMAS), [
   "RestaurantCandidate",
   "RestaurantResolution",
@@ -171,30 +171,6 @@ for (const [fixtureName, schemaName] of Object.entries(validFixtureToSchema)) {
     }`,
   );
 }
-
-const restaurantCandidate = validFixture.restaurantCandidate;
-assert(isRecord(restaurantCandidate));
-assert.equal(
-  restaurantCandidate.officialWebsiteUrl,
-  "https://fixture.example/restaurant",
-);
-assert(isRecord(restaurantCandidate.localeEvidence));
-assert.equal(restaurantCandidate.localeEvidence.countryCode, "US");
-assert.equal(restaurantCandidate.localeEvidence.countryBasis, "source_stated");
-assert.equal(restaurantCandidate.localeEvidence.currencyCode, "USD");
-assert.equal(
-  restaurantCandidate.localeEvidence.currencyBasis,
-  "inferred_from_source",
-);
-assert.equal(
-  BOUNDARY_DTO_SCHEMAS.RestaurantCandidate.safeParse({
-    ...restaurantCandidate,
-    officialWebsiteUrl: null,
-    localeEvidence: null,
-  }).success,
-  true,
-  "restaurant candidate nullable metadata must remain valid",
-);
 
 const canonical = validFixture.canonicalMenuAnalysis;
 assert(isRecord(canonical));

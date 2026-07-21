@@ -24,12 +24,6 @@ import {
   type UiOperationalEventPort,
 } from "@foodseyo/contracts";
 
-import { rankRestaurantCandidates } from "./candidate-ranking.js";
-import {
-  createConfirmedRestaurantResolution,
-  validateRestaurantCandidateSelection,
-} from "./confirmation.js";
-
 const SAFE_TOKEN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,255}$/u;
 
 const publicOutcome = (
@@ -189,8 +183,6 @@ const PROVIDER_RECORD_KEYS = new Set([
   "longitude",
   "signals",
   "providerRank",
-  "officialWebsiteUrl",
-  "localeEvidence",
 ]);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -214,12 +206,6 @@ const parseProviderRecord = (
     (value.shortLocation !== null && typeof value.shortLocation !== "string") ||
     (value.latitude !== null && typeof value.latitude !== "number") ||
     (value.longitude !== null && typeof value.longitude !== "number") ||
-    ("officialWebsiteUrl" in value &&
-      value.officialWebsiteUrl !== null &&
-      typeof value.officialWebsiteUrl !== "string") ||
-    ("localeEvidence" in value &&
-      value.localeEvidence !== null &&
-      !isRecord(value.localeEvidence)) ||
     !Array.isArray(value.signals) ||
     !Number.isInteger(value.providerRank)
   ) {
@@ -255,12 +241,6 @@ const parseProviderRecord = (
     location,
     matchSignals: value.signals,
     rank: value.providerRank,
-    ...(Object.hasOwn(value, "officialWebsiteUrl")
-      ? { officialWebsiteUrl: value.officialWebsiteUrl }
-      : {}),
-    ...(Object.hasOwn(value, "localeEvidence")
-      ? { localeEvidence: value.localeEvidence }
-      : {}),
   });
   return result.success ? result.data : null;
 };
@@ -331,26 +311,30 @@ export class GooglePlacesCandidateFinder {
         error: publicError("INVALID_UPSTREAM_RESULT", context),
       };
     }
-    const rankedCandidates = rankRestaurantCandidates(
-      candidates as RestaurantCandidate[],
-      { name: normalized.name, location: normalized.location },
-    );
-    const candidateIds = new Set(
-      rankedCandidates.map((item) => item.candidateId),
-    );
-    if (candidateIds.size !== rankedCandidates.length) {
+    const validCandidates = candidates as RestaurantCandidate[];
+    const candidateIds = new Set(validCandidates.map((item) => item.candidateId));
+    const placeIds = new Set(validCandidates.map((item) => item.googlePlaceId));
+    const ranks = new Set(validCandidates.map((item) => item.rank));
+    if (
+      candidateIds.size !== validCandidates.length ||
+      placeIds.size !== validCandidates.length ||
+      ranks.size !== validCandidates.length
+    ) {
       return {
         status: "error",
         error: publicError("INVALID_UPSTREAM_RESULT", context),
       };
     }
-    if (rankedCandidates.length === 0) {
+    const bounded = [...validCandidates]
+      .sort((left, right) => left.rank - right.rank)
+      .slice(0, 10);
+    if (bounded.length === 0) {
       return {
         status: "outcome",
         outcome: publicOutcome("RESTAURANT_NOT_RESOLVED", context),
       };
     }
-    return { status: "success", value: rankedCandidates };
+    return { status: "success", value: bounded };
   }
 }
 
@@ -410,24 +394,20 @@ export class FoundationRestaurantResolutionPort
     }
 
     if (value.selectedCandidateId !== null) {
-      const confirmationRequest = { ...value, candidates };
-      const selection = validateRestaurantCandidateSelection(
-        confirmationRequest,
-        context,
+      const selected = candidates.find(
+        (candidate) => candidate.candidateId === value.selectedCandidateId,
       );
-      if (selection.status !== "success") {
-        return selection;
-      }
-      const selected = selection.value;
-      const confirmationEvidence = value.confirmationEvidence;
-      if (confirmationEvidence === null) {
-        return { status: "error", error: publicError("INVALID_INPUT", context) };
+      if (selected === undefined || value.confirmationEvidence === null) {
+        return {
+          status: "error",
+          error: publicError("INVALID_INPUT", context),
+        };
       }
       let restaurantId: string | null;
       try {
         restaurantId = await this.assignRestaurantIdentity(
           selected,
-          confirmationEvidence,
+          value.confirmationEvidence,
           context,
         );
       } catch {
@@ -452,11 +432,18 @@ export class FoundationRestaurantResolutionPort
               outcome: publicOutcome("RESTAURANT_NOT_RESOLVED", context),
             };
       }
-      return createConfirmedRestaurantResolution(
-        confirmationRequest,
+      return this.success({
+        state:
+          value.confirmationEvidence.kind === "user_action"
+            ? "user_confirmed"
+            : "externally_verified",
+        candidates,
+        selectedCandidateId: selected.candidateId,
         restaurantId,
-        context,
-      );
+        confirmationEvidence: value.confirmationEvidence,
+        requiresUserConfirmation: false,
+        resolvedAt: value.confirmationEvidence.recordedAt,
+      }, context);
     }
 
     if (value.confirmationEvidence !== null) {

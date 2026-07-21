@@ -432,7 +432,7 @@ assert.equal(CONTRACT_STATUS, "frozen");
 assert.deepEqual(CONTRACT_VERSIONS, {
   sharedVocabulary: "shared-vocabulary/1.0.0",
   menuSource: "menu-source/1.0.0",
-  restaurantResolution: "restaurant-resolution/1.1.0",
+  restaurantResolution: "restaurant-resolution/1.0.0",
   compactExtraction: "compact-extraction/1.0.0",
   analysisSnapshot: "analysis-snapshot/1.0.0",
   consistency: "consistency/1.0.0",
@@ -441,7 +441,7 @@ assert.deepEqual(CONTRACT_VERSIONS, {
   explanationRenderer: "explanation-renderer/1.0.0",
   exactCacheKey: "exact-cache-key/1.0.0",
   environmentRegistry: "environment-registry/1.0.0",
-  boundaryDtos: "boundary-dtos/1.1.0",
+  boundaryDtos: "boundary-dtos/1.0.0",
   moduleInterfaces: "module-interfaces/1.0.0",
 });
 

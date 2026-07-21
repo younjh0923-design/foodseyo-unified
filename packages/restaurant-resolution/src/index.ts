@@ -19,16 +19,6 @@ export {
   FoundationRestaurantResolutionPort,
   RestaurantResolutionCoordinator,
 } from "./foundation.js";
-export {
-  rankRestaurantCandidates,
-  type RestaurantCandidateRankingClues,
-  type RestaurantCandidateRankingOptions,
-} from "./candidate-ranking.js";
-export {
-  createConfirmedRestaurantResolution,
-  validateRestaurantCandidateSelection,
-} from "./confirmation.js";
-export { RestaurantResolutionService } from "./resolution-service.js";
 
 export class FakeRestaurantResolutionPort
   implements RestaurantResolutionPort
