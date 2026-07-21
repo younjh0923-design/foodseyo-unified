@@ -1277,26 +1277,44 @@ assert.match(webFoundation, /Proposed\s+shapes are not consumed/);
 assertTaskStatus(
   taskMaster,
   "### U2.5 Continuous integration",
-  "REVIEW",
+  "DONE",
+);
+const continuousIntegrationFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.5 Continuous integration",
+);
+assert.match(
+  continuousIntegrationFoundation,
+  /PR #26 feature HEAD\s+`e0a0ed6fae816e373efbc3afdb09f7ac4b79fc1b` merged to `main` as\s+`da66876fa5026db80921f50b50987361f7040fed`\./,
+  "U2.5 must record the approved PR #26 feature HEAD as merged to main",
 );
 const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
-assert.match(immediateNextAction, /current integration target is PR #26/i);
-assert.match(immediateNextAction, /U2\.5 remains in review until PR\s+#26/);
+assert.match(immediateNextAction, /U2 Core Integration is complete\./);
+assertOrdered(immediateNextAction, "post-U2 contract order", [
+  "next work is the Issue #21",
+  "#20 platform contract PR",
+]);
 assert.match(
   immediateNextAction,
-  /PR #24 feature HEAD\s+`65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as\s+`952b357fba526068a11597f490eea61fcccbba58`\./,
+  /next work is the Issue #21\s+intake\/progress contract PR/i,
 );
 assert.match(
   immediateNextAction,
-  /proposed Issue #20 and #21 shapes remain unavailable and\s+unused/i,
+  /following work is the Issue\s+#20 platform contract PR/i,
+);
+assert.match(
+  immediateNextAction,
+  /proposed types\s+and shapes remain unimplemented and unused/i,
 );
 assert.doesNotMatch(
   immediateNextAction,
   /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,
 );
+assert.doesNotMatch(immediateNextAction, /PR #26/i);
+assert.doesNotMatch(immediateNextAction, /U2\.5 remains in review/i);
 assert.doesNotMatch(immediateNextAction, /current integration target is PR #24/i);
 assert.doesNotMatch(immediateNextAction, /next integration target is PR #26/i);
 assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bS1\./);
