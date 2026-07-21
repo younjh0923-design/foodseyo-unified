@@ -18,7 +18,11 @@ import type {
   TransientContentIdentity,
   TransientContentIdentityPort,
 } from "./foundation.js";
-import type { OfficialMenuCollector } from "./official-menu-collector.js";
+import {
+  OfficialMenuCollectorService,
+  type OfficialMenuCollector,
+} from "./official-menu-collector.js";
+import { OfficialMenuSourceAcquisitionOrchestrator } from "./official-menu-source-acquisition-orchestrator.js";
 import {
   OfficialMenuCollectorKind,
   selectOfficialMenuCollector,
@@ -63,6 +67,8 @@ export interface OfficialMenuTransportResponse {
   readonly status: number;
   readonly headers: Readonly<Record<string, string | undefined>>;
   readonly body: AsyncIterable<Uint8Array> | null;
+  /** Idempotently stops and releases any unconsumed response body. */
+  cancel(): Promise<void>;
 }
 
 /**
@@ -98,6 +104,7 @@ export interface OfficialMenuTransientContentStore
     content: TransientMenuContent,
     context: PortInvocationContext,
   ): Promise<Uint8Array | null>;
+  releaseScope(context: PortInvocationContext): void;
 }
 
 interface OfficialMenuRetrievalDependencies {
@@ -110,16 +117,26 @@ interface OfficialMenuRetrievalDependencies {
   readonly clearScheduledTimeout: (handle: TimeoutHandle) => void;
 }
 
-export interface BoundedOfficialMenuCollectorDependencies {
+export interface BoundedOfficialMenuAcquisitionDependencies {
   readonly dnsResolver: OfficialMenuDnsResolver;
   readonly transport: OfficialMenuHttpTransport;
-  readonly contentStore: OfficialMenuTransientContentStore;
   readonly limits: OfficialMenuRetrievalLimits;
   readonly scheduleTimeout?: (
     callback: () => void,
     timeoutMs: number,
   ) => TimeoutHandle;
   readonly clearScheduledTimeout?: (handle: TimeoutHandle) => void;
+  readonly collectionClock?: () => string;
+}
+
+interface BoundedOfficialMenuCollectorDependencies
+  extends BoundedOfficialMenuAcquisitionDependencies {
+  readonly contentStore: OfficialMenuTransientContentStore;
+}
+
+export interface BoundedOfficialMenuAcquisitionRuntime {
+  readonly orchestrator: OfficialMenuSourceAcquisitionOrchestrator;
+  releaseScope(context: PortInvocationContext): void;
 }
 
 export type OfficialMenuRetrievalFailureReason =
@@ -176,6 +193,7 @@ interface ParsedIpAddress {
 }
 
 interface StoredOfficialMenuContent {
+  readonly ownerCorrelationId: string;
   readonly content: TransientMenuContent;
   readonly bytes: Uint8Array;
   readonly identity: TransientContentIdentity;
@@ -337,6 +355,38 @@ const isUnsafeIpv4 = (octets: readonly number[]): boolean => {
   );
 };
 
+const matchesIpv6Prefix = (
+  words: readonly number[],
+  prefixWords: readonly number[],
+  prefixLength: number,
+): boolean => {
+  const completeWords = Math.floor(prefixLength / 16);
+  for (let index = 0; index < completeWords; index += 1) {
+    if (words[index] !== prefixWords[index]) return false;
+  }
+  const remainingBits = prefixLength % 16;
+  if (remainingBits === 0) return true;
+  const mask = (0xffff << (16 - remainingBits)) & 0xffff;
+  return (
+    ((words[completeWords] ?? 0) & mask) ===
+    ((prefixWords[completeWords] ?? 0) & mask)
+  );
+};
+
+/**
+ * IANA IPv6 Special-Purpose Address Space entries inside otherwise public
+ * unicast space. The broad non-2000::/3 check below already rejects NAT64,
+ * discard-only, dummy, unique-local, link-local, site-local, and multicast.
+ * Keep this list aligned with the IANA special-purpose registry.
+ */
+const BLOCKED_PUBLIC_SHAPED_IPV6_PREFIXES = [
+  { words: [0x2001, 0x0000], prefixLength: 23 }, // IETF assignments/ORCHID
+  { words: [0x2001, 0x0db8], prefixLength: 32 }, // documentation
+  { words: [0x2002], prefixLength: 16 }, // 6to4
+  { words: [0x2620, 0x004f, 0x8000], prefixLength: 48 }, // AS112
+  { words: [0x3fff, 0x0000], prefixLength: 20 }, // documentation
+] as const;
+
 const isUnsafeIpv6 = (words: readonly number[]): boolean => {
   const first = words[0] ?? -1;
   const allZero = words.every((word) => word === 0);
@@ -346,27 +396,15 @@ const isUnsafeIpv6 = (words: readonly number[]): boolean => {
     words[5] === 0xffff;
   const compatibleIpv4 = words.slice(0, 6).every((word) => word === 0);
   if (mappedIpv4 || compatibleIpv4) {
-    const high = words[6] ?? 0;
-    const low = words[7] ?? 0;
-    return isUnsafeIpv4([
-      high >> 8,
-      high & 0xff,
-      low >> 8,
-      low & 0xff,
-    ]);
+    return true;
   }
   return (
     allZero ||
     loopback ||
     (first & 0xe000) !== 0x2000 ||
-    (first & 0xfe00) === 0xfc00 ||
-    (first & 0xffc0) === 0xfe80 ||
-    (first & 0xff00) === 0xff00 ||
-    (first === 0x2001 && words[1] === 0) ||
-    (first === 0x2001 && words[1] === 2) ||
-    (first === 0x2001 && words[1] === 0x0db8) ||
-    first === 0x2002 ||
-    (first === 0x3fff && ((words[1] ?? 0) & 0xf000) === 0)
+    BLOCKED_PUBLIC_SHAPED_IPV6_PREFIXES.some(({ words: prefix, prefixLength }) =>
+      matchesIpv6Prefix(words, prefix, prefixLength),
+    )
   );
 };
 
@@ -427,17 +465,10 @@ const normalizeUrl = (rawUrl: string, baseUrl?: string): NormalizedUrlResult => 
   return { status: "success", value: parsed };
 };
 
-const sameOfficialHostFamily = (left: string, right: string): boolean => {
+const sameOfficialHostname = (left: string, right: string): boolean => {
   const normalizedLeft = stripIpv6Brackets(left.toLowerCase());
   const normalizedRight = stripIpv6Brackets(right.toLowerCase());
-  if (parseIpAddress(normalizedLeft) !== null) {
-    return normalizedLeft === normalizedRight;
-  }
-  return (
-    normalizedLeft === normalizedRight ||
-    normalizedLeft.endsWith(`.${normalizedRight}`) ||
-    normalizedRight.endsWith(`.${normalizedLeft}`)
-  );
+  return normalizedLeft === normalizedRight;
 };
 
 const normalizedHeaders = (
@@ -575,6 +606,19 @@ export const retrieveBoundedOfficialMenu = async (
     operation: Promise<T>,
   ): Promise<T | OfficialMenuRetrievalFailure> =>
     Promise.race([operation, interruption]);
+  const cancelUnconsumedResponse = async (
+    response: OfficialMenuTransportResponse,
+  ): Promise<void> => {
+    try {
+      if (typeof response.cancel !== "function") {
+        interrupt("aborted");
+        return;
+      }
+      await raceWithInterruption(Promise.resolve(response.cancel()));
+    } catch {
+      interrupt("aborted");
+    }
+  };
 
   try {
     if (context.signal.aborted) onAbort();
@@ -605,120 +649,131 @@ export const retrieveBoundedOfficialMenu = async (
         return failure(interruptedReason ?? "transport_failure");
       }
 
-      if (
-        !Number.isInteger(response.status) ||
-        response.status < 100 ||
-        response.status > 599 ||
-        typeof response.headers !== "object" ||
-        response.headers === null ||
-        Array.isArray(response.headers)
-      ) {
-        return failure("invalid_response");
-      }
-      const headers = normalizedHeaders(response.headers);
-      if (REDIRECT_STATUSES.has(response.status)) {
-        const location = headers.get("location");
-        if (location === undefined) return failure("invalid_response");
-        const redirected = normalizeUrl(location, current.toString());
-        if (redirected.status === "failure") return failure("redirect_escape");
+      let responseBodyConsumed = false;
+      try {
         if (
-          !sameOfficialHostFamily(initialHostname, redirected.value.hostname)
+          !Number.isInteger(response.status) ||
+          response.status < 100 ||
+          response.status > 599 ||
+          typeof response.headers !== "object" ||
+          response.headers === null ||
+          Array.isArray(response.headers)
         ) {
-          return failure("redirect_escape");
-        }
-        const target = redirected.value.toString();
-        if (seen.has(target)) return failure("redirect_loop");
-        if (redirectUrls.length >= limits.maxRedirects) {
-          return failure("redirect_limit");
-        }
-        seen.add(target);
-        redirectUrls.push(target);
-        current = redirected.value;
-        continue;
-      }
-
-      if (response.status === 404 || response.status === 410) {
-        return failure("source_not_found");
-      }
-      if (response.status >= 500) return failure("transport_failure");
-      if (response.status < 200 || response.status >= 300) {
-        return failure("invalid_response");
-      }
-
-      const rawContentType = headers.get("content-type");
-      const mimeType = rawContentType?.split(";", 1)[0]?.trim().toLowerCase();
-      if (mimeType === undefined || mimeType.length === 0) {
-        return failure("unsupported_mime");
-      }
-      const contentKind = contentKindForMime(
-        mimeType,
-        selection.collectorKind,
-      );
-      if (contentKind === null) return failure("unsupported_mime");
-
-      const contentLength = headers.get("content-length");
-      if (contentLength !== undefined) {
-        if (!/^\d+$/u.test(contentLength)) return failure("invalid_response");
-        const declaredLength = Number(contentLength);
-        if (!Number.isSafeInteger(declaredLength)) {
           return failure("invalid_response");
         }
-        if (declaredLength > limits.maxResponseBytes) {
-          return failure("oversized_response");
-        }
-      }
-      if (
-        typeof response.body !== "object" ||
-        response.body === null ||
-        !(Symbol.asyncIterator in response.body)
-      ) {
-        return failure("invalid_response");
-      }
-
-      const chunks: Uint8Array[] = [];
-      let byteCount = 0;
-      const iterator = response.body[Symbol.asyncIterator]();
-      while (true) {
-        let next: IteratorResult<Uint8Array>;
-        try {
-          const raced = await raceWithInterruption(iterator.next());
-          if (isRetrievalFailure(raced)) return raced;
-          next = raced;
-        } catch {
-          return failure(interruptedReason ?? "transport_failure");
-        }
-        if (next.done === true) break;
-        if (!(next.value instanceof Uint8Array)) {
-          return failure("invalid_response");
-        }
-        byteCount += next.value.byteLength;
-        if (byteCount > limits.maxResponseBytes) {
-          try {
-            const returned = iterator.return?.();
-            if (returned !== undefined) void returned.catch(() => undefined);
-          } catch {
-            // The bounded failure remains authoritative.
+        const headers = normalizedHeaders(response.headers);
+        if (REDIRECT_STATUSES.has(response.status)) {
+          const location = headers.get("location");
+          if (location === undefined) return failure("invalid_response");
+          const redirected = normalizeUrl(location, current.toString());
+          if (redirected.status === "failure") {
+            return failure("redirect_escape");
           }
-          return failure("oversized_response");
+          if (
+            !sameOfficialHostname(initialHostname, redirected.value.hostname)
+          ) {
+            return failure("redirect_escape");
+          }
+          const target = redirected.value.toString();
+          if (seen.has(target)) return failure("redirect_loop");
+          if (redirectUrls.length >= limits.maxRedirects) {
+            return failure("redirect_limit");
+          }
+          seen.add(target);
+          redirectUrls.push(target);
+          current = redirected.value;
+          continue;
         }
-        chunks.push(next.value.slice());
-      }
-      if (byteCount === 0) return failure("invalid_response");
-      const bytes = combineChunks(chunks, byteCount);
-      if (contentKind === "pdf" && !hasPdfSignature(bytes)) {
-        return failure("invalid_response");
-      }
-      return {
-        status: "success",
-        value: {
-          contentKind,
-          bytes,
-          normalizedSourceUrl,
-          finalUrl: current.toString(),
-          redirectUrls: [...redirectUrls],
+
+        if (response.status === 404 || response.status === 410) {
+          return failure("source_not_found");
+        }
+        if (response.status >= 500) return failure("transport_failure");
+        if (response.status < 200 || response.status >= 300) {
+          return failure("invalid_response");
+        }
+
+        const rawContentType = headers.get("content-type");
+        const mimeType = rawContentType?.split(";", 1)[0]?.trim().toLowerCase();
+        if (mimeType === undefined || mimeType.length === 0) {
+          return failure("unsupported_mime");
+        }
+        const contentKind = contentKindForMime(
           mimeType,
-        },
-      };
+          selection.collectorKind,
+        );
+        if (contentKind === null) return failure("unsupported_mime");
+
+        const contentLength = headers.get("content-length");
+        if (contentLength !== undefined) {
+          if (!/^\d+$/u.test(contentLength)) return failure("invalid_response");
+          const declaredLength = Number(contentLength);
+          if (!Number.isSafeInteger(declaredLength)) {
+            return failure("invalid_response");
+          }
+          if (declaredLength > limits.maxResponseBytes) {
+            return failure("oversized_response");
+          }
+        }
+        if (
+          typeof response.body !== "object" ||
+          response.body === null ||
+          !(Symbol.asyncIterator in response.body)
+        ) {
+          return failure("invalid_response");
+        }
+
+        const chunks: Uint8Array[] = [];
+        let byteCount = 0;
+        let iterator: AsyncIterator<Uint8Array>;
+        try {
+          iterator = response.body[Symbol.asyncIterator]();
+        } catch {
+          return failure("invalid_response");
+        }
+        while (true) {
+          let next: IteratorResult<Uint8Array>;
+          try {
+            const raced = await raceWithInterruption(iterator.next());
+            if (isRetrievalFailure(raced)) return raced;
+            next = raced;
+          } catch {
+            return failure(interruptedReason ?? "transport_failure");
+          }
+          if (next.done === true) {
+            responseBodyConsumed = true;
+            break;
+          }
+          if (!(next.value instanceof Uint8Array)) {
+            return failure("invalid_response");
+          }
+          byteCount += next.value.byteLength;
+          if (byteCount > limits.maxResponseBytes) {
+            return failure("oversized_response");
+          }
+          chunks.push(next.value.slice());
+        }
+        if (byteCount === 0) return failure("invalid_response");
+        const bytes = combineChunks(chunks, byteCount);
+        if (contentKind === "pdf" && !hasPdfSignature(bytes)) {
+          return failure("invalid_response");
+        }
+        return {
+          status: "success",
+          value: {
+            contentKind,
+            bytes,
+            normalizedSourceUrl,
+            finalUrl: current.toString(),
+            redirectUrls: [...redirectUrls],
+            mimeType,
+          },
+        };
+      } finally {
+        if (!responseBodyConsumed) {
+          await cancelUnconsumedResponse(response);
+        }
+      }
     }
   } finally {
     context.signal.removeEventListener("abort", onAbort);
@@ -884,6 +939,7 @@ const fingerprintFor = async (
 ): Promise<string> => {
   const metadata = new TextEncoder().encode(
     [
+      input.selection.candidate.sourceId,
       input.selection.candidate.kind,
       input.normalizedSourceUrl,
       input.finalUrl,
@@ -947,13 +1003,26 @@ export class RequestScopedOfficialMenuContentStore
       };
     }
 
+    const snapshot: OfficialMenuContentStoreInput = {
+      selection: {
+        candidate: { ...input.selection.candidate },
+        collectorKind: input.selection.collectorKind,
+      },
+      contentKind: input.contentKind,
+      bytes: input.bytes.slice(),
+      normalizedSourceUrl: input.normalizedSourceUrl,
+      finalUrl: input.finalUrl,
+      redirectUrls: [...input.redirectUrls],
+      mimeType: input.mimeType,
+    };
+
     let sourceRef: string;
     let contentHandleId: string;
     let sourceFingerprint: string;
     try {
       sourceRef = this.idFactory();
       contentHandleId = this.idFactory();
-      sourceFingerprint = await fingerprintFor(input);
+      sourceFingerprint = await fingerprintFor(snapshot);
     } catch {
       return {
         status: "error",
@@ -973,23 +1042,24 @@ export class RequestScopedOfficialMenuContentStore
     }
 
     const content = TransientMenuContentSchema.parse({
-      kind: input.contentKind,
+      kind: snapshot.contentKind,
       contentHandle,
       sensitivity: "sensitive_transient",
-      byteCount: input.bytes.byteLength,
+      byteCount: snapshot.bytes.byteLength,
       pageCount: null,
     });
     this.#records.set(contentHandle, {
+      ownerCorrelationId: context.correlationId,
       content: { ...content },
-      bytes: input.bytes.slice(),
+      bytes: snapshot.bytes,
       identity: { sourceRef, sourceFingerprint },
       retrieval: {
-        sourceId: input.selection.candidate.sourceId,
-        sourceKind: input.selection.candidate.kind,
-        normalizedSourceUrl: input.normalizedSourceUrl,
-        finalUrl: input.finalUrl,
-        redirectUrls: [...input.redirectUrls],
-        mimeType: input.mimeType,
+        sourceId: snapshot.selection.candidate.sourceId,
+        sourceKind: snapshot.selection.candidate.kind,
+        normalizedSourceUrl: snapshot.normalizedSourceUrl,
+        finalUrl: snapshot.finalUrl,
+        redirectUrls: snapshot.redirectUrls,
+        mimeType: snapshot.mimeType,
       },
     });
     return { status: "success", value: { ...content } };
@@ -1005,6 +1075,7 @@ export class RequestScopedOfficialMenuContentStore
     const record = this.#records.get(parsed.data.contentHandle);
     return Promise.resolve(
       record !== undefined &&
+        record.ownerCorrelationId === context.correlationId &&
         record.content.kind === parsed.data.kind &&
         record.content.byteCount === parsed.data.byteCount &&
         record.content.pageCount === parsed.data.pageCount
@@ -1023,6 +1094,7 @@ export class RequestScopedOfficialMenuContentStore
     const record = this.#records.get(parsed.data.contentHandle);
     return Promise.resolve(
       record !== undefined &&
+        record.ownerCorrelationId === context.correlationId &&
         record.content.kind === parsed.data.kind &&
         record.content.byteCount === parsed.data.byteCount &&
         record.content.pageCount === parsed.data.pageCount
@@ -1030,4 +1102,48 @@ export class RequestScopedOfficialMenuContentStore
         : null,
     );
   }
+
+  releaseScope(context: PortInvocationContext): void {
+    PortInvocationContextSchema.parse(context);
+    for (const [contentHandle, record] of this.#records) {
+      if (record.ownerCorrelationId !== context.correlationId) continue;
+      record.bytes.fill(0);
+      this.#records.delete(contentHandle);
+    }
+  }
 }
+
+/**
+ * Creates the public, opaque runtime while retaining raw storage and reading
+ * exclusively inside this module.
+ */
+export const createBoundedOfficialMenuAcquisitionRuntime = (
+  dependencies: BoundedOfficialMenuAcquisitionDependencies,
+): BoundedOfficialMenuAcquisitionRuntime => {
+  const contentStore = new RequestScopedOfficialMenuContentStore();
+  const collectorDependencies: BoundedOfficialMenuCollectorDependencies = {
+    ...dependencies,
+    contentStore,
+  };
+  const collectorService = new OfficialMenuCollectorService(
+    new BoundedHtmlMenuPageCollector(collectorDependencies),
+    new BoundedPdfMenuCollector(collectorDependencies),
+    new BoundedOrderPageCollector(collectorDependencies),
+  );
+  const orchestrator =
+    dependencies.collectionClock === undefined
+      ? new OfficialMenuSourceAcquisitionOrchestrator(
+          collectorService,
+          contentStore,
+        )
+      : new OfficialMenuSourceAcquisitionOrchestrator(
+          collectorService,
+          contentStore,
+          dependencies.collectionClock,
+        );
+  return Object.freeze({
+    orchestrator,
+    releaseScope: (context: PortInvocationContext): void =>
+      contentStore.releaseScope(context),
+  });
+};

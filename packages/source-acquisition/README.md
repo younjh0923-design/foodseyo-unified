@@ -35,8 +35,16 @@ HTML, PDF, and ordering-page collectors. It requires an injected DNS resolver
 and a transport that pins connections to the verified addresses, disables
 automatic redirects, revalidates every redirect hop, enforces the invocation
 deadline and streaming byte limit, and accepts only the collector's approved
-MIME types. Retrieved bytes remain in a request-scoped transient store behind
-an opaque `TransientMenuContent` handle; normalized and final URLs stay inside
-that package-owned provenance boundary. Provider-specific Web Search remains
-separate S1.3 work. This package never returns source bodies, raw provider
-responses, or raw URLs through the frozen shared port.
+MIME types. Redirects stay on the exact normalized hostname unless a future
+authoritative policy supplies an explicit alternate-host allowlist; hostname
+suffixes never imply authorization. IPv4 and IPv6 decisions conservatively
+reject the IANA special-purpose ranges, including translation, discard,
+benchmarking, documentation, ORCHID, local, and multicast space. Retrieved
+bytes remain in a correlation-bound transient store behind an opaque
+`TransientMenuContent` handle; normalized and final URLs stay inside that
+package-owned provenance boundary, and every unconsumed response is explicitly
+cancelled. A non-forgeable package-local discovery proof binds each selected
+source to the confirmed restaurant IDs and menu scope before collection.
+Provider-specific Web Search remains separate S1.3 work. This package never
+returns source bodies, raw provider responses, or raw URLs through the frozen
+shared port or package entry point.

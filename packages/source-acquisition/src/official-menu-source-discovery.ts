@@ -38,6 +38,15 @@ export interface OfficialMenuSourceDiscovery {
   ): Promise<PortResult<readonly OfficialMenuSourceCandidate[]>>;
 }
 
+const VERIFIED_DISCOVERY = Symbol("verifiedOfficialMenuSourceDiscovery");
+
+export interface VerifiedOfficialMenuSourceDiscovery {
+  readonly request: OfficialMenuSourceDiscoveryRequest;
+  readonly candidates: readonly OfficialMenuSourceCandidate[];
+  readonly correlationId: string;
+  readonly [VERIFIED_DISCOVERY]: true;
+}
+
 const publicError = (
   code: PublicErrorCode,
   context: PortInvocationContext,
@@ -62,7 +71,39 @@ const cloneCandidate = (
   candidate: OfficialMenuSourceCandidate,
 ): OfficialMenuSourceCandidate => ({ ...candidate });
 
-const validRequest = (
+const verifiedDiscovery = (
+  request: OfficialMenuSourceDiscoveryRequest,
+  candidates: readonly OfficialMenuSourceCandidate[],
+  correlationId: string,
+): VerifiedOfficialMenuSourceDiscovery => {
+  const value = {
+    request: Object.freeze({ ...request }),
+    candidates: Object.freeze(
+      candidates.map((candidate) => Object.freeze(cloneCandidate(candidate))),
+    ),
+    correlationId,
+  } as Omit<VerifiedOfficialMenuSourceDiscovery, typeof VERIFIED_DISCOVERY> &
+    Partial<Pick<VerifiedOfficialMenuSourceDiscovery, typeof VERIFIED_DISCOVERY>>;
+  Object.defineProperty(value, VERIFIED_DISCOVERY, {
+    value: true,
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  });
+  return Object.freeze(value) as VerifiedOfficialMenuSourceDiscovery;
+};
+
+export const isVerifiedOfficialMenuSourceDiscovery = (
+  value: unknown,
+): value is VerifiedOfficialMenuSourceDiscovery =>
+  typeof value === "object" &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.hasOwn(value, VERIFIED_DISCOVERY) &&
+  Object.isFrozen(value) &&
+  Reflect.get(value, VERIFIED_DISCOVERY) === true;
+
+export const isOfficialMenuSourceDiscoveryRequest = (
   value: unknown,
 ): value is OfficialMenuSourceDiscoveryRequest => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -86,19 +127,20 @@ const validRequest = (
   );
 };
 
-const validCandidate = (
-  value: OfficialMenuSourceCandidate,
-): boolean =>
+export const isOfficialMenuSourceCandidate = (
+  value: unknown,
+): value is OfficialMenuSourceCandidate =>
   typeof value === "object" &&
   value !== null &&
   !Array.isArray(value) &&
   Object.keys(value).length === 3 &&
-  Object.hasOwn(value, "sourceId") &&
-  Object.hasOwn(value, "kind") &&
-  Object.hasOwn(value, "locator") &&
+  "sourceId" in value &&
+  "kind" in value &&
+  "locator" in value &&
   typeof value.sourceId === "string" &&
   value.sourceId.trim().length > 0 &&
-  OFFICIAL_MENU_SOURCE_KINDS.includes(value.kind) &&
+  typeof value.kind === "string" &&
+  OFFICIAL_MENU_SOURCE_KINDS.some((kind) => kind === value.kind) &&
   typeof value.locator === "string" &&
   value.locator.trim().length > 0;
 
@@ -172,7 +214,7 @@ export class OfficialMenuSourceDiscoveryService {
     context: PortInvocationContext,
   ): Promise<PortResult<readonly OfficialMenuSourceCandidate[]>> {
     PortInvocationContextSchema.parse(context);
-    if (!validRequest(request)) {
+    if (!isOfficialMenuSourceDiscoveryRequest(request)) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
 
@@ -188,7 +230,10 @@ export class OfficialMenuSourceDiscoveryService {
     if (result.status !== "success") {
       return result;
     }
-    if (!Array.isArray(result.value) || !result.value.every(validCandidate)) {
+    if (
+      !Array.isArray(result.value) ||
+      !result.value.every(isOfficialMenuSourceCandidate)
+    ) {
       return {
         status: "error",
         error: publicError("INVALID_UPSTREAM_RESULT", context),
@@ -212,5 +257,27 @@ export class OfficialMenuSourceDiscoveryService {
     }
 
     return { status: "success", value: unique };
+  }
+
+  async discoverVerified(
+    request: OfficialMenuSourceDiscoveryRequest,
+    context: PortInvocationContext,
+  ): Promise<PortResult<VerifiedOfficialMenuSourceDiscovery>> {
+    PortInvocationContextSchema.parse(context);
+    if (!isOfficialMenuSourceDiscoveryRequest(request)) {
+      return { status: "error", error: publicError("INVALID_INPUT", context) };
+    }
+    const requestSnapshot = cloneRequest(request);
+    const result = await this.discover(requestSnapshot, context);
+    return result.status === "success"
+      ? {
+          status: "success",
+          value: verifiedDiscovery(
+            requestSnapshot,
+            result.value,
+            context.correlationId,
+          ),
+        }
+      : result;
   }
 }

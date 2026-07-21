@@ -8,9 +8,14 @@ import {
 } from "@foodseyo/contracts";
 
 import {
-  OFFICIAL_MENU_SOURCE_KINDS,
+  isOfficialMenuSourceCandidate,
+  isVerifiedOfficialMenuSourceDiscovery,
   type OfficialMenuSourceCandidate,
+  type OfficialMenuSourceDiscoveryRequest,
+  type VerifiedOfficialMenuSourceDiscovery,
 } from "./official-menu-source-discovery.js";
+
+const VERIFIED_SELECTION = Symbol("verifiedOfficialMenuCollectorSelection");
 
 export enum OfficialMenuCollectorKind {
   HTML_MENU_PAGE = "HTML_MENU_PAGE",
@@ -21,6 +26,14 @@ export enum OfficialMenuCollectorKind {
 export interface OfficialMenuCollectorSelection {
   readonly candidate: OfficialMenuSourceCandidate;
   readonly collectorKind: OfficialMenuCollectorKind;
+}
+
+export interface VerifiedOfficialMenuCollectorSelection {
+  readonly discoveryRequest: OfficialMenuSourceDiscoveryRequest;
+  readonly discoveredCandidates: readonly OfficialMenuSourceCandidate[];
+  readonly discoveryCorrelationId: string;
+  readonly selection: OfficialMenuCollectorSelection;
+  readonly [VERIFIED_SELECTION]: true;
 }
 
 const invalidUpstreamResult = (
@@ -40,23 +53,24 @@ const invalidUpstreamResult = (
 
 const validCandidate = (
   value: unknown,
-): value is OfficialMenuSourceCandidate => {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    return false;
-  }
-  if (!("sourceId" in value) || !("kind" in value) || !("locator" in value)) {
-    return false;
-  }
-  return (
-    Object.keys(value).length === 3 &&
-    typeof value.sourceId === "string" &&
-    value.sourceId.trim().length > 0 &&
-    typeof value.kind === "string" &&
-    OFFICIAL_MENU_SOURCE_KINDS.some((kind) => kind === value.kind) &&
-    typeof value.locator === "string" &&
-    value.locator.trim().length > 0
-  );
-};
+): value is OfficialMenuSourceCandidate =>
+  isOfficialMenuSourceCandidate(value);
+
+const sameCandidate = (
+  left: OfficialMenuSourceCandidate,
+  right: OfficialMenuSourceCandidate,
+): boolean =>
+  left.sourceId === right.sourceId &&
+  left.kind === right.kind &&
+  left.locator === right.locator;
+
+const cloneCandidate = (
+  candidate: OfficialMenuSourceCandidate,
+): OfficialMenuSourceCandidate => Object.freeze({ ...candidate });
+
+const cloneDiscoveryRequest = (
+  request: OfficialMenuSourceDiscoveryRequest,
+): OfficialMenuSourceDiscoveryRequest => Object.freeze({ ...request });
 
 const collectorKindFor = (
   candidate: OfficialMenuSourceCandidate,
@@ -110,3 +124,83 @@ export const selectOfficialMenuCollectors = (
   }
   return { status: "success", value: selections };
 };
+
+/**
+ * Binds one exact candidate snapshot to the discovery request that produced
+ * it. The private symbol prevents callers from fabricating this proof object.
+ */
+export const verifyOfficialMenuCollectorSelection = (
+  discovery: VerifiedOfficialMenuSourceDiscovery,
+  selection: OfficialMenuCollectorSelection,
+  context: PortInvocationContext,
+): PortResult<VerifiedOfficialMenuCollectorSelection> => {
+  PortInvocationContextSchema.parse(context);
+  if (
+    !isVerifiedOfficialMenuSourceDiscovery(discovery) ||
+    discovery.correlationId !== context.correlationId ||
+    typeof selection !== "object" ||
+    selection === null ||
+    Array.isArray(selection) ||
+    Object.keys(selection).length !== 2 ||
+    !("candidate" in selection) ||
+    !("collectorKind" in selection)
+  ) {
+    return { status: "error", error: invalidUpstreamResult(context) };
+  }
+
+  const selected = selectOfficialMenuCollector(selection.candidate, context);
+  if (
+    selected.status !== "success" ||
+    selected.value.collectorKind !== selection.collectorKind ||
+    !discovery.candidates.every(validCandidate)
+  ) {
+    return { status: "error", error: invalidUpstreamResult(context) };
+  }
+
+  const sourceIds = new Set<string>();
+  const locators = new Set<string>();
+  let exactMatches = 0;
+  for (const candidate of discovery.candidates) {
+    if (sourceIds.has(candidate.sourceId) || locators.has(candidate.locator)) {
+      return { status: "error", error: invalidUpstreamResult(context) };
+    }
+    sourceIds.add(candidate.sourceId);
+    locators.add(candidate.locator);
+    if (sameCandidate(candidate, selected.value.candidate)) exactMatches += 1;
+  }
+  if (exactMatches !== 1) {
+    return { status: "error", error: invalidUpstreamResult(context) };
+  }
+
+  const candidates = Object.freeze(discovery.candidates.map(cloneCandidate));
+  const verified = {
+    discoveryRequest: cloneDiscoveryRequest(discovery.request),
+    discoveredCandidates: candidates,
+    discoveryCorrelationId: discovery.correlationId,
+    selection: Object.freeze({
+      candidate: cloneCandidate(selected.value.candidate),
+      collectorKind: selected.value.collectorKind,
+    }),
+  } as Omit<VerifiedOfficialMenuCollectorSelection, typeof VERIFIED_SELECTION> &
+    Partial<Pick<VerifiedOfficialMenuCollectorSelection, typeof VERIFIED_SELECTION>>;
+  Object.defineProperty(verified, VERIFIED_SELECTION, {
+    value: true,
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  });
+  return {
+    status: "success",
+    value: Object.freeze(verified) as VerifiedOfficialMenuCollectorSelection,
+  };
+};
+
+export const isVerifiedOfficialMenuCollectorSelection = (
+  value: unknown,
+): value is VerifiedOfficialMenuCollectorSelection =>
+  typeof value === "object" &&
+  value !== null &&
+  !Array.isArray(value) &&
+  Object.hasOwn(value, VERIFIED_SELECTION) &&
+  Object.isFrozen(value) &&
+  Reflect.get(value, VERIFIED_SELECTION) === true;

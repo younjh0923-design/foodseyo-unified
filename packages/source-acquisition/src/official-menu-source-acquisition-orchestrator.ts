@@ -17,7 +17,10 @@ import {
   type TransientContentIdentityPort,
 } from "./foundation.js";
 import { OfficialMenuCollectorService } from "./official-menu-collector.js";
-import type { OfficialMenuCollectorSelection } from "./official-menu-collector-selection.js";
+import {
+  isVerifiedOfficialMenuCollectorSelection,
+  type VerifiedOfficialMenuCollectorSelection,
+} from "./official-menu-collector-selection.js";
 import {
   assembleCollectedOfficialMenuSourceInput,
   type CollectedOfficialMenuSourceAssemblyInput,
@@ -25,7 +28,7 @@ import {
 
 export interface OfficialMenuSourceAcquisitionOrchestrationInput {
   readonly request: MenuSourceAcquisitionRequest;
-  readonly selection: OfficialMenuCollectorSelection;
+  readonly verifiedSelection: VerifiedOfficialMenuCollectorSelection;
 }
 
 export type CollectedOfficialMenuSourceAssembler = (
@@ -75,21 +78,33 @@ export class OfficialMenuSourceAcquisitionOrchestrator {
       Array.isArray(input) ||
       Object.keys(input).length !== 2 ||
       !("request" in input) ||
-      !("selection" in input)
+      !("verifiedSelection" in input)
     ) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
     const requestResult = MenuSourceAcquisitionRequestSchema.safeParse(
       input.request,
     );
+    const restaurantContext = requestResult.success
+      ? restaurantContextFromMenuSourceRequest(requestResult.data)
+      : null;
     if (
       !requestResult.success ||
-      restaurantContextFromMenuSourceRequest(requestResult.data) === null
+      restaurantContext === null ||
+      !isVerifiedOfficialMenuCollectorSelection(input.verifiedSelection) ||
+      input.verifiedSelection.discoveryRequest.googlePlaceId !==
+        restaurantContext.googlePlaceId ||
+      input.verifiedSelection.discoveryRequest.restaurantId !==
+        restaurantContext.restaurantId ||
+      input.verifiedSelection.discoveryRequest.menuScope !==
+        requestResult.data.menuScope ||
+      input.verifiedSelection.discoveryCorrelationId !== context.correlationId
     ) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
 
-    const collected = await this.collector.collect(input.selection, context);
+    const selection = input.verifiedSelection.selection;
+    const collected = await this.collector.collect(selection, context);
     if (collected.status !== "success") {
       return collected;
     }
@@ -127,8 +142,8 @@ export class OfficialMenuSourceAcquisitionOrchestrator {
       {
         request: requestResult.data,
         selection: {
-          candidate: { ...input.selection.candidate },
-          collectorKind: input.selection.collectorKind,
+          candidate: { ...selection.candidate },
+          collectorKind: selection.collectorKind,
         },
         content: { ...collected.value },
         contentIdentity: { ...contentIdentity },

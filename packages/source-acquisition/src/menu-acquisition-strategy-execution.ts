@@ -9,6 +9,7 @@ import {
   OfficialMenuSourceDiscoveryService,
   type OfficialMenuSourceCandidate,
   type OfficialMenuSourceDiscoveryRequest,
+  type VerifiedOfficialMenuSourceDiscovery,
 } from "./official-menu-source-discovery.js";
 
 export interface MenuAcquisitionStrategyExecutionInput {
@@ -29,6 +30,7 @@ export type MenuAcquisitionStrategyExecutionOutcome =
       readonly kind: "official_sources";
       readonly reuseOutcome: MenuAcquisitionReuseOutcome;
       readonly sources: readonly OfficialMenuSourceCandidate[];
+      readonly discovery: VerifiedOfficialMenuSourceDiscovery;
     }
   | {
       readonly kind: "wait_for_next_stage";
@@ -74,7 +76,7 @@ export class MenuAcquisitionStrategyExecutionService {
           },
         };
       case MenuAcquisitionStrategy.DISCOVER_OFFICIAL_SOURCE: {
-        const discoveryResult = await this.officialSources.discover(
+        const discoveryResult = await this.officialSources.discoverVerified(
           input.discoveryRequest,
           context,
         );
@@ -86,7 +88,8 @@ export class MenuAcquisitionStrategyExecutionService {
           value: {
             kind: "official_sources",
             reuseOutcome: input.reuseOutcome,
-            sources: discoveryResult.value.map(cloneSource),
+            sources: discoveryResult.value.candidates.map(cloneSource),
+            discovery: discoveryResult.value,
           },
         };
       }

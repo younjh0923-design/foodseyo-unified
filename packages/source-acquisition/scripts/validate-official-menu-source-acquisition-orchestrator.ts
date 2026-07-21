@@ -22,13 +22,22 @@ import {
   FakePdfMenuCollector,
   OfficialMenuCollectorService,
 } from "../src/official-menu-collector.js";
-import { OfficialMenuCollectorKind } from "../src/official-menu-collector-selection.js";
+import {
+  OfficialMenuCollectorKind,
+  verifyOfficialMenuCollectorSelection,
+} from "../src/official-menu-collector-selection.js";
 import {
   OfficialMenuSourceAcquisitionOrchestrator,
   type CollectedOfficialMenuSourceAssembler,
   type OfficialMenuSourceAcquisitionOrchestrationInput,
 } from "../src/official-menu-source-acquisition-orchestrator.js";
 import { assembleCollectedOfficialMenuSourceInput } from "../src/official-menu-source-input-assembler.js";
+import {
+  FakeOfficialMenuSourceDiscovery,
+  OfficialMenuSourceDiscoveryService,
+  type OfficialMenuSourceCandidate,
+  type OfficialMenuSourceDiscoveryRequest,
+} from "../src/official-menu-source-discovery.js";
 import * as publicPackageSurface from "../src/index.js";
 
 const context: PortInvocationContext = {
@@ -95,9 +104,38 @@ const selection = {
   },
   collectorKind: OfficialMenuCollectorKind.HTML_MENU_PAGE,
 };
+const discoveryRequest = {
+  googlePlaceId,
+  restaurantId,
+  menuScope: request.menuScope,
+};
+const discover = (
+  discoveryInput: OfficialMenuSourceDiscoveryRequest,
+  candidates: readonly OfficialMenuSourceCandidate[] = [selection.candidate],
+) =>
+  new OfficialMenuSourceDiscoveryService(
+    new FakeOfficialMenuSourceDiscovery({
+      status: "success",
+      value: candidates,
+    }),
+  ).discoverVerified(discoveryInput, context);
+const verifiedDiscoveryResult = await discover(discoveryRequest);
+assert.equal(verifiedDiscoveryResult.status, "success");
+if (verifiedDiscoveryResult.status !== "success") {
+  throw new Error("verified discovery failed");
+}
+const verifiedSelectionResult = verifyOfficialMenuCollectorSelection(
+  verifiedDiscoveryResult.value,
+  selection,
+  context,
+);
+assert.equal(verifiedSelectionResult.status, "success");
+if (verifiedSelectionResult.status !== "success") {
+  throw new Error("selection proof failed");
+}
 const input: OfficialMenuSourceAcquisitionOrchestrationInput = {
   request,
-  selection,
+  verifiedSelection: verifiedSelectionResult.value,
 };
 const collectedContent: TransientMenuContent = {
   kind: "html",
@@ -323,6 +361,79 @@ assert.equal(blockedPorts.html.callCount, 0);
 assert.equal(blockedIdentity.callCount, 0);
 assert.equal(blockedClock.callCount(), 0);
 
+for (const [name, mismatchedDiscovery] of [
+  [
+    "google_place",
+    { ...discoveryRequest, googlePlaceId: "different_google_place" },
+  ],
+  [
+    "restaurant",
+    {
+      ...discoveryRequest,
+      restaurantId: "f1000000-0000-4000-8000-000000000099",
+    },
+  ],
+  ["menu_scope", { ...discoveryRequest, menuScope: "lunch" as const }],
+] as const) {
+  const discovery = await discover(mismatchedDiscovery);
+  assert.equal(discovery.status, "success", name);
+  if (discovery.status !== "success") {
+    throw new Error(`${name} discovery failed`);
+  }
+  const proof = verifyOfficialMenuCollectorSelection(
+    discovery.value,
+    selection,
+    context,
+  );
+  assert.equal(proof.status, "success", name);
+  if (proof.status !== "success") throw new Error(`${name} proof failed`);
+  const ports = collectorPorts();
+  const identity = new FakeTransientContentIdentityPort({
+    sourceRef,
+    sourceFingerprint,
+  });
+  const result = await new OfficialMenuSourceAcquisitionOrchestrator(
+    collectorService(ports),
+    identity,
+  ).acquire({ request, verifiedSelection: proof.value }, context);
+  assert.equal(result.status, "error", name);
+  if (result.status !== "error") throw new Error(`${name} mismatch must fail`);
+  assert.equal(result.error.error.code, "INVALID_INPUT", name);
+  assert.equal(ports.html.callCount, 0, name);
+  assert.equal(identity.callCount, 0, name);
+}
+
+const secondCandidate = {
+  sourceId: "candidate-second-orchestration",
+  kind: "official_menu_page" as const,
+  locator: "locator:second-orchestration",
+};
+const combinedDiscovery = await discover(discoveryRequest, [
+  selection.candidate,
+  secondCandidate,
+]);
+assert.equal(combinedDiscovery.status, "success");
+if (combinedDiscovery.status !== "success") {
+  throw new Error("combined discovery failed");
+}
+const combinedEvidence = verifyOfficialMenuCollectorSelection(
+  combinedDiscovery.value,
+  {
+    candidate: {
+      sourceId: selection.candidate.sourceId,
+      kind: selection.candidate.kind,
+      locator: secondCandidate.locator,
+    },
+    collectorKind: OfficialMenuCollectorKind.HTML_MENU_PAGE,
+  },
+  context,
+);
+assert.equal(combinedEvidence.status, "error");
+if (combinedEvidence.status !== "error") {
+  throw new Error("cross-candidate evidence must fail");
+}
+assert.equal(combinedEvidence.error.error.code, "INVALID_UPSTREAM_RESULT");
+
 const malformedPorts = collectorPorts();
 const malformedIdentity = new FakeTransientContentIdentityPort({
   sourceRef,
@@ -333,18 +444,12 @@ const malformed = await new OfficialMenuSourceAcquisitionOrchestrator(
   malformedIdentity,
   countingClock().now,
 ).acquire(
-  {
-    ...input,
-    selection: {
-      ...selection,
-      candidate: { ...selection.candidate, locator: "" },
-    },
-  },
+  { request, verifiedSelection: {} } as unknown as OfficialMenuSourceAcquisitionOrchestrationInput,
   context,
 );
 assert.equal(malformed.status, "error");
 if (malformed.status !== "error") throw new Error("selection must fail");
-assert.equal(malformed.error.error.code, "INVALID_UPSTREAM_RESULT");
+assert.equal(malformed.error.error.code, "INVALID_INPUT");
 assert.equal(malformedPorts.html.callCount, 0);
 assert.equal(malformedIdentity.callCount, 0);
 

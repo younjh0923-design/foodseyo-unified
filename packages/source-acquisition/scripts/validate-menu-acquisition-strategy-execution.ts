@@ -217,7 +217,7 @@ assert.deepEqual(immutableInput, immutableSnapshot);
 
 const third = await deterministicFixture.service.execute(
   immutableInput,
-  context("deterministic-third"),
+  context("deterministic-second"),
 );
 assert.equal(third.status, "success");
 if (third.status !== "success") throw new Error("third execution failed");

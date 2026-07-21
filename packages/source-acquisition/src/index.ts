@@ -64,12 +64,15 @@ export {
   type OfficialMenuSourceDiscovery,
   type OfficialMenuSourceDiscoveryRequest,
   type OfficialMenuSourceKind,
+  type VerifiedOfficialMenuSourceDiscovery,
 } from "./official-menu-source-discovery.js";
 export {
   OfficialMenuCollectorKind,
+  verifyOfficialMenuCollectorSelection,
   selectOfficialMenuCollector,
   selectOfficialMenuCollectors,
   type OfficialMenuCollectorSelection,
+  type VerifiedOfficialMenuCollectorSelection,
 } from "./official-menu-collector-selection.js";
 export {
   FakeHtmlMenuPageCollector,
@@ -79,16 +82,12 @@ export {
   type OfficialMenuCollector,
 } from "./official-menu-collector.js";
 export {
-  BoundedHtmlMenuPageCollector,
-  BoundedOrderPageCollector,
-  BoundedPdfMenuCollector,
-  RequestScopedOfficialMenuContentStore,
-  type BoundedOfficialMenuCollectorDependencies,
-  type OfficialMenuContentStoreInput,
+  createBoundedOfficialMenuAcquisitionRuntime,
+  type BoundedOfficialMenuAcquisitionDependencies,
+  type BoundedOfficialMenuAcquisitionRuntime,
   type OfficialMenuDnsResolver,
   type OfficialMenuHttpTransport,
   type OfficialMenuRetrievalLimits,
-  type OfficialMenuTransientContentStore,
   type OfficialMenuTransportRequest,
   type OfficialMenuTransportResponse,
 } from "./official-menu-bounded-retrieval.js";

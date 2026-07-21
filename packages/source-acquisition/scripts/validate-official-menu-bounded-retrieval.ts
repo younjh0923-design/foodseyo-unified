@@ -15,6 +15,7 @@ import {
   BoundedOrderPageCollector,
   BoundedPdfMenuCollector,
   RequestScopedOfficialMenuContentStore,
+  createBoundedOfficialMenuAcquisitionRuntime,
   retrieveBoundedOfficialMenu,
   type OfficialMenuContentStoreInput,
   type OfficialMenuDnsResolver,
@@ -29,9 +30,15 @@ import {
 import { OfficialMenuCollectorService } from "../src/official-menu-collector.js";
 import {
   OfficialMenuCollectorKind,
+  verifyOfficialMenuCollectorSelection,
   type OfficialMenuCollectorSelection,
 } from "../src/official-menu-collector-selection.js";
 import { OfficialMenuSourceAcquisitionOrchestrator } from "../src/official-menu-source-acquisition-orchestrator.js";
+import {
+  FakeOfficialMenuSourceDiscovery,
+  OfficialMenuSourceDiscoveryService,
+} from "../src/official-menu-source-discovery.js";
+import * as publicPackageSurface from "../src/index.js";
 
 const SAFE_IPV4 = "93.184.216.34";
 const LIMITS: OfficialMenuRetrievalLimits = {
@@ -75,14 +82,25 @@ const response = (
   contentType: string | null,
   chunks: readonly Uint8Array[] = [],
   additionalHeaders: Readonly<Record<string, string>> = {},
-): OfficialMenuTransportResponse => ({
-  status,
-  headers: {
-    ...(contentType === null ? {} : { "Content-Type": contentType }),
-    ...additionalHeaders,
-  },
-  body: chunks.length === 0 ? null : bodyFrom(...chunks),
-});
+  onCancel: () => void = () => undefined,
+): OfficialMenuTransportResponse => {
+  let cancelled = false;
+  return {
+    status,
+    headers: {
+      ...(contentType === null ? {} : { "Content-Type": contentType }),
+      ...additionalHeaders,
+    },
+    body: chunks.length === 0 ? null : bodyFrom(...chunks),
+    cancel: () => {
+      if (!cancelled) {
+        cancelled = true;
+        onCancel();
+      }
+      return Promise.resolve();
+    },
+  };
+};
 
 class FixtureDnsResolver implements OfficialMenuDnsResolver {
   readonly calls: string[] = [];
@@ -172,6 +190,10 @@ class RecordingStore implements OfficialMenuTransientContentStore {
   ) {
     return this.delegate.read(content, invocationContext);
   }
+
+  releaseScope(invocationContext: PortInvocationContext): void {
+    this.delegate.releaseScope(invocationContext);
+  }
 }
 
 const normalScheduler = {
@@ -186,6 +208,12 @@ const immediateTimeoutScheduler = {
     callback();
     return setTimeout(() => undefined, 60_000);
   },
+  clearScheduledTimeout: (handle: ReturnType<typeof setTimeout>) =>
+    clearTimeout(handle),
+};
+
+const deferredTimeoutScheduler = {
+  scheduleTimeout: (callback: () => void) => setTimeout(callback, 0),
   clearScheduledTimeout: (handle: ReturnType<typeof setTimeout>) =>
     clearTimeout(handle),
 };
@@ -216,10 +244,13 @@ const assertFailure = (
 
 // 1. Valid HTML is normalized and streamed through the shared boundary.
 {
+  let cancelCount = 0;
   const dns = new FixtureDnsResolver({ "menu.fixture.example": [SAFE_IPV4] });
   const transport = new FixtureTransport(() =>
     response(200, "Text/HTML; charset=utf-8", [HTML_BYTES], {
       "Content-Length": String(HTML_BYTES.byteLength),
+    }, () => {
+      cancelCount += 1;
     }),
   );
   const result = await retrieve(
@@ -239,6 +270,7 @@ const assertFailure = (
   assert.deepEqual(result.value.bytes, HTML_BYTES);
   assert.deepEqual(transport.requests[0]?.approvedAddresses, [SAFE_IPV4]);
   assert.equal(transport.requests[0]?.redirect, "manual");
+  assert.equal(cancelCount, 0);
 }
 
 // 2. Valid PDF requires both an approved MIME and PDF signature.
@@ -261,11 +293,16 @@ const assertFailure = (
 
 // 3. Relative redirects are resolved, revalidated, and retained as evidence.
 {
+  let cancelCount = 0;
   const dns = new FixtureDnsResolver({});
   const transport = new FixtureTransport((request) =>
     request.url.endsWith("/start")
-      ? response(302, null, [], { Location: "/menus/dinner" })
-      : response(200, "text/html", [HTML_BYTES]),
+      ? response(302, null, [], { Location: "/menus/dinner" }, () => {
+          cancelCount += 1;
+        })
+      : response(200, "text/html", [HTML_BYTES], {}, () => {
+          cancelCount += 1;
+        }),
   );
   const result = await retrieve(
     "relative_redirect",
@@ -279,6 +316,7 @@ const assertFailure = (
   assert.deepEqual(result.value.redirectUrls, [result.value.finalUrl]);
   assert.equal(dns.calls.length, 2);
   assert.equal(transport.requests.length, 2);
+  assert.equal(cancelCount, 1);
 }
 
 // 4-12. URL and every resolved address must be publicly routable.
@@ -294,6 +332,10 @@ for (const [name, locator, answers, reason] of [
   ["localhost", "https://localhost/menu", {}, "unsafe_destination"],
   ["private_ipv4", "https://127.0.0.1/menu", {}, "unsafe_ip"],
   ["blocked_ipv6", "https://[fd00::1]/menu", {}, "unsafe_ip"],
+  ["deprecated_orchid", "https://[2001:10::1]/menu", {}, "unsafe_ip"],
+  ["orchid_v2", "https://[2001:20::1]/menu", {}, "unsafe_ip"],
+  ["documentation_ipv6", "https://[2001:db8::1]/menu", {}, "unsafe_ip"],
+  ["link_local_ipv6", "https://[fe80::1]/menu", {}, "unsafe_ip"],
   [
     "mapped_ipv6",
     "https://[::ffff:127.0.0.1]/menu",
@@ -312,6 +354,12 @@ for (const [name, locator, answers, reason] of [
     { "menu.fixture.example": [SAFE_IPV4, "169.254.169.254"] },
     "unsafe_ip",
   ],
+  [
+    "mixed_special_ipv6",
+    "https://menu.fixture.example/menu",
+    { "menu.fixture.example": ["2606:4700:4700::1111", "2001:20::1"] },
+    "unsafe_ip",
+  ],
 ] as const) {
   const transport = new FixtureTransport(() =>
     response(200, "text/html", [HTML_BYTES]),
@@ -326,17 +374,68 @@ for (const [name, locator, answers, reason] of [
   assert.equal(transport.requests.length, 0, name);
 }
 
+// A normal public IPv6 destination remains eligible.
+{
+  const transport = new FixtureTransport(() => response(404, null));
+  const result = await retrieve(
+    "public_ipv6",
+    selection("https://[2606:4700:4700::1111]/menu"),
+    new FixtureDnsResolver({}),
+    transport,
+  );
+  assertFailure(result, "source_not_found");
+  assert.equal(transport.requests.length, 1);
+}
+
 // 13. A safe origin cannot redirect into a different/private destination.
 {
+  let cancelCount = 0;
   const result = await retrieve(
     "redirect_escape",
     selection("https://menu.fixture.example/start"),
     new FixtureDnsResolver({}),
     new FixtureTransport(() =>
-      response(302, null, [], { Location: "https://127.0.0.1/menu" }),
+      response(302, null, [], { Location: "https://127.0.0.1/menu" }, () => {
+        cancelCount += 1;
+      }),
     ),
   );
   assertFailure(result, "redirect_escape");
+  assert.equal(cancelCount, 1);
+}
+
+for (const [name, origin, target] of [
+  [
+    "public_suffix_parent_escape",
+    "https://restaurant.github.io/menu",
+    "https://github.io/menu",
+  ],
+  [
+    "registrable_parent_escape",
+    "https://menu.fixture.example/menu",
+    "https://fixture.example/menu",
+  ],
+  [
+    "unrelated_host_escape",
+    "https://menu.fixture.example/menu",
+    "https://unrelated.example/menu",
+  ],
+] as const) {
+  let cancelCount = 0;
+  const transport = new FixtureTransport(() =>
+    response(302, null, [], { Location: target }, () => {
+      cancelCount += 1;
+    }),
+  );
+  const result = await retrieve(
+    name,
+    selection(origin),
+    new FixtureDnsResolver({}),
+    transport,
+  );
+  assertFailure(result, "redirect_escape");
+  assert.equal(transport.requests.length, 1, name);
+  assert.equal(cancelCount, 1, name);
 }
 
 // 14. Redirect loops are distinct from the bounded redirect limit.
@@ -388,11 +487,38 @@ for (const [name, locator, answers, reason] of [
   assertFailure(result, "timeout");
 }
 
+// A timeout after response headers cancels the active body.
+{
+  let cancelCount = 0;
+  const never = new Promise<IteratorResult<Uint8Array>>(() => undefined);
+  const result = await retrieve(
+    "body_timeout",
+    selection("https://menu.fixture.example/menu"),
+    new FixtureDnsResolver({}),
+    new FixtureTransport(() => ({
+      status: 200,
+      headers: { "Content-Type": "text/html" },
+      body: {
+        [Symbol.asyncIterator]: () => ({ next: () => never }),
+      },
+      cancel: () => {
+        cancelCount += 1;
+        return Promise.resolve();
+      },
+    })),
+    LIMITS,
+    deferredTimeoutScheduler,
+  );
+  assertFailure(result, "timeout");
+  assert.equal(cancelCount, 1);
+}
+
 // 17-18. Streaming limits apply even with a small or absent Content-Length.
 for (const [name, headers] of [
   ["stream_limit_misleading_length", { "Content-Length": "2" }],
   ["stream_limit_without_length", {}],
 ] as const) {
+  let cancelCount = 0;
   const result = await retrieve(
     name,
     selection("https://menu.fixture.example/menu"),
@@ -403,23 +529,90 @@ for (const [name, headers] of [
         "text/html",
         [new Uint8Array(24), new Uint8Array(16)],
         headers,
+        () => {
+          cancelCount += 1;
+        },
       ),
     ),
   );
   assertFailure(result, "oversized_response");
+  assert.equal(cancelCount, 1, name);
+}
+
+// An oversized declared length is rejected and its body is cancelled.
+{
+  let cancelCount = 0;
+  const result = await retrieve(
+    "declared_length_limit",
+    selection("https://menu.fixture.example/menu"),
+    new FixtureDnsResolver({}),
+    new FixtureTransport(() =>
+      response(
+        200,
+        "text/html",
+        [HTML_BYTES],
+        { "Content-Length": "33" },
+        () => {
+          cancelCount += 1;
+        },
+      ),
+    ),
+  );
+  assertFailure(result, "oversized_response");
+  assert.equal(cancelCount, 1);
 }
 
 // 19. MIME is authoritative; file extension alone never selects a collector.
 {
+  let cancelCount = 0;
   const result = await retrieve(
     "unsupported_mime",
     selection("https://menu.fixture.example/menu.pdf"),
     new FixtureDnsResolver({}),
     new FixtureTransport(() =>
-      response(200, "image/png", [new Uint8Array([1, 2, 3])]),
+      response(200, "image/png", [new Uint8Array([1, 2, 3])], {}, () => {
+        cancelCount += 1;
+      }),
     ),
   );
   assertFailure(result, "unsupported_mime");
+  assert.equal(cancelCount, 1);
+}
+
+// Invalid response metadata is rejected after cancelling the active response.
+{
+  let cancelCount = 0;
+  const result = await retrieve(
+    "invalid_status",
+    selection("https://menu.fixture.example/menu"),
+    new FixtureDnsResolver({}),
+    new FixtureTransport(() =>
+      response(99, "text/html", [HTML_BYTES], {}, () => {
+        cancelCount += 1;
+      }),
+    ),
+  );
+  assertFailure(result, "invalid_response");
+  assert.equal(cancelCount, 1);
+}
+
+for (const [name, status, reason] of [
+  ["unsupported_status", 403, "invalid_response"],
+  ["gone_source", 410, "source_not_found"],
+] as const) {
+  let cancelCount = 0;
+  const result = await retrieve(
+    name,
+    selection("https://menu.fixture.example/menu"),
+    new FixtureDnsResolver({}),
+    new FixtureTransport(() =>
+      response(status, "text/html", [HTML_BYTES], {}, () => {
+        cancelCount += 1;
+      }),
+    ),
+  );
+  assertFailure(result, reason);
+  assert.equal(cancelCount, 1, name);
 }
 
 // A declared PDF without a PDF signature is an invalid upstream response.
@@ -441,9 +634,14 @@ for (const [name, headers] of [
 // 20. Missing official sources remain a typed non-error outcome at the collector.
 {
   const store = new RequestScopedOfficialMenuContentStore();
+  let cancelCount = 0;
   const collector = new BoundedHtmlMenuPageCollector({
     dnsResolver: new FixtureDnsResolver({}),
-    transport: new FixtureTransport(() => response(404, "text/html")),
+    transport: new FixtureTransport(() =>
+      response(404, "text/html", [], {}, () => {
+        cancelCount += 1;
+      }),
+    ),
     contentStore: store,
     limits: LIMITS,
     ...normalScheduler,
@@ -455,6 +653,7 @@ for (const [name, headers] of [
   assert.equal(result.status, "outcome");
   if (result.status !== "outcome") throw new Error("outcome expected");
   assert.equal(result.outcome.code, "MENU_SOURCE_NOT_FOUND");
+  assert.equal(cancelCount, 1);
 }
 
 // 21. Transport and DNS failures remain retryable typed failures.
@@ -655,12 +854,37 @@ for (const [name, dnsResolver, transport, scheduler, expectedCode] of [
       requestedAt: "2026-07-21T16:00:00.000Z",
     });
   const selected = selection("https://menu.fixture.example/start");
-  const inputSnapshot = structuredClone({ request, selection: selected });
+  const integrationContext = context("integration");
+  const discovery = await new OfficialMenuSourceDiscoveryService(
+    new FakeOfficialMenuSourceDiscovery({
+      status: "success",
+      value: [selected.candidate],
+    }),
+  ).discoverVerified(
+    { googlePlaceId, restaurantId, menuScope: request.menuScope },
+    integrationContext,
+  );
+  assert.equal(discovery.status, "success");
+  if (discovery.status !== "success") throw new Error("discovery failed");
+  const verified = verifyOfficialMenuCollectorSelection(
+    discovery.value,
+    selected,
+    integrationContext,
+  );
+  assert.equal(verified.status, "success");
+  if (verified.status !== "success") throw new Error("proof failed");
+  const inputSnapshot = structuredClone({
+    request,
+    verifiedSelection: verified.value,
+  });
   const result = await new OfficialMenuSourceAcquisitionOrchestrator(
     collectorService,
     contentStore,
     () => "2026-07-21T16:00:02.000Z",
-  ).acquire({ request, selection: selected }, context("integration"));
+  ).acquire(
+    { request, verifiedSelection: verified.value },
+    integrationContext,
+  );
   assert.equal(result.status, "success");
   if (result.status !== "success") throw new Error("integration failed");
   assert.deepEqual(result.value.restaurantContext, {
@@ -675,13 +899,17 @@ for (const [name, dnsResolver, transport, scheduler, expectedCode] of [
   assert.equal(result.value.content.kind, "html");
   const firstRead = await contentStore.read(
     result.value.content,
-    context("read-first"),
+    integrationContext,
   );
   assert.deepEqual(firstRead, HTML_BYTES);
   firstRead?.fill(0);
   assert.deepEqual(
-    await contentStore.read(result.value.content, context("read-second")),
+    await contentStore.read(result.value.content, integrationContext),
     HTML_BYTES,
+  );
+  assert.equal(
+    await contentStore.read(result.value.content, context("different-scope")),
+    null,
   );
   assert.equal(
     contentStore.lastInput?.normalizedSourceUrl,
@@ -696,8 +924,112 @@ for (const [name, dnsResolver, transport, scheduler, expectedCode] of [
   ]);
   assert.notEqual(result.value.source.sourceRef, selected.candidate.sourceId);
   assert.equal(JSON.stringify(result.value).includes("fixture.example"), false);
-  assert.deepEqual({ request, selection: selected }, inputSnapshot);
+  assert.deepEqual(
+    { request, verifiedSelection: verified.value },
+    inputSnapshot,
+  );
   assert.equal(transport.requests.length, 2);
+
+  const publicRuntime = createBoundedOfficialMenuAcquisitionRuntime({
+    dnsResolver: new FixtureDnsResolver({}),
+    transport: new FixtureTransport((transportRequest) =>
+      transportRequest.url.endsWith("/start")
+        ? response(302, null, [], { Location: "/menu" })
+        : response(200, "text/html", [HTML_BYTES]),
+    ),
+    limits: LIMITS,
+    ...normalScheduler,
+    collectionClock: () => "2026-07-21T16:00:02.000Z",
+  });
+  assert.deepEqual(Object.keys(publicRuntime).sort(), [
+    "orchestrator",
+    "releaseScope",
+  ]);
+  const publicResult = await publicRuntime.orchestrator.acquire(
+    { request, verifiedSelection: verified.value },
+    integrationContext,
+  );
+  assert.equal(publicResult.status, "success");
+  publicRuntime.releaseScope(integrationContext);
+}
+
+// Request-scoped raw records cannot cross scopes and clean up independently.
+{
+  const generatedIds = [
+    "a1000000-0000-4000-8000-000000000001",
+    "a1000000-0000-4000-8000-000000000002",
+    "b1000000-0000-4000-8000-000000000001",
+    "b1000000-0000-4000-8000-000000000002",
+  ];
+  const store = new RequestScopedOfficialMenuContentStore(() => {
+    const generated = generatedIds.shift();
+    if (generated === undefined) throw new Error("fixture ID exhausted");
+    return generated;
+  });
+  const scopeA = context("scope_a");
+  const scopeB = context("scope_b");
+  const storeFor = (
+    selected: OfficialMenuCollectorSelection,
+    bytes: Uint8Array,
+    invocationContext: PortInvocationContext,
+  ) =>
+    store.store(
+      {
+        selection: selected,
+        contentKind: "html",
+        bytes,
+        normalizedSourceUrl: selected.candidate.locator,
+        finalUrl: selected.candidate.locator,
+        redirectUrls: [],
+        mimeType: "text/html",
+      },
+      invocationContext,
+    );
+  const storedA = await storeFor(
+    selection("https://menu.fixture.example/a"),
+    new Uint8Array([1, 2, 3]),
+    scopeA,
+  );
+  const storedB = await storeFor(
+    selection("https://menu.fixture.example/b"),
+    new Uint8Array([4, 5, 6]),
+    scopeB,
+  );
+  assert.equal(storedA.status, "success");
+  assert.equal(storedB.status, "success");
+  if (storedA.status !== "success" || storedB.status !== "success") {
+    throw new Error("scope fixture store failed");
+  }
+  assert.deepEqual(
+    Array.from((await store.read(storedA.value, scopeA)) ?? []),
+    [1, 2, 3],
+  );
+  assert.equal(await store.read(storedA.value, scopeB), null);
+  assert.equal(await store.identify(storedA.value, scopeB), null);
+  assert.equal(
+    await store.read(
+      { ...storedA.value, contentHandle: "official:unknown-handle" },
+      scopeA,
+    ),
+    null,
+  );
+  store.releaseScope(scopeA);
+  assert.equal(await store.read(storedA.value, scopeA), null);
+  assert.deepEqual(
+    Array.from((await store.read(storedB.value, scopeB)) ?? []),
+    [4, 5, 6],
+  );
+  store.releaseScope(scopeB);
+  assert.equal(await store.read(storedB.value, scopeB), null);
+}
+
+for (const forbiddenPublicExport of [
+  "RequestScopedOfficialMenuContentStore",
+  "BoundedHtmlMenuPageCollector",
+  "BoundedPdfMenuCollector",
+  "BoundedOrderPageCollector",
+]) {
+  assert.equal(forbiddenPublicExport in publicPackageSurface, false);
 }
 
 console.log("Bounded official menu retrieval validation passed.");
