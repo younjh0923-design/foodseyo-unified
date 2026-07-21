@@ -324,10 +324,11 @@
   Web Search fallback within `source_acquisition`, using only `in_progress`
   or phase-local `complete`. It cannot duplicate confirmation, failure,
   timeout, canonical success, publication, or final workflow result meaning.
-- **Compatibility:** The candidate adds one UI-safe event member and one
-  dedicated public entry point. Frozen `1.0.0` DTO, error, outcome,
-  invocation, persistence, cache, environment, and provider meanings remain
-  unchanged.
+- **Compatibility:** The dedicated public entry point adds a candidate-only
+  UI-safe event union and port. Frozen `module-interfaces/1.0.0`
+  `UiSafeOperationalEvent`, `UiOperationalEventPort`, and their runtime schema
+  remain unchanged, as do frozen DTO, error, outcome, invocation, persistence,
+  cache, environment, and provider meanings.
 - **Operational scope:** Network-free schemas, fixtures, and fakes only. No
   provider, database, migration, Preview, Production, Vercel, or deployment
   action is authorized.

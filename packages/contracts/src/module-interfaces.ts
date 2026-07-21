@@ -58,10 +58,6 @@ import {
   type MenuScope,
 } from "./vocabulary.js";
 import { CONTRACT_VERSIONS } from "./versions.js";
-import {
-  UiWorkflowProgressSchema,
-  type UiWorkflowProgress,
-} from "./web-experience.js";
 
 export const MODULE_INTERFACE_VERSION =
   CONTRACT_VERSIONS.moduleInterfaces;
@@ -133,8 +129,7 @@ export interface RestaurantResolutionPort {
 export type UiSafeOperationalEvent =
   | RestaurantResolution
   | PublicOutcome
-  | PublicErrorEnvelope
-  | UiWorkflowProgress;
+  | PublicErrorEnvelope;
 
 export interface UiOperationalEventPort {
   emit(
@@ -1105,7 +1100,6 @@ export const UiSafeOperationalEventSchema =
         RestaurantResolutionSchema.safeParse(value),
         PublicOutcomeSchema.safeParse(value),
         PublicErrorEnvelopeSchema.safeParse(value),
-        UiWorkflowProgressSchema.safeParse(value),
       ];
       if (!candidates.some((candidate) => candidate.success)) {
         addContractIssue(issues, "invalid_ui_operational_event", [

@@ -34,11 +34,13 @@ Search fallback at `source_acquisition`, with `in_progress` or phase-local
 `complete` only. It cannot carry confirmation, failure, terminal success, raw
 input, provider detail, menu meaning, database data, or ORM types.
 
-The candidate extends the UI-safe operational event union additively but does
-not reinterpret the frozen restaurant, outcome, error, canonical, publication,
-persistence, cache, environment, or provider contracts. It remains unavailable
-to feature code until the exact contract PR receives all-owner approval and
-merges to `main`.
+The candidate public entry point defines its own UI-safe event union and port.
+The frozen `module-interfaces/1.0.0` `UiSafeOperationalEvent`,
+`UiOperationalEventPort`, and runtime schema remain unchanged. The candidate
+does not reinterpret the frozen restaurant, outcome, error, canonical,
+publication, persistence, cache, environment, or provider contracts. It
+remains unavailable to feature code until the exact contract PR receives
+all-owner approval and merges to `main`.
 
 ### Module interfaces
 

@@ -2,17 +2,21 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import { UiSafeOperationalEventSchema } from "../packages/contracts/src/module-interfaces.js";
-import type { RuntimeContractSchema } from "../packages/contracts/src/runtime-schema.js";
 import {
+  CANDIDATE_CONTRACT_VERSIONS,
+  UiSafeOperationalEventSchema,
+  type RuntimeContractSchema,
+} from "@foodseyo/contracts";
+import {
+  UI_WORKFLOW_STAGE,
   UI_WORKFLOW_PHASES,
   UI_WORKFLOW_PROGRESS_STATES,
   WEB_EXPERIENCE_CONTRACT_STATUS,
   WEB_EXPERIENCE_SCHEMAS,
   WEB_EXPERIENCE_VERSION,
+  WebExperienceUiSafeOperationalEventSchema,
   type WebExperienceSchemaName,
-} from "../packages/contracts/src/web-experience.js";
-import { CANDIDATE_CONTRACT_VERSIONS } from "../packages/contracts/src/versions.js";
+} from "@foodseyo/contracts/web-experience";
 
 type JsonObject = Record<string, unknown>;
 type Mutation = {
@@ -44,6 +48,7 @@ assert.equal(
   CANDIDATE_CONTRACT_VERSIONS.webExperience,
   WEB_EXPERIENCE_VERSION,
 );
+assert.equal(UI_WORKFLOW_STAGE, "source_acquisition");
 assert.deepEqual(UI_WORKFLOW_PHASES, [
   "official_source_lookup",
   "web_search_fallback",
@@ -91,7 +96,14 @@ for (const [fixtureName, schemaName] of Object.entries(validFixtureToSchema)) {
     }`,
   );
   if (schemaName === "UiWorkflowProgress") {
-    UiSafeOperationalEventSchema.parse(validFixtures[fixtureName]);
+    WebExperienceUiSafeOperationalEventSchema.parse(
+      validFixtures[fixtureName],
+    );
+    assert.equal(
+      UiSafeOperationalEventSchema.safeParse(validFixtures[fixtureName]).success,
+      false,
+      "frozen module-interfaces/1.0.0 must reject candidate progress",
+    );
   }
 }
 

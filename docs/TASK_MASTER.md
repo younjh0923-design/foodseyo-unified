@@ -571,6 +571,11 @@ U2 Core Integration is complete. The current contract action is Issue #21 on
 `web-experience/0.1.0` candidate remains unavailable to feature code until
 its dedicated exact-HEAD contract PR receives all-owner approval and merges.
 
+PR #28's docs-only S1.6 policy approval is merged in canonical `main` at
+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`. It does not authorize UI code or
+production explanation-renderer integration before the remaining contract and
+canonical-fixture gates complete.
+
 After Issue #21 merges, the following contract action is the Issue #20
 platform contract PR. Issues #21 and #20 are `status:approved`; their candidate
 shapes remain unavailable until their respective exact contract PRs receive

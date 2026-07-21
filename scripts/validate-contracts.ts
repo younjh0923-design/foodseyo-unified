@@ -1320,7 +1320,18 @@ assert.match(
 );
 assert.match(immediateNextAction, /Issue #20 remains a separate platform contract/);
 assert.match(immediateNextAction, /S1 implementation has not started\./);
-assert.doesNotMatch(immediateNextAction, /Draft PR #28 remains preserved/);
+assert.match(
+  immediateNextAction,
+  /PR #28's docs-only S1\.6 policy approval is merged[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
+);
+assert.match(
+  immediateNextAction,
+  /does not authorize UI code or[\s\S]+production explanation-renderer integration/i,
+);
+assertOrdered(immediateNextAction, "contract review order", [
+  "current contract action is Issue #21",
+  "following contract action is the Issue #20",
+]);
 assert.doesNotMatch(
   immediateNextAction,
   /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,

@@ -12,10 +12,13 @@ implementation. It wraps the existing U1.3 DTOs; it does not redefine them.
 
 ## Candidate web-experience extension
 
-Issue #21 adds `UiWorkflowProgress` to `UiSafeOperationalEvent` as an
-additive candidate member governed by `web-experience/0.1.0`. The existing
-`module-interfaces/1.0.0` invocation, result, restaurant confirmation,
-outcome, error, analysis, and publication meanings remain unchanged.
+Issue #21 leaves the frozen `module-interfaces/1.0.0`
+`UiSafeOperationalEvent`, `UiOperationalEventPort`, and runtime schema
+unchanged. The separate `@foodseyo/contracts/web-experience` entry point
+defines a candidate-only `WebExperienceUiSafeOperationalEvent` union and
+`WebExperienceUiOperationalEventPort` that opt into `UiWorkflowProgress`.
+The existing invocation, result, restaurant confirmation, outcome, error,
+analysis, and publication meanings remain unchanged.
 
 The progress member is limited to non-terminal `source_acquisition` phases.
 Confirmation remains in `RestaurantResolution`/`PublicOutcome`; failures remain

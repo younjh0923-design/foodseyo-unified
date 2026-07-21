@@ -1,3 +1,4 @@
+import type { WorkflowStage } from "./boundary-dtos.js";
 import {
   addContractIssue,
   createRuntimeSchema,
@@ -12,6 +13,11 @@ import {
   type ContractValidationIssue,
 } from "./runtime-schema.js";
 import { CANDIDATE_CONTRACT_VERSIONS } from "./versions.js";
+import {
+  UiSafeOperationalEventSchema,
+  type PortInvocationContext,
+  type UiSafeOperationalEvent,
+} from "./module-interfaces.js";
 
 export const WEB_EXPERIENCE_CONTRACT_STATUS = "candidate" as const;
 export const WEB_EXPERIENCE_VERSION =
@@ -23,6 +29,11 @@ export const UI_WORKFLOW_PHASES = [
   "official_source_lookup",
   "web_search_fallback",
 ] as const;
+
+export const UI_WORKFLOW_STAGE =
+  "source_acquisition" as const satisfies WorkflowStage;
+
+export type UiWorkflowStage = typeof UI_WORKFLOW_STAGE;
 
 export const UI_WORKFLOW_PROGRESS_STATES = [
   "in_progress",
@@ -51,9 +62,24 @@ export interface SubmissionIntakeRequest {
  */
 export interface UiWorkflowProgress {
   readonly contractVersion: WebExperienceVersion;
-  readonly stage: "source_acquisition";
+  readonly stage: UiWorkflowStage;
   readonly phase: UiWorkflowPhase;
   readonly state: UiWorkflowProgressState;
+}
+
+export type WebExperienceUiSafeOperationalEvent =
+  | UiSafeOperationalEvent
+  | UiWorkflowProgress;
+
+/**
+ * Candidate-only opt-in port. The frozen module-interfaces/1.0.0 event union
+ * and UiOperationalEventPort remain unchanged.
+ */
+export interface WebExperienceUiOperationalEventPort {
+  emit(
+    event: WebExperienceUiSafeOperationalEvent,
+    context: PortInvocationContext,
+  ): Promise<void>;
 }
 
 const SAFE_OPAQUE_HANDLE_PATTERN =
@@ -164,7 +190,7 @@ const validateUiWorkflowProgress = (
     issues,
     ["contractVersion"],
   );
-  validateLiteral(value.stage, "source_acquisition", issues, ["stage"]);
+  validateLiteral(value.stage, UI_WORKFLOW_STAGE, issues, ["stage"]);
   validateEnumValue(value.phase, UI_WORKFLOW_PHASES, issues, ["phase"]);
   validateEnumValue(
     value.state,
@@ -184,6 +210,22 @@ export const UiWorkflowProgressSchema =
   createRuntimeSchema<UiWorkflowProgress>(
     "UiWorkflowProgress",
     validateUiWorkflowProgress,
+  );
+
+export const WebExperienceUiSafeOperationalEventSchema =
+  createRuntimeSchema<WebExperienceUiSafeOperationalEvent>(
+    "WebExperienceUiSafeOperationalEvent",
+    (value, issues) => {
+      const candidates = [
+        UiSafeOperationalEventSchema.safeParse(value),
+        UiWorkflowProgressSchema.safeParse(value),
+      ];
+      if (!candidates.some((candidate) => candidate.success)) {
+        addContractIssue(issues, "invalid_ui_operational_event", [
+          "uiOperationalEvent",
+        ]);
+      }
+    },
   );
 
 export const WEB_EXPERIENCE_SCHEMAS = {

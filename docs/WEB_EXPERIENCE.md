@@ -63,14 +63,15 @@ Restaurant confirmation continues through
 
 ## Port and compatibility impact
 
-The existing `UiOperationalEventPort` accepts `UiWorkflowProgress` as one
-additional UI-safe event member. Existing frozen restaurant resolution,
-outcome, error, invocation, and application-result meanings are not
-reinterpreted. The event carries its own candidate version token.
-
-An exhaustive consumer of `UiSafeOperationalEvent` must add the progress
-branch before it consumes the merged candidate. That compatibility work belongs
-in later feature PRs after this contract PR merges.
+The frozen `module-interfaces/1.0.0` `UiSafeOperationalEvent`,
+`UiOperationalEventPort`, and runtime schema do not accept
+`UiWorkflowProgress` and remain unchanged. This candidate entry point instead
+exports `WebExperienceUiSafeOperationalEvent`,
+`WebExperienceUiOperationalEventPort`, and their runtime schema. Consumers opt
+into that candidate-only union after this contract PR merges, so exhaustive
+consumers of the frozen union do not change meaning without a version update.
+The progress event carries its own candidate version token while reusing the
+frozen `PortInvocationContext`.
 
 The candidate adds no public error or outcome, environment name, persistence
 shape, cache meaning, migration, provider permission, Preview or Production
