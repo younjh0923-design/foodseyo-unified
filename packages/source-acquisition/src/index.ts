@@ -66,6 +66,19 @@ export {
   type OfficialMenuSourceKind,
 } from "./official-menu-source-discovery.js";
 export {
+  OfficialMenuCollectorKind,
+  selectOfficialMenuCollector,
+  selectOfficialMenuCollectors,
+  type OfficialMenuCollectorSelection,
+} from "./official-menu-collector-selection.js";
+export {
+  FakeHtmlMenuPageCollector,
+  FakeOrderPageCollector,
+  FakePdfMenuCollector,
+  OfficialMenuCollectorService,
+  type OfficialMenuCollector,
+} from "./official-menu-collector.js";
+export {
   FakeUploadedImageClassifier,
   MIN_UPLOADED_IMAGE_CLASSIFICATION_CONFIDENCE,
   UPLOADED_IMAGE_CROP_COMPLETENESS,
