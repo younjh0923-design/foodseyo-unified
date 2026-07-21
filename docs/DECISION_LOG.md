@@ -408,5 +408,12 @@
   rejects stale owner writes through guarded compare-and-swap. The menu-only
   operation accepts only a runtime-validated `analysis_only` canonical value and
   leaves all seven publication-side table counts at zero in deterministic tests.
+- **DB-4 evidence:** The minimal publication API reuses an existing Google Place
+  binding, reserves an application UUID otherwise, and rebuilds/revalidates the
+  immutable canonical value if a concurrent transaction wins. Eligible
+  canonical data, menu lifecycle, items, Dish identities, matches, and the
+  internal receipt commit atomically. Three pre-commit fault points roll back
+  completely; simulated response loss after commit recovers the identical
+  runtime-validated frozen five-field receipt without duplicates.
 - **Status:** Accepted implementation baseline
 - **Date:** 2026-07-21

@@ -438,7 +438,7 @@ Checkpoint state:
   parity validation;
 - **DB-3:** DONE - exact cache, ownership, bounded waiting, and
   `analysis_only` persistence;
-- **DB-4:** IN PROGRESS - Google Place convergence and atomic eligible
+- **DB-4:** DONE - Google Place convergence and atomic eligible
   publication;
 - **DB-5:** BLOCKED by explicit owner authorization - Neon Development
   migration and real test-row mutation.
@@ -475,8 +475,7 @@ this authorization.
 - **Owner:** Youn
 - **Reviewer:** YTW
 - **Dependency:** S2.1 and approved restaurant-resolution fixtures
-- **Status:** BLOCKED
-- **Blocked by:** S2.1
+- **Status:** IN PROGRESS
 - **Scope:** confirmed restaurant plus menu scope plus freshness.
 - **Acceptance:** no unconfirmed restaurant publishes a shared menu; stale
   versions are retained and never silently overwritten; acquired official and

@@ -54,3 +54,13 @@ bounded waiter, records retryable or terminal failure through guarded CAS, and
 persists only runtime-validated `analysis_only` canonical results. The
 menu-only transaction cannot create restaurant, menu, Dish, match, or receipt
 rows, and stale owners are rejected before any canonical write.
+
+DB-4 keeps the application surface narrow with
+`findRestaurantByExternalReference` and `publishEligibleAnalysis`. Publication
+resolves Google Place ID before canonical construction, retries by rebuilding
+and revalidating the immutable canonical value when a concurrent restaurant
+winner appears, and atomically writes the eligible canonical row, menu
+lifecycle, items, reusable Dish identities, matches, and receipt. The adapter
+projects internal receipt rows into the exact frozen five-field DTO and parses
+that projection through `PublicationReceiptSchema`. Deterministic faults prove
+pre-commit rollback and committed-but-uncertain identical receipt recovery.

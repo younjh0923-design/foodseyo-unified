@@ -1,7 +1,13 @@
 import {
   CanonicalMenuAnalysisSchema,
+  MODULE_INTERFACE_VERSION,
+  PublicationEligibleAnalysisSchema,
+  PublicationReceiptSchema,
+  isPublicationEligibleAnalysis,
   type CanonicalMenuAnalysis,
   type MenuSourceType,
+  type PublicationEligibleAnalysis,
+  type PublicationReceipt,
 } from "@foodseyo/contracts";
 import type { Pool, PoolClient, QueryResultRow } from "pg";
 
@@ -98,6 +104,28 @@ export interface PersistAnalysisOnlyRequest {
   readonly expiresAt: string;
 }
 
+export type PublicationFaultPoint =
+  | "after_commit_response_loss"
+  | "before_canonical_analysis"
+  | "before_receipt"
+  | "while_writing_menu_items";
+
+export interface PublishEligibleAnalysisRequest {
+  readonly identity: ExactAnalysisIdentity;
+  readonly runId: string;
+  readonly operationId: string;
+  readonly externalReferenceId: string;
+  readonly googlePlaceId: string;
+  readonly reservedRestaurantId: string;
+  readonly restaurantDisplayName: string;
+  readonly persistedAt: string;
+  readonly expiresAt: string;
+  readonly faultPoint?: PublicationFaultPoint;
+  readonly buildAnalysis: (
+    restaurantId: string,
+  ) => Promise<PublicationEligibleAnalysis> | PublicationEligibleAnalysis;
+}
+
 export interface WaitPolicy {
   readonly maxPolls: number;
   readonly pollIntervalMs: number;
@@ -125,6 +153,12 @@ export interface MvpAnalysisRepository {
   persistAnalysisOnly(
     request: PersistAnalysisOnlyRequest,
   ): Promise<CanonicalMenuAnalysis>;
+  findRestaurantByExternalReference(
+    googlePlaceId: string,
+  ): Promise<string | null>;
+  publishEligibleAnalysis(
+    request: PublishEligibleAnalysisRequest,
+  ): Promise<PublicationReceipt>;
 }
 
 export class StaleAnalysisOwnerError extends Error {
@@ -138,6 +172,20 @@ export class PersistenceContractError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "PersistenceContractError";
+  }
+}
+
+export class InjectedPublicationFailure extends Error {
+  constructor(readonly point: PublicationFaultPoint) {
+    super(`injected publication failure at ${point}`);
+    this.name = "InjectedPublicationFailure";
+  }
+}
+
+class RestaurantConvergenceConflict extends Error {
+  constructor(readonly committedRestaurantId: string) {
+    super("Google Place ID was concurrently bound to another restaurant");
+    this.name = "RestaurantConvergenceConflict";
   }
 }
 
@@ -286,6 +334,86 @@ interface RunRow extends QueryResultRow {
   readonly safe_error_code: SafeAnalysisErrorCode | null;
   readonly status: "failed_terminal" | "processing";
 }
+
+interface PublicationReceiptRow extends QueryResultRow {
+  readonly analysis_id: string;
+  readonly contract_version: string;
+  readonly published_at: Date | string;
+  readonly restaurant_menu_version_id: string;
+  readonly status: string;
+}
+
+const projectPublicationReceipt = (
+  row: PublicationReceiptRow,
+): PublicationReceipt =>
+  PublicationReceiptSchema.parse({
+    contractVersion: row.contract_version,
+    analysisId: row.analysis_id,
+    menuVersionId: row.restaurant_menu_version_id,
+    status: row.status,
+    publishedAt:
+      row.published_at instanceof Date
+        ? row.published_at.toISOString()
+        : row.published_at,
+  });
+
+const validateEligiblePublication = (
+  request: PublishEligibleAnalysisRequest,
+  restaurantId: string,
+  value: PublicationEligibleAnalysis,
+): PublicationEligibleAnalysis => {
+  validateIdentity(request.identity);
+  requireUuid(request.runId, "runId");
+  requireUuid(request.operationId, "operationId");
+  requireUuid(request.externalReferenceId, "externalReferenceId");
+  requireUuid(request.reservedRestaurantId, "reservedRestaurantId");
+  requireUuid(restaurantId, "restaurantId");
+  requireNonblank(request.googlePlaceId, "googlePlaceId");
+  requireNonblank(request.restaurantDisplayName, "restaurantDisplayName");
+  const persistedAt = requireTimestamp(request.persistedAt, "persistedAt");
+  const expiresAt = requireTimestamp(request.expiresAt, "expiresAt");
+  if (expiresAt <= persistedAt) {
+    throw new PersistenceContractError("expiresAt must follow persistedAt");
+  }
+  const analysis = PublicationEligibleAnalysisSchema.parse(value);
+  if (!isPublicationEligibleAnalysis(analysis)) {
+    throw new PersistenceContractError("eligible publication requires menuVersion");
+  }
+  if (
+    analysis.restaurantResolution.restaurantId !== restaurantId ||
+    analysis.menuVersion.restaurantId !== restaurantId
+  ) {
+    throw new PersistenceContractError(
+      "canonical and relational restaurant identities must match",
+    );
+  }
+  if (analysis.restaurantResolution.selectedCandidateId === restaurantId) {
+    throw new PersistenceContractError(
+      "request-scoped candidateId cannot become Restaurant.id",
+    );
+  }
+  const selectedCandidate = analysis.restaurantResolution.candidates.find(
+    (candidate) =>
+      candidate.candidateId === analysis.restaurantResolution.selectedCandidateId,
+  );
+  if (selectedCandidate?.googlePlaceId !== request.googlePlaceId) {
+    throw new PersistenceContractError(
+      "canonical restaurant resolution does not match Google Place ID",
+    );
+  }
+  if (
+    analysis.source.sourceRef !== request.identity.sourceRef ||
+    !analysis.menuVersion.sourceRefs.includes(request.identity.sourceRef)
+  ) {
+    throw new PersistenceContractError(
+      "eligible canonical source does not match exact evidence identity",
+    );
+  }
+  if (analysis.menuVersion.state !== "active") {
+    throw new PersistenceContractError("published menu version must be active");
+  }
+  return analysis;
+};
 
 const parseCanonicalRow = (row: CanonicalRow): CanonicalMenuAnalysis =>
   CanonicalMenuAnalysisSchema.parse(row.canonical_analysis_json);
@@ -629,6 +757,336 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
       return analysis;
     });
   }
+
+  async findRestaurantByExternalReference(
+    googlePlaceId: string,
+  ): Promise<string | null> {
+    requireNonblank(googlePlaceId, "googlePlaceId");
+    const result = await this.sql.query<{ readonly restaurant_id: string }>(
+      `select restaurant_id
+         from restaurant_external_references
+        where provider = 'google_places' and external_id = $1
+        limit 1`,
+      [googlePlaceId],
+    );
+    return result.rows[0]?.restaurant_id ?? null;
+  }
+
+  async #findPublicationReceipt(
+    analysisId: string,
+  ): Promise<PublicationReceipt | null> {
+    const result = await this.sql.query<PublicationReceiptRow>(
+      `select analysis_id, restaurant_menu_version_id, contract_version,
+              status, published_at
+         from publication_receipts
+        where analysis_id = $1
+        limit 1`,
+      [analysisId],
+    );
+    return result.rows[0] ? projectPublicationReceipt(result.rows[0]) : null;
+  }
+
+  async publishEligibleAnalysis(
+    request: PublishEligibleAnalysisRequest,
+  ): Promise<PublicationReceipt> {
+    let restaurantId =
+      (await this.findRestaurantByExternalReference(request.googlePlaceId)) ??
+      request.reservedRestaurantId;
+
+    for (let convergenceAttempt = 0; convergenceAttempt < 2; convergenceAttempt += 1) {
+      const analysis = validateEligiblePublication(
+        request,
+        restaurantId,
+        await request.buildAnalysis(restaurantId),
+      );
+      try {
+        const receipt = await this.#publishEligibleAttempt(
+          request,
+          restaurantId,
+          analysis,
+        );
+        if (request.faultPoint === "after_commit_response_loss") {
+          const recovered = await this.#findPublicationReceipt(receipt.analysisId);
+          if (!recovered) {
+            throw new PersistenceContractError(
+              "committed publication receipt could not be recovered",
+            );
+          }
+          return recovered;
+        }
+        return receipt;
+      } catch (error) {
+        if (error instanceof RestaurantConvergenceConflict) {
+          restaurantId = error.committedRestaurantId;
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new PersistenceContractError("restaurant convergence retry was exhausted");
+  }
+
+  async #publishEligibleAttempt(
+    request: PublishEligibleAnalysisRequest,
+    restaurantId: string,
+    analysis: PublicationEligibleAnalysis,
+  ): Promise<PublicationReceipt> {
+    return this.sql.transaction(async (executor) => {
+      const existingReceipt = await executor.query<PublicationReceiptRow>(
+        `select analysis_id, restaurant_menu_version_id, contract_version,
+                status, published_at
+           from publication_receipts
+          where analysis_id = $1
+          limit 1`,
+        [analysis.analysisId],
+      );
+      if (existingReceipt.rows[0]) {
+        return projectPublicationReceipt(existingReceipt.rows[0]);
+      }
+
+      const owner = await executor.query<{ readonly id: string }>(
+        `select id from analysis_runs
+          where id = $1 and evidence_set_id = $2 and analysis_contract_id = $3
+            and status = 'processing' and lease_expires_at > $4::timestamptz
+          for update`,
+        [
+          request.runId,
+          request.identity.evidenceSetId,
+          request.identity.analysisContractId,
+          request.persistedAt,
+        ],
+      );
+      if (!owner.rows[0]) {
+        throw new StaleAnalysisOwnerError();
+      }
+
+      const external = await executor.query<{ readonly restaurant_id: string }>(
+        `select restaurant_id
+           from restaurant_external_references
+          where provider = 'google_places' and external_id = $1
+          limit 1`,
+        [request.googlePlaceId],
+      );
+      const committedRestaurantId = external.rows[0]?.restaurant_id;
+      if (committedRestaurantId && committedRestaurantId !== restaurantId) {
+        throw new RestaurantConvergenceConflict(committedRestaurantId);
+      }
+      if (!committedRestaurantId) {
+        await executor.query(
+          `insert into restaurants (id, display_name, created_at, updated_at)
+           values ($1, $2, $3, $3)
+           on conflict (id) do nothing`,
+          [restaurantId, request.restaurantDisplayName, request.persistedAt],
+        );
+        const insertedReference = await executor.query<{
+          readonly restaurant_id: string;
+        }>(
+          `insert into restaurant_external_references (
+            id, restaurant_id, provider, external_id, created_at
+          ) values ($1, $2, 'google_places', $3, $4)
+          on conflict (provider, external_id) do nothing
+          returning restaurant_id`,
+          [
+            request.externalReferenceId,
+            restaurantId,
+            request.googlePlaceId,
+            request.persistedAt,
+          ],
+        );
+        if (!insertedReference.rows[0]) {
+          const winner = await executor.query<{ readonly restaurant_id: string }>(
+            `select restaurant_id
+               from restaurant_external_references
+              where provider = 'google_places' and external_id = $1
+              limit 1`,
+            [request.googlePlaceId],
+          );
+          const winnerId = winner.rows[0]?.restaurant_id;
+          if (!winnerId) {
+            throw new PersistenceContractError(
+              "Google Place ID convergence winner was not visible",
+            );
+          }
+          if (winnerId !== restaurantId) {
+            throw new RestaurantConvergenceConflict(winnerId);
+          }
+        }
+      }
+
+      if (request.faultPoint === "before_canonical_analysis") {
+        throw new InjectedPublicationFailure(request.faultPoint);
+      }
+
+      await executor.query(
+        `insert into canonical_analyses (
+          id, evidence_set_id, analysis_contract_id, producing_run_id,
+          publication_state, restaurant_id, restaurant_menu_version_id,
+          canonical_analysis_json, validated_at, created_at, last_accessed_at,
+          expires_at, invalidated_at, safe_invalidation_code
+        ) values ($1, $2, $3, $4, 'eligible', $5, $6, $7::jsonb,
+                  $8, $9, $9, $10, null, null)`,
+        [
+          analysis.analysisId,
+          request.identity.evidenceSetId,
+          request.identity.analysisContractId,
+          request.runId,
+          restaurantId,
+          analysis.menuVersion.menuVersionId,
+          JSON.stringify(analysis),
+          analysis.validatedAt,
+          request.persistedAt,
+          request.expiresAt,
+        ],
+      );
+
+      const activeVersion = await executor.query<{
+        readonly id: string;
+        readonly version_ordinal: number;
+      }>(
+        `select id, version_ordinal
+           from restaurant_menu_versions
+          where restaurant_id = $1 and menu_scope = $2 and state = 'active'
+          for update`,
+        [restaurantId, analysis.menuVersion.menuScope],
+      );
+      const predecessor = activeVersion.rows[0];
+      if (predecessor) {
+        if (
+          analysis.menuVersion.supersedesMenuVersionId !== predecessor.id ||
+          analysis.menuVersion.versionOrdinal !== predecessor.version_ordinal + 1
+        ) {
+          throw new PersistenceContractError(
+            "new active menu must explicitly supersede the current active version",
+          );
+        }
+        await executor.query(
+          `update restaurant_menu_versions
+              set state = 'superseded', valid_until = $2
+            where id = $1 and state = 'active'`,
+          [predecessor.id, analysis.menuVersion.validFrom],
+        );
+      }
+      await executor.query(
+        `insert into restaurant_menu_versions (
+          id, restaurant_id, evidence_set_id, menu_scope, state,
+          version_ordinal, collected_at, valid_from, valid_until,
+          supersedes_menu_version_id, created_at
+        ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          analysis.menuVersion.menuVersionId,
+          restaurantId,
+          request.identity.evidenceSetId,
+          analysis.menuVersion.menuScope,
+          analysis.menuVersion.state,
+          analysis.menuVersion.versionOrdinal,
+          analysis.menuVersion.collectedAt,
+          analysis.menuVersion.validFrom,
+          analysis.menuVersion.validUntil,
+          analysis.menuVersion.supersedesMenuVersionId,
+          request.persistedAt,
+        ],
+      );
+
+      if (request.faultPoint === "while_writing_menu_items") {
+        throw new InjectedPublicationFailure(request.faultPoint);
+      }
+      for (const item of analysis.menuItems) {
+        await executor.query(
+          `insert into menu_items (
+            id, restaurant_menu_version_id, restaurant_id, section_index,
+            item_index, name, description, price_minor_units, price_currency,
+            option_texts, created_at
+          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+          [
+            item.menuItemId,
+            analysis.menuVersion.menuVersionId,
+            restaurantId,
+            item.sectionIndex,
+            item.itemIndex,
+            item.name,
+            item.description,
+            item.price?.amountMinor ?? null,
+            item.price?.currency ?? null,
+            [...item.optionTexts],
+            request.persistedAt,
+          ],
+        );
+      }
+      for (const candidate of analysis.dishCandidates) {
+        if (candidate.dishId) {
+          await executor.query(
+            `insert into dishes (
+              id, display_name, normalized_name, created_at, updated_at
+            ) values ($1, $2, $3, $4, $4)
+            on conflict (id) do nothing`,
+            [
+              candidate.dishId,
+              candidate.displayName,
+              candidate.normalizedName,
+              request.persistedAt,
+            ],
+          );
+        }
+      }
+      for (const match of analysis.dishMatches) {
+        await executor.query(
+          `insert into menu_item_dish_matches (
+            id, menu_item_id, dish_candidate_id, dish_id, state,
+            decision_kind, reviewer_ref, rule_version, decided_at, created_at
+          ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            match.matchId,
+            match.menuItemId,
+            match.dishCandidateId,
+            match.dishId,
+            match.state,
+            match.decision?.kind ?? null,
+            match.decision?.reviewerRef ?? null,
+            match.decision?.ruleVersion ?? null,
+            match.decision?.decidedAt ?? null,
+            request.persistedAt,
+          ],
+        );
+      }
+
+      if (request.faultPoint === "before_receipt") {
+        throw new InjectedPublicationFailure(request.faultPoint);
+      }
+      const receiptRow = await executor.query<PublicationReceiptRow>(
+        `insert into publication_receipts (
+          analysis_id, restaurant_id, restaurant_menu_version_id, operation_id,
+          contract_version, status, published_at, created_at
+        ) values ($1, $2, $3, $4, $5, 'published', $6, $6)
+        returning analysis_id, restaurant_menu_version_id, contract_version,
+                  status, published_at`,
+        [
+          analysis.analysisId,
+          restaurantId,
+          analysis.menuVersion.menuVersionId,
+          request.operationId,
+          MODULE_INTERFACE_VERSION,
+          request.persistedAt,
+        ],
+      );
+      const ready = await executor.query(
+        `update analysis_runs
+            set status = 'ready', lease_expires_at = null, finished_at = $4,
+                safe_error_code = null, updated_at = $4
+          where id = $1 and evidence_set_id = $2 and analysis_contract_id = $3
+            and status = 'processing' and lease_expires_at > $4::timestamptz`,
+        [
+          request.runId,
+          request.identity.evidenceSetId,
+          request.identity.analysisContractId,
+          request.persistedAt,
+        ],
+      );
+      if (ready.rowCount !== 1 || !receiptRow.rows[0]) {
+        throw new StaleAnalysisOwnerError();
+      }
+      return projectPublicationReceipt(receiptRow.rows[0]);
+    });
+  }
 }
 
 interface MemoryEvidenceIdentity {
@@ -648,6 +1106,21 @@ interface MemoryCanonical {
   readonly expiresAt: string;
   readonly identityKey: string;
   readonly runId: string;
+}
+
+interface MemoryMenuVersion {
+  readonly id: string;
+  readonly menuScope: string;
+  readonly restaurantId: string;
+  readonly versionOrdinal: number;
+  state: string;
+  validUntil: string | null;
+}
+
+export interface DeterministicConcurrentWinner {
+  readonly googlePlaceId: string;
+  readonly restaurantDisplayName: string;
+  readonly restaurantId: string;
 }
 
 export interface DeterministicPersistenceCounts {
@@ -675,20 +1148,32 @@ export class DeterministicMvpAnalysisRepository
   readonly #runs: MemoryRun[] = [];
   readonly #canonical: MemoryCanonical[] = [];
   readonly #runIds = new Set<string>();
+  readonly #restaurants = new Map<string, string>();
+  readonly #externalReferences = new Map<string, string>();
+  readonly #menuVersions = new Map<string, MemoryMenuVersion>();
+  readonly #menuItems = new Set<string>();
+  readonly #dishes = new Set<string>();
+  readonly #matches = new Set<string>();
+  readonly #receipts = new Map<string, PublicationReceipt>();
+  #concurrentWinnerInjected = false;
+
+  constructor(
+    private readonly concurrentWinner: DeterministicConcurrentWinner | null = null,
+  ) {}
 
   snapshotCounts(): DeterministicPersistenceCounts {
     return {
       analysisContracts: this.#contracts.size,
       analysisRuns: this.#runs.length,
       canonicalAnalyses: this.#canonical.length,
-      dishes: 0,
+      dishes: this.#dishes.size,
       menuEvidenceSets: this.#evidence.size,
-      menuItemDishMatches: 0,
-      menuItems: 0,
-      publicationReceipts: 0,
-      restaurantExternalReferences: 0,
-      restaurantMenuVersions: 0,
-      restaurants: 0,
+      menuItemDishMatches: this.#matches.size,
+      menuItems: this.#menuItems.size,
+      publicationReceipts: this.#receipts.size,
+      restaurantExternalReferences: this.#externalReferences.size,
+      restaurantMenuVersions: this.#menuVersions.size,
+      restaurants: this.#restaurants.size,
     };
   }
 
@@ -743,7 +1228,8 @@ export class DeterministicMvpAnalysisRepository
           entry.identityKey === identityKey &&
           Date.parse(entry.expiresAt) > observed &&
           run?.status === "ready" &&
-          entry.analysis.publicationState === "analysis_only"
+          (entry.analysis.publicationState === "analysis_only" ||
+            this.#receipts.has(entry.analysis.analysisId))
         );
       });
     return reusable?.analysis ?? null;
@@ -902,5 +1388,154 @@ export class DeterministicMvpAnalysisRepository
     run.status = "ready";
     run.safeErrorCode = null;
     return analysis;
+  }
+
+  findRestaurantByExternalReference(
+    googlePlaceId: string,
+  ): Promise<string | null> {
+    requireNonblank(googlePlaceId, "googlePlaceId");
+    return Promise.resolve(this.#externalReferences.get(googlePlaceId) ?? null);
+  }
+
+  async publishEligibleAnalysis(
+    request: PublishEligibleAnalysisRequest,
+  ): Promise<PublicationReceipt> {
+    let restaurantId =
+      (await this.findRestaurantByExternalReference(request.googlePlaceId)) ??
+      request.reservedRestaurantId;
+
+    for (let convergenceAttempt = 0; convergenceAttempt < 2; convergenceAttempt += 1) {
+      const analysis = validateEligiblePublication(
+        request,
+        restaurantId,
+        await request.buildAnalysis(restaurantId),
+      );
+      if (
+        !this.#concurrentWinnerInjected &&
+        this.concurrentWinner?.googlePlaceId === request.googlePlaceId &&
+        !this.#externalReferences.has(request.googlePlaceId)
+      ) {
+        this.#restaurants.set(
+          this.concurrentWinner.restaurantId,
+          this.concurrentWinner.restaurantDisplayName,
+        );
+        this.#externalReferences.set(
+          this.concurrentWinner.googlePlaceId,
+          this.concurrentWinner.restaurantId,
+        );
+        this.#concurrentWinnerInjected = true;
+        restaurantId = this.concurrentWinner.restaurantId;
+        continue;
+      }
+      const existingReceipt = this.#receipts.get(analysis.analysisId);
+      if (existingReceipt) {
+        return PublicationReceiptSchema.parse(existingReceipt);
+      }
+      const committedRestaurantId = this.#externalReferences.get(
+        request.googlePlaceId,
+      );
+      if (committedRestaurantId && committedRestaurantId !== restaurantId) {
+        restaurantId = committedRestaurantId;
+        continue;
+      }
+
+      const identityKey = exactIdentityKey(request.identity);
+      const run = this.#runs.find(
+        (candidate) =>
+          candidate.identityKey === identityKey &&
+          candidate.owner.runId === request.runId,
+      );
+      if (
+        run?.status !== "processing" ||
+        Date.parse(run.owner.leaseExpiresAt) <= Date.parse(request.persistedAt)
+      ) {
+        throw new StaleAnalysisOwnerError();
+      }
+      if (this.#canonical.some((entry) => entry.analysis.analysisId === analysis.analysisId)) {
+        throw new PersistenceContractError("analysisId must be unique");
+      }
+
+      const activeVersion = [...this.#menuVersions.values()].find(
+        (version) =>
+          version.restaurantId === restaurantId &&
+          version.menuScope === analysis.menuVersion.menuScope &&
+          version.state === "active",
+      );
+      if (
+        activeVersion &&
+        (analysis.menuVersion.supersedesMenuVersionId !== activeVersion.id ||
+          analysis.menuVersion.versionOrdinal !== activeVersion.versionOrdinal + 1)
+      ) {
+        throw new PersistenceContractError(
+          "new active menu must explicitly supersede the current active version",
+        );
+      }
+      if (request.faultPoint === "before_canonical_analysis") {
+        throw new InjectedPublicationFailure(request.faultPoint);
+      }
+      if (request.faultPoint === "while_writing_menu_items") {
+        throw new InjectedPublicationFailure(request.faultPoint);
+      }
+      if (request.faultPoint === "before_receipt") {
+        throw new InjectedPublicationFailure(request.faultPoint);
+      }
+
+      const receipt = PublicationReceiptSchema.parse({
+        contractVersion: MODULE_INTERFACE_VERSION,
+        analysisId: analysis.analysisId,
+        menuVersionId: analysis.menuVersion.menuVersionId,
+        status: "published",
+        publishedAt: request.persistedAt,
+      });
+
+      if (!committedRestaurantId) {
+        this.#restaurants.set(restaurantId, request.restaurantDisplayName);
+        this.#externalReferences.set(request.googlePlaceId, restaurantId);
+      }
+      if (activeVersion) {
+        activeVersion.state = "superseded";
+        activeVersion.validUntil = analysis.menuVersion.validFrom;
+      }
+      this.#menuVersions.set(analysis.menuVersion.menuVersionId, {
+        id: analysis.menuVersion.menuVersionId,
+        menuScope: analysis.menuVersion.menuScope,
+        restaurantId,
+        state: analysis.menuVersion.state,
+        validUntil: analysis.menuVersion.validUntil,
+        versionOrdinal: analysis.menuVersion.versionOrdinal,
+      });
+      for (const item of analysis.menuItems) {
+        this.#menuItems.add(item.menuItemId);
+      }
+      for (const candidate of analysis.dishCandidates) {
+        if (candidate.dishId) {
+          this.#dishes.add(candidate.dishId);
+        }
+      }
+      for (const match of analysis.dishMatches) {
+        this.#matches.add(match.matchId);
+      }
+      this.#canonical.push({
+        analysis,
+        expiresAt: request.expiresAt,
+        identityKey,
+        runId: request.runId,
+      });
+      this.#receipts.set(analysis.analysisId, receipt);
+      run.status = "ready";
+      run.safeErrorCode = null;
+
+      if (request.faultPoint === "after_commit_response_loss") {
+        const recovered = this.#receipts.get(analysis.analysisId);
+        if (!recovered) {
+          throw new PersistenceContractError(
+            "committed publication receipt could not be recovered",
+          );
+        }
+        return PublicationReceiptSchema.parse(recovered);
+      }
+      return receipt;
+    }
+    throw new PersistenceContractError("restaurant convergence retry was exhausted");
   }
 }
