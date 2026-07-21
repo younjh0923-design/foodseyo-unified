@@ -1206,6 +1206,11 @@ assert.match(
   dataPipelineFoundation,
   /47c6a61e0a38397c5bc881e38872764e978013ed/,
 );
+assert.match(
+  dataPipelineFoundation,
+  /PR #25 feature HEAD\s+`7453b7f99f701c482ada7e4b7897fad71fa4306f` merged to `main` as\s+`47c6a61e0a38397c5bc881e38872764e978013ed`\./,
+  "U2.1 must record the approved PR #25 feature HEAD as merged to main",
+);
 for (const heading of [
   "### U2.4 Web and result-experience foundation",
   "### U2.5 Continuous integration",
