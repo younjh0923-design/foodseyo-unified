@@ -145,7 +145,15 @@ const assertBrowserBoundary = (file: string, source: string): void => {
 
 for (const [file, source] of [
   ["apps/web/app/page.tsx", 'import "@foodseyo/source-acquisition";'],
+  [
+    "apps/web/app/source-internal/page.tsx",
+    'import "@foodseyo/source-acquisition/internal";',
+  ],
   ["apps/web/pages/index.tsx", 'import "@foodseyo/restaurant-resolution";'],
+  [
+    "apps/web/app/restaurant-server/page.tsx",
+    'import "@foodseyo/restaurant-resolution/server";',
+  ],
   ["apps/web/middleware.ts", 'const db = require("drizzle-orm");'],
   ["apps/web/proxy.ts", 'import OpenAI from "openai";'],
   ["apps/web/app/database-probe.ts", 'import "@foodseyo/database";'],
