@@ -26,6 +26,58 @@ export {
   type TransientContentIdentityPort,
   type TransientDiscoveredMenuSource,
 } from "./foundation.js";
+export {
+  InMemoryMenuCacheBodyRepository,
+  InMemoryMenuCacheRepository,
+  MENU_CACHE_COVERAGES,
+  MenuCacheBodyService,
+  MenuCacheService,
+  evaluateMenuCacheCandidates,
+  type MenuCacheCandidate,
+  type MenuCacheBody,
+  type MenuCacheBodyLookupOutcome,
+  type MenuCacheBodyRepository,
+  type MenuCacheCoverage,
+  type MenuCacheLookupOutcome,
+  type MenuCacheRepository,
+  type MenuCacheRepositoryLookup,
+} from "./menu-cache.js";
+export {
+  MenuAcquisitionReuseService,
+  type MenuAcquisitionReuseInput,
+  type MenuAcquisitionReuseOutcome,
+} from "./menu-acquisition-reuse.js";
+export {
+  MenuAcquisitionStrategy,
+  decideMenuAcquisitionStrategy,
+} from "./menu-acquisition-strategy.js";
+export {
+  MenuAcquisitionStrategyExecutionService,
+  type MenuAcquisitionStrategyExecutionInput,
+  type MenuAcquisitionStrategyExecutionOutcome,
+} from "./menu-acquisition-strategy-execution.js";
+export {
+  FakeOfficialMenuSourceDiscovery,
+  OFFICIAL_MENU_SOURCE_KINDS,
+  OfficialMenuSourceDiscoveryService,
+  type OfficialMenuSourceCandidate,
+  type OfficialMenuSourceDiscovery,
+  type OfficialMenuSourceDiscoveryRequest,
+  type OfficialMenuSourceKind,
+} from "./official-menu-source-discovery.js";
+export {
+  FakeUploadedImageClassifier,
+  MIN_UPLOADED_IMAGE_CLASSIFICATION_CONFIDENCE,
+  UPLOADED_IMAGE_CROP_COMPLETENESS,
+  UploadedImageReuseService,
+  classifyUploadedImageReuse,
+  type UploadedImageClassifier,
+  type UploadedImageCropCompleteness,
+  type UploadedImageObservation,
+  type UploadedImageReference,
+  type UploadedImageReuseClassification,
+  type UploadedImageReuseOutcome,
+} from "./uploaded-image-classification.js";
 
 export class FakeMenuSourceAcquisitionPort
   implements MenuSourceAcquisitionPort
