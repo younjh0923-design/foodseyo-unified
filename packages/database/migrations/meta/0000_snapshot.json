@@ -1,0 +1,1286 @@
+{
+  "id": "adc37db0-ec9e-4ada-ad3b-94cda02a7228",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.analysis_contracts": {
+      "name": "analysis_contracts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "model_version": {
+          "name": "model_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_schema_version": {
+          "name": "provider_schema_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "menu_source_version": {
+          "name": "menu_source_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "restaurant_resolution_version": {
+          "name": "restaurant_resolution_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "compact_extraction_version": {
+          "name": "compact_extraction_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analysis_snapshot_version": {
+          "name": "analysis_snapshot_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consistency_version": {
+          "name": "consistency_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dish_knowledge_version": {
+          "name": "dish_knowledge_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "merge_policy_version": {
+          "name": "merge_policy_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "explanation_renderer_version": {
+          "name": "explanation_renderer_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "boundary_dto_version": {
+          "name": "boundary_dto_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "module_interface_version": {
+          "name": "module_interface_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exact_cache_key_version": {
+          "name": "exact_cache_key_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "analysis_contracts_semantic_vector_uq": {
+          "name": "analysis_contracts_semantic_vector_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "model_version",
+            "prompt_version",
+            "provider_schema_version",
+            "menu_source_version",
+            "restaurant_resolution_version",
+            "compact_extraction_version",
+            "analysis_snapshot_version",
+            "consistency_version",
+            "dish_knowledge_version",
+            "merge_policy_version",
+            "explanation_renderer_version",
+            "boundary_dto_version",
+            "module_interface_version",
+            "exact_cache_key_version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "analysis_contracts_versions_nonblank_ck": {
+          "name": "analysis_contracts_versions_nonblank_ck",
+          "value": "btrim(\"analysis_contracts\".\"model_version\") <> ''\n        and btrim(\"analysis_contracts\".\"prompt_version\") <> ''\n        and btrim(\"analysis_contracts\".\"provider_schema_version\") <> ''\n        and btrim(\"analysis_contracts\".\"menu_source_version\") <> ''\n        and btrim(\"analysis_contracts\".\"restaurant_resolution_version\") <> ''\n        and btrim(\"analysis_contracts\".\"compact_extraction_version\") <> ''\n        and btrim(\"analysis_contracts\".\"analysis_snapshot_version\") <> ''\n        and btrim(\"analysis_contracts\".\"consistency_version\") <> ''\n        and btrim(\"analysis_contracts\".\"dish_knowledge_version\") <> ''\n        and btrim(\"analysis_contracts\".\"merge_policy_version\") <> ''\n        and btrim(\"analysis_contracts\".\"explanation_renderer_version\") <> ''\n        and btrim(\"analysis_contracts\".\"boundary_dto_version\") <> ''\n        and btrim(\"analysis_contracts\".\"module_interface_version\") <> ''\n        and btrim(\"analysis_contracts\".\"exact_cache_key_version\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.analysis_runs": {
+      "name": "analysis_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "evidence_set_id": {
+          "name": "evidence_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analysis_contract_id": {
+          "name": "analysis_contract_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempt_number": {
+          "name": "attempt_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "safe_error_code": {
+          "name": "safe_error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "analysis_runs_one_processing_uq": {
+          "name": "analysis_runs_one_processing_uq",
+          "columns": [
+            {
+              "expression": "evidence_set_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "analysis_contract_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"analysis_runs\".\"status\" = 'processing'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "analysis_runs_evidence_set_id_menu_evidence_sets_id_fk": {
+          "name": "analysis_runs_evidence_set_id_menu_evidence_sets_id_fk",
+          "tableFrom": "analysis_runs",
+          "tableTo": "menu_evidence_sets",
+          "columnsFrom": [
+            "evidence_set_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "analysis_runs_analysis_contract_id_analysis_contracts_id_fk": {
+          "name": "analysis_runs_analysis_contract_id_analysis_contracts_id_fk",
+          "tableFrom": "analysis_runs",
+          "tableTo": "analysis_contracts",
+          "columnsFrom": [
+            "analysis_contract_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "analysis_runs_attempt_uq": {
+          "name": "analysis_runs_attempt_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "evidence_set_id",
+            "analysis_contract_id",
+            "attempt_number"
+          ]
+        },
+        "analysis_runs_owner_identity_uq": {
+          "name": "analysis_runs_owner_identity_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "evidence_set_id",
+            "analysis_contract_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "analysis_runs_attempt_positive_ck": {
+          "name": "analysis_runs_attempt_positive_ck",
+          "value": "\"analysis_runs\".\"attempt_number\" > 0"
+        },
+        "analysis_runs_status_ck": {
+          "name": "analysis_runs_status_ck",
+          "value": "\"analysis_runs\".\"status\" in ('processing', 'ready', 'failed_retryable', 'failed_terminal')"
+        },
+        "analysis_runs_state_shape_ck": {
+          "name": "analysis_runs_state_shape_ck",
+          "value": "(\n          \"analysis_runs\".\"status\" = 'processing'\n          and \"analysis_runs\".\"lease_expires_at\" is not null\n          and \"analysis_runs\".\"lease_expires_at\" > \"analysis_runs\".\"started_at\"\n          and \"analysis_runs\".\"finished_at\" is null\n          and \"analysis_runs\".\"safe_error_code\" is null\n        ) or (\n          \"analysis_runs\".\"status\" = 'ready'\n          and \"analysis_runs\".\"lease_expires_at\" is null\n          and \"analysis_runs\".\"finished_at\" is not null\n          and \"analysis_runs\".\"safe_error_code\" is null\n        ) or (\n          \"analysis_runs\".\"status\" in ('failed_retryable', 'failed_terminal')\n          and \"analysis_runs\".\"lease_expires_at\" is null\n          and \"analysis_runs\".\"finished_at\" is not null\n          and btrim(\"analysis_runs\".\"safe_error_code\") <> ''\n        )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.canonical_analyses": {
+      "name": "canonical_analyses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "evidence_set_id": {
+          "name": "evidence_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "analysis_contract_id": {
+          "name": "analysis_contract_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "producing_run_id": {
+          "name": "producing_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "publication_state": {
+          "name": "publication_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "restaurant_id": {
+          "name": "restaurant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "restaurant_menu_version_id": {
+          "name": "restaurant_menu_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "canonical_analysis_json": {
+          "name": "canonical_analysis_json",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "validated_at": {
+          "name": "validated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_accessed_at": {
+          "name": "last_accessed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invalidated_at": {
+          "name": "invalidated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "safe_invalidation_code": {
+          "name": "safe_invalidation_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "canonical_analyses_active_exact_uq": {
+          "name": "canonical_analyses_active_exact_uq",
+          "columns": [
+            {
+              "expression": "evidence_set_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "analysis_contract_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"canonical_analyses\".\"invalidated_at\" is null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "canonical_analyses_run_identity_fk": {
+          "name": "canonical_analyses_run_identity_fk",
+          "tableFrom": "canonical_analyses",
+          "tableTo": "analysis_runs",
+          "columnsFrom": [
+            "producing_run_id",
+            "evidence_set_id",
+            "analysis_contract_id"
+          ],
+          "columnsTo": [
+            "id",
+            "evidence_set_id",
+            "analysis_contract_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "canonical_analyses_publication_identity_uq": {
+          "name": "canonical_analyses_publication_identity_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "restaurant_id",
+            "restaurant_menu_version_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "canonical_analyses_publication_state_ck": {
+          "name": "canonical_analyses_publication_state_ck",
+          "value": "\"canonical_analyses\".\"publication_state\" in ('analysis_only', 'eligible')"
+        },
+        "canonical_analyses_identity_shape_ck": {
+          "name": "canonical_analyses_identity_shape_ck",
+          "value": "(\n          \"canonical_analyses\".\"publication_state\" = 'analysis_only'\n          and \"canonical_analyses\".\"restaurant_id\" is null\n          and \"canonical_analyses\".\"restaurant_menu_version_id\" is null\n        ) or (\n          \"canonical_analyses\".\"publication_state\" = 'eligible'\n          and \"canonical_analyses\".\"restaurant_id\" is not null\n          and \"canonical_analyses\".\"restaurant_menu_version_id\" is not null\n        )"
+        },
+        "canonical_analyses_json_shape_ck": {
+          "name": "canonical_analyses_json_shape_ck",
+          "value": "jsonb_typeof(\"canonical_analyses\".\"canonical_analysis_json\") = 'object'\n        and \"canonical_analyses\".\"canonical_analysis_json\" ->> 'analysisId' = \"canonical_analyses\".\"id\"::text\n        and \"canonical_analyses\".\"canonical_analysis_json\" ->> 'publicationState' = \"canonical_analyses\".\"publication_state\"\n        and (\n          \"canonical_analyses\".\"publication_state\" = 'analysis_only'\n          or \"canonical_analyses\".\"canonical_analysis_json\" #>> '{restaurantResolution,restaurantId}' = \"canonical_analyses\".\"restaurant_id\"::text\n        )\n        and (\n          \"canonical_analyses\".\"publication_state\" = 'analysis_only'\n          or \"canonical_analyses\".\"canonical_analysis_json\" #>> '{menuVersion,menuVersionId}' = \"canonical_analyses\".\"restaurant_menu_version_id\"::text\n        )"
+        },
+        "canonical_analyses_lifetime_ck": {
+          "name": "canonical_analyses_lifetime_ck",
+          "value": "\"canonical_analyses\".\"expires_at\" > \"canonical_analyses\".\"created_at\"\n        and (\n          (\"canonical_analyses\".\"invalidated_at\" is null and \"canonical_analyses\".\"safe_invalidation_code\" is null)\n          or (\"canonical_analyses\".\"invalidated_at\" is not null and btrim(\"canonical_analyses\".\"safe_invalidation_code\") <> '')\n        )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.dishes": {
+      "name": "dishes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_name": {
+          "name": "normalized_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "dishes_display_name_idx": {
+          "name": "dishes_display_name_idx",
+          "columns": [
+            {
+              "expression": "display_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "dishes_normalized_name_idx": {
+          "name": "dishes_normalized_name_idx",
+          "columns": [
+            {
+              "expression": "normalized_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "dishes_names_nonblank_ck": {
+          "name": "dishes_names_nonblank_ck",
+          "value": "btrim(\"dishes\".\"display_name\") <> '' and btrim(\"dishes\".\"normalized_name\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.menu_evidence_sets": {
+      "name": "menu_evidence_sets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "source_ref": {
+          "name": "source_ref",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_type": {
+          "name": "source_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_fingerprint": {
+          "name": "source_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_identity_version": {
+          "name": "evidence_identity_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "collected_at": {
+          "name": "collected_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "menu_evidence_sets_source_ref_uq": {
+          "name": "menu_evidence_sets_source_ref_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "source_ref"
+          ]
+        },
+        "menu_evidence_sets_exact_identity_uq": {
+          "name": "menu_evidence_sets_exact_identity_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "source_fingerprint",
+            "evidence_identity_version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "menu_evidence_sets_source_type_ck": {
+          "name": "menu_evidence_sets_source_type_ck",
+          "value": "\"menu_evidence_sets\".\"source_type\" in ('uploaded_menu', 'official_website', 'official_pdf', 'ordering_page', 'web_search_discovery')"
+        },
+        "menu_evidence_sets_identity_nonblank_ck": {
+          "name": "menu_evidence_sets_identity_nonblank_ck",
+          "value": "btrim(\"menu_evidence_sets\".\"source_fingerprint\") <> '' and btrim(\"menu_evidence_sets\".\"evidence_identity_version\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.menu_item_dish_matches": {
+      "name": "menu_item_dish_matches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "menu_item_id": {
+          "name": "menu_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dish_candidate_id": {
+          "name": "dish_candidate_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dish_id": {
+          "name": "dish_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "decision_kind": {
+          "name": "decision_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewer_ref": {
+          "name": "reviewer_ref",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rule_version": {
+          "name": "rule_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "menu_item_dish_matches_menu_item_id_menu_items_id_fk": {
+          "name": "menu_item_dish_matches_menu_item_id_menu_items_id_fk",
+          "tableFrom": "menu_item_dish_matches",
+          "tableTo": "menu_items",
+          "columnsFrom": [
+            "menu_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "menu_item_dish_matches_dish_id_dishes_id_fk": {
+          "name": "menu_item_dish_matches_dish_id_dishes_id_fk",
+          "tableFrom": "menu_item_dish_matches",
+          "tableTo": "dishes",
+          "columnsFrom": [
+            "dish_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "menu_item_dish_matches_candidate_uq": {
+          "name": "menu_item_dish_matches_candidate_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "menu_item_id",
+            "dish_candidate_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "menu_item_dish_matches_state_ck": {
+          "name": "menu_item_dish_matches_state_ck",
+          "value": "\"menu_item_dish_matches\".\"state\" in ('candidate', 'matched', 'rejected', 'unresolved')"
+        },
+        "menu_item_dish_matches_decision_kind_ck": {
+          "name": "menu_item_dish_matches_decision_kind_ck",
+          "value": "\"menu_item_dish_matches\".\"decision_kind\" is null or \"menu_item_dish_matches\".\"decision_kind\" in ('human_reviewed', 'deterministic_rule')"
+        },
+        "menu_item_dish_matches_shape_ck": {
+          "name": "menu_item_dish_matches_shape_ck",
+          "value": "(\n          \"menu_item_dish_matches\".\"state\" = 'matched'\n          and \"menu_item_dish_matches\".\"dish_id\" is not null\n          and \"menu_item_dish_matches\".\"decision_kind\" is not null\n        ) or (\n          \"menu_item_dish_matches\".\"state\" = 'rejected'\n          and \"menu_item_dish_matches\".\"dish_id\" is null\n          and \"menu_item_dish_matches\".\"decision_kind\" is not null\n        ) or (\n          \"menu_item_dish_matches\".\"state\" in ('candidate', 'unresolved')\n          and \"menu_item_dish_matches\".\"dish_id\" is null\n          and \"menu_item_dish_matches\".\"decision_kind\" is null\n        )"
+        },
+        "menu_item_dish_matches_decision_shape_ck": {
+          "name": "menu_item_dish_matches_decision_shape_ck",
+          "value": "(\n          \"menu_item_dish_matches\".\"decision_kind\" is null\n          and \"menu_item_dish_matches\".\"reviewer_ref\" is null\n          and \"menu_item_dish_matches\".\"rule_version\" is null\n          and \"menu_item_dish_matches\".\"decided_at\" is null\n        ) or (\n          \"menu_item_dish_matches\".\"decision_kind\" = 'human_reviewed'\n          and \"menu_item_dish_matches\".\"reviewer_ref\" is not null\n          and \"menu_item_dish_matches\".\"rule_version\" is null\n          and \"menu_item_dish_matches\".\"decided_at\" is not null\n        ) or (\n          \"menu_item_dish_matches\".\"decision_kind\" = 'deterministic_rule'\n          and \"menu_item_dish_matches\".\"reviewer_ref\" is null\n          and btrim(\"menu_item_dish_matches\".\"rule_version\") <> ''\n          and \"menu_item_dish_matches\".\"decided_at\" is not null\n        )"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.menu_items": {
+      "name": "menu_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "restaurant_menu_version_id": {
+          "name": "restaurant_menu_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "restaurant_id": {
+          "name": "restaurant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section_index": {
+          "name": "section_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_index": {
+          "name": "item_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_minor_units": {
+          "name": "price_minor_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_currency": {
+          "name": "price_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "option_texts": {
+          "name": "option_texts",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "menu_items_menu_restaurant_fk": {
+          "name": "menu_items_menu_restaurant_fk",
+          "tableFrom": "menu_items",
+          "tableTo": "restaurant_menu_versions",
+          "columnsFrom": [
+            "restaurant_menu_version_id",
+            "restaurant_id"
+          ],
+          "columnsTo": [
+            "id",
+            "restaurant_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "menu_items_position_uq": {
+          "name": "menu_items_position_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "restaurant_menu_version_id",
+            "section_index",
+            "item_index"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "menu_items_shape_ck": {
+          "name": "menu_items_shape_ck",
+          "value": "\"menu_items\".\"section_index\" >= 0\n        and \"menu_items\".\"item_index\" >= 0\n        and btrim(\"menu_items\".\"name\") <> ''\n        and (\"menu_items\".\"description\" is null or btrim(\"menu_items\".\"description\") <> '')\n        and (\n          (\"menu_items\".\"price_minor_units\" is null and \"menu_items\".\"price_currency\" is null)\n          or (\n            \"menu_items\".\"price_minor_units\" >= 0\n            and \"menu_items\".\"price_currency\" ~ '^[A-Z]{3}$'\n          )\n        )\n        and array_position(\"menu_items\".\"option_texts\", null) is null\n        and array_position(\"menu_items\".\"option_texts\", '') is null"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.publication_receipts": {
+      "name": "publication_receipts",
+      "schema": "",
+      "columns": {
+        "analysis_id": {
+          "name": "analysis_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "restaurant_id": {
+          "name": "restaurant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "restaurant_menu_version_id": {
+          "name": "restaurant_menu_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "operation_id": {
+          "name": "operation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contract_version": {
+          "name": "contract_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "publication_receipts_analysis_identity_fk": {
+          "name": "publication_receipts_analysis_identity_fk",
+          "tableFrom": "publication_receipts",
+          "tableTo": "canonical_analyses",
+          "columnsFrom": [
+            "analysis_id",
+            "restaurant_id",
+            "restaurant_menu_version_id"
+          ],
+          "columnsTo": [
+            "id",
+            "restaurant_id",
+            "restaurant_menu_version_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "publication_receipts_menu_restaurant_fk": {
+          "name": "publication_receipts_menu_restaurant_fk",
+          "tableFrom": "publication_receipts",
+          "tableTo": "restaurant_menu_versions",
+          "columnsFrom": [
+            "restaurant_menu_version_id",
+            "restaurant_id"
+          ],
+          "columnsTo": [
+            "id",
+            "restaurant_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "publication_receipts_operation_uq": {
+          "name": "publication_receipts_operation_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "operation_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "publication_receipts_contract_version_ck": {
+          "name": "publication_receipts_contract_version_ck",
+          "value": "\"publication_receipts\".\"contract_version\" = 'module-interfaces/1.0.0'"
+        },
+        "publication_receipts_status_ck": {
+          "name": "publication_receipts_status_ck",
+          "value": "\"publication_receipts\".\"status\" = 'published'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.restaurant_external_references": {
+      "name": "restaurant_external_references",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "restaurant_id": {
+          "name": "restaurant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "restaurant_external_references_restaurant_id_restaurants_id_fk": {
+          "name": "restaurant_external_references_restaurant_id_restaurants_id_fk",
+          "tableFrom": "restaurant_external_references",
+          "tableTo": "restaurants",
+          "columnsFrom": [
+            "restaurant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "restaurant_external_refs_provider_external_uq": {
+          "name": "restaurant_external_refs_provider_external_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "provider",
+            "external_id"
+          ]
+        },
+        "restaurant_external_refs_restaurant_provider_uq": {
+          "name": "restaurant_external_refs_restaurant_provider_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "restaurant_id",
+            "provider"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "restaurant_external_refs_provider_ck": {
+          "name": "restaurant_external_refs_provider_ck",
+          "value": "\"restaurant_external_references\".\"provider\" = 'google_places'"
+        },
+        "restaurant_external_refs_external_nonblank_ck": {
+          "name": "restaurant_external_refs_external_nonblank_ck",
+          "value": "btrim(\"restaurant_external_references\".\"external_id\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.restaurant_menu_versions": {
+      "name": "restaurant_menu_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "restaurant_id": {
+          "name": "restaurant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "evidence_set_id": {
+          "name": "evidence_set_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "menu_scope": {
+          "name": "menu_scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_ordinal": {
+          "name": "version_ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "collected_at": {
+          "name": "collected_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valid_until": {
+          "name": "valid_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "supersedes_menu_version_id": {
+          "name": "supersedes_menu_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "restaurant_menu_versions_one_active_uq": {
+          "name": "restaurant_menu_versions_one_active_uq",
+          "columns": [
+            {
+              "expression": "restaurant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "menu_scope",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"restaurant_menu_versions\".\"state\" = 'active'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "restaurant_menu_versions_restaurant_id_restaurants_id_fk": {
+          "name": "restaurant_menu_versions_restaurant_id_restaurants_id_fk",
+          "tableFrom": "restaurant_menu_versions",
+          "tableTo": "restaurants",
+          "columnsFrom": [
+            "restaurant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "restaurant_menu_versions_evidence_set_id_menu_evidence_sets_id_fk": {
+          "name": "restaurant_menu_versions_evidence_set_id_menu_evidence_sets_id_fk",
+          "tableFrom": "restaurant_menu_versions",
+          "tableTo": "menu_evidence_sets",
+          "columnsFrom": [
+            "evidence_set_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "restaurant_menu_versions_predecessor_fk": {
+          "name": "restaurant_menu_versions_predecessor_fk",
+          "tableFrom": "restaurant_menu_versions",
+          "tableTo": "restaurant_menu_versions",
+          "columnsFrom": [
+            "supersedes_menu_version_id",
+            "restaurant_id"
+          ],
+          "columnsTo": [
+            "id",
+            "restaurant_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "restaurant_menu_versions_id_restaurant_uq": {
+          "name": "restaurant_menu_versions_id_restaurant_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "restaurant_id"
+          ]
+        },
+        "restaurant_menu_versions_ordinal_uq": {
+          "name": "restaurant_menu_versions_ordinal_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "restaurant_id",
+            "menu_scope",
+            "version_ordinal"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "restaurant_menu_versions_scope_ck": {
+          "name": "restaurant_menu_versions_scope_ck",
+          "value": "\"restaurant_menu_versions\".\"menu_scope\" in ('default', 'all_day', 'breakfast', 'brunch', 'lunch', 'dinner', 'drinks', 'dessert', 'happy_hour', 'kids', 'late_night', 'seasonal')"
+        },
+        "restaurant_menu_versions_state_ck": {
+          "name": "restaurant_menu_versions_state_ck",
+          "value": "\"restaurant_menu_versions\".\"state\" in ('draft', 'active', 'stale', 'superseded', 'retired')"
+        },
+        "restaurant_menu_versions_lifetime_ck": {
+          "name": "restaurant_menu_versions_lifetime_ck",
+          "value": "\"restaurant_menu_versions\".\"version_ordinal\" > 0\n        and (\"restaurant_menu_versions\".\"valid_until\" is null or \"restaurant_menu_versions\".\"valid_until\" > \"restaurant_menu_versions\".\"valid_from\")\n        and (\"restaurant_menu_versions\".\"supersedes_menu_version_id\" is null or \"restaurant_menu_versions\".\"supersedes_menu_version_id\" <> \"restaurant_menu_versions\".\"id\")"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.restaurants": {
+      "name": "restaurants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "restaurants_display_name_nonblank_ck": {
+          "name": "restaurants_display_name_nonblank_ck",
+          "value": "btrim(\"restaurants\".\"display_name\") <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

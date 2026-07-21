@@ -114,7 +114,10 @@ assert.match(
   decisionLog,
   /## U-016 - Next\.js web application platform candidate/u,
 );
-assert.match(decisionLog, /Candidate - exact contract PR approval pending/u);
+assert.match(
+  decisionLog,
+  /9ef6b510c1ad8ab4465b59044913723ff11d8742[\s\S]*045b42b0da419e96366488380e5a953f28c11b06[\s\S]*\*\*Status:\*\* Accepted/u,
+);
 
 const sourceFiles: string[] = [];
 const ignoredSourceDirectories = new Set([".next", "node_modules"]);

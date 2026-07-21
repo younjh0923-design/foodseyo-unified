@@ -358,7 +358,62 @@
   lockfile baseline while explicitly disabling the optional `sharp` install
   script. It authorizes no route, component, Preview, Production, Vercel
   configuration, or deployment before exact-HEAD approval and merge.
-- **Approval evidence:** Youn, YTW, and Juhyung approved the complete Issue #20
-  direction. Exact contract PR approval and merge remain required.
-- **Status:** Candidate - exact contract PR approval pending
+- **Approval evidence:** Youn, YTW, and Juhyung approved exact PR #31 HEAD
+  `9ef6b510c1ad8ab4465b59044913723ff11d8742`. PR #31 merged to `main` as
+  `045b42b0da419e96366488380e5a953f28c11b06`; Issue #20 then moved to
+  `status:merged` and closed.
+- **Status:** Accepted
+- **Date:** 2026-07-21
+
+## U-017 - Implement the bounded MVP persistence vertical slice
+
+- **Decision:** Implement DB-1 through DB-4 in one Draft PR using exactly
+  `analysis_contracts`, `menu_evidence_sets`, `analysis_runs`,
+  `canonical_analyses`, `restaurants`, `restaurant_external_references`,
+  `restaurant_menu_versions`, `menu_items`, `dishes`,
+  `menu_item_dish_matches`, and `publication_receipts`.
+- **Cache and ownership:** Exact identity combines the transient evidence
+  identity with the complete semantic version vector. Unique-insert ownership,
+  application-generated run IDs, leases, bounded waiting, guarded
+  compare-and-swap transitions, retryable/terminal failure, and stale-owner
+  rejection are required without a generalized queue or lock framework.
+- **Persistence boundary:** DB-3 persists only `analysis_only` canonical
+  results and creates no restaurant, menu, Dish, match, or receipt row. An
+  `eligible` result becomes reusable only when DB-4 atomically writes its
+  branch-confirmed relational projection and matching receipt.
+- **Restaurant identity:** Restaurant means one physical branch. Google Place
+  ID remains a unique external reference and never the Foodseyo primary key.
+  Existing Place IDs reuse the committed restaurant UUID; a concurrent winner
+  requires rollback, canonical rebuild/revalidation, and retry rather than a
+  projection-only identity rewrite.
+- **Receipt compatibility:** Frozen `module-interfaces/1.0.0`
+  `PublicationReceipt` remains exactly `contractVersion`, `analysisId`,
+  `menuVersionId`, `status`, and `publishedAt`. Internal receipt columns do not
+  expand the public DTO.
+- **Dependency correction:** PR #27 is not a prerequisite for core database
+  implementation. Contract-shaped confirmed-restaurant fixtures are used until
+  its adapter and this implementation share a common `main`.
+- **Rollout:** DB-2 may generate but not apply the migration. DB-5 Neon
+  Development migration and test-row mutation require a separate explicit
+  owner instruction. Preview and Production remain unauthorized.
+- **DB-2 evidence:** The Drizzle schema and generated migration contain exactly
+  the eleven approved tables, one JSONB canonical payload, application-supplied
+  UUIDs, closed text checks, the required menu-version composite uniqueness,
+  both receipt integrity foreign keys, and an exact frozen receipt-version
+  check. Static parity validation runs in the repository integration suite; the
+  migration remains unapplied.
+- **DB-3 evidence:** The provider-independent repository resolves exact
+  identities, elects a single application-generated run owner, bounds duplicate
+  waiting, replaces expired leases, records retryable or terminal outcomes, and
+  rejects stale owner writes through guarded compare-and-swap. The menu-only
+  operation accepts only a runtime-validated `analysis_only` canonical value and
+  leaves all seven publication-side table counts at zero in deterministic tests.
+- **DB-4 evidence:** The minimal publication API reuses an existing Google Place
+  binding, reserves an application UUID otherwise, and rebuilds/revalidates the
+  immutable canonical value if a concurrent transaction wins. Eligible
+  canonical data, menu lifecycle, items, Dish identities, matches, and the
+  internal receipt commit atomically. Three pre-commit fault points roll back
+  completely; simulated response loss after commit recovers the identical
+  runtime-validated frozen five-field receipt without duplicates.
+- **Status:** Accepted implementation baseline
 - **Date:** 2026-07-21
