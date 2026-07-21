@@ -108,7 +108,7 @@ assert.match(sharedContracts, /exact contract PR receives all-owner approval/u);
 const decisionLog = await readFile(resolve("docs/DECISION_LOG.md"), "utf8");
 assert.match(
   decisionLog,
-  /## U-015 - Next\.js web application platform candidate/u,
+  /## U-016 - Next\.js web application platform candidate/u,
 );
 assert.match(decisionLog, /Candidate - exact contract PR approval pending/u);
 

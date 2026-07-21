@@ -82,11 +82,12 @@ Every Codex task starts by reading:
 5. `docs/SENSORY_VOCABULARY.md`
 6. `docs/BOUNDARY_DTOS.md`
 7. `docs/MODULE_INTERFACES.md`
-8. `docs/CONTRACT_CHANGE_GUIDE.md`
-9. `docs/CONTRACT_CHANGE_QUEUE.md`
-10. the assigned task in `docs/TASK_MASTER.md`
-11. `docs/TEAM_OWNERSHIP.md`
-12. the owning package README and tests
+8. `docs/WEB_EXPERIENCE.md`
+9. `docs/CONTRACT_CHANGE_GUIDE.md`
+10. `docs/CONTRACT_CHANGE_QUEUE.md`
+11. the assigned task in `docs/TASK_MASTER.md`
+12. `docs/TEAM_OWNERSHIP.md`
+13. the owning package README and tests
 
 Before implementation, every Codex task refreshes GitHub state and scans the
 complete open contract-change queue. It then deeply reviews only proposals in

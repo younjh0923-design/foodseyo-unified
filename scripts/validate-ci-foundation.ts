@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import { access, readdir, readFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
+import {
+  WEB_EXPERIENCE_VERSION,
+  WebExperienceUiSafeOperationalEventSchema,
+} from "@foodseyo/contracts/web-experience";
+
 type JsonObject = Record<string, unknown>;
 type PackageManifest = {
   readonly name?: string;
@@ -88,6 +93,7 @@ const requiredRootScripts = [
   "typecheck",
   "validate:contracts",
   "validate:boundary-dtos",
+  "validate:web-experience",
   "validate:module-interfaces",
   "validate:source-acquisition",
   "validate:restaurant-resolution",
@@ -109,6 +115,11 @@ for (const scriptName of requiredRootScripts) {
     `root package is missing ${scriptName}`,
   );
 }
+assert.equal(WEB_EXPERIENCE_VERSION, "web-experience/0.1.0");
+assert.equal(
+  typeof WebExperienceUiSafeOperationalEventSchema.safeParse,
+  "function",
+);
 for (const requiredInvocation of [
   "pnpm typecheck",
   "pnpm test",
@@ -133,8 +144,8 @@ assert.equal(
 );
 assert.equal(
   rootManifest.scripts["test:unit"],
-  "pnpm validate:contracts && pnpm validate:boundary-dtos",
-  "unit validation must preserve contracts and boundary DTO checks",
+  "pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:web-experience",
+  "unit validation must preserve contracts, boundary DTOs, and web-experience checks",
 );
 assert.equal(
   rootManifest.scripts["test:integration"],
@@ -333,6 +344,14 @@ for (const name of dependencyGraph.keys()) {
 
 const contractPackage = packageByName.get("@foodseyo/contracts");
 assert(contractPackage);
+assert(
+  isRecord(contractPackage.manifest.exports),
+  "@foodseyo/contracts exports map is required",
+);
+assert.equal(
+  contractPackage.manifest.exports["./web-experience"],
+  "./src/web-experience.ts",
+);
 const contractDeclarations = new Set<string>();
 for (const file of await sourceFiles(join(contractPackage.directory, "src"))) {
   const content = await readFile(file, "utf8");

@@ -1276,32 +1276,66 @@ assert.match(webFoundation, /Issue #21/);
 assert.match(webFoundation, /all-owner proposal approval/);
 assert.match(
   webFoundation,
-  /cannot consume it before the exact contract PR is approved and merged/,
+  /PR #30 is merged[\s\S]+web-experience\/0\.1\.0[\s\S]+available to dependent feature code/,
+);
+assert.match(
+  webFoundation,
+  /platform candidate[\s\S]+cannot consume that platform candidate before the exact contract PR is[\s\S]+approved and merged/,
 );
 assertTaskStatus(
   taskMaster,
   "### U2.5 Continuous integration",
-  "REVIEW",
+  "DONE",
+);
+const continuousIntegrationFoundation = markdownTaskSection(
+  taskMaster,
+  "### U2.5 Continuous integration",
+);
+assert.match(
+  continuousIntegrationFoundation,
+  /PR #26 feature HEAD\s+`e0a0ed6fae816e373efbc3afdb09f7ac4b79fc1b` merged to `main` as\s+`da66876fa5026db80921f50b50987361f7040fed`\./,
+  "U2.5 must record the approved PR #26 feature HEAD as merged to main",
 );
 const immediateNextAction = markdownTaskSection(
   taskMaster,
   "## Immediate next action",
 );
 assert.match(immediateNextAction, /current platform-contract action is Issue #20/i);
+assert.match(immediateNextAction, /U2 Core Integration is complete\./);
 assert.match(
   immediateNextAction,
-  /`contracts\/issue-20-web-platform`[\s\S]+`da66876fa5026db80921f50b50987361f7040fed`/,
+  /`contracts\/issue-20-web-platform`[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
 );
 assert.match(
   immediateNextAction,
   /Next\.js `16\.2\.10`[\s\S]+React `19\.2\.7`[\s\S]+React DOM `19\.2\.7` candidate remains unavailable/,
 );
-assert.match(immediateNextAction, /Draft PR #28 remains preserved/);
-assert.match(immediateNextAction, /Draft PR #30 remains a separate Issue #21/);
-assert.doesNotMatch(
+assert.match(
+  immediateNextAction,
+  /PR #30 exact HEAD[\s\S]+`913458fcb2497bf424c3a330826e131101fcfc34`[\s\S]+merged to canonical `main` as[\s\S]+`c04305e421657863d3c0c06fdfe3f90192a1593f`/,
+);
+assert.match(
+  immediateNextAction,
+  /`web-experience\/0\.1\.0` candidate is available to dependent feature code/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #28's docs-only S1\.6 policy approval remains merged[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
+);
+assert.match(
+  immediateNextAction,
+  /PR #31 receives exact-HEAD all-owner[\s\S]+approval and merges/,
+);
+assert.match(immediateNextAction, /S1 implementation has not started\./);
+assert.match(
+  immediateNextAction,
+  /does not authorize UI code or[\s\S]+production explanation-renderer integration/i,
+);assert.doesNotMatch(
   immediateNextAction,
   /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,
 );
+assert.doesNotMatch(immediateNextAction, /PR #26/i);
+assert.doesNotMatch(immediateNextAction, /U2\.5 remains in review/i);
 assert.doesNotMatch(immediateNextAction, /current integration target is PR #24/i);
 assert.doesNotMatch(immediateNextAction, /next integration target is PR #26/i);
 assert.doesNotMatch(immediateNextAction, /Start[\s\S]{0,80}\bS1\./);

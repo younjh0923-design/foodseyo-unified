@@ -18,3 +18,11 @@ export const CONTRACT_VERSIONS = {
 
 export type ContractName = keyof typeof CONTRACT_VERSIONS;
 export type ContractVersion = (typeof CONTRACT_VERSIONS)[ContractName];
+
+export const CANDIDATE_CONTRACT_VERSIONS = {
+  webExperience: "web-experience/0.1.0",
+} as const;
+
+export type CandidateContractName = keyof typeof CANDIDATE_CONTRACT_VERSIONS;
+export type CandidateContractVersion =
+  (typeof CANDIDATE_CONTRACT_VERSIONS)[CandidateContractName];

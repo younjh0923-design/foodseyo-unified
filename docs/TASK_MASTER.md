@@ -202,6 +202,9 @@ Execution order:
 U2 starts only after U1.6 is `DONE`. U2.1, U2.2, U2.3, and U2.4 then run in
 parallel against the frozen interfaces and deterministic fakes.
 
+U2 Core Integration is complete. U2.1 through U2.5 are merged into `main` and
+marked `DONE`.
+
 ### U2.1 Data and pipeline foundation
 
 - **Owner:** Youn
@@ -285,13 +288,12 @@ parallel against the frozen interfaces and deterministic fakes.
   presentation projections, evidence/unknown labeling, safe outcome/error
   handling, accessibility requirements, and deterministic fake-port tests are
   implemented on `ui/result-experience-foundation`.
-- **Current blockers:** Issue #20 has all-owner proposal approval and its exact
-  Next.js/React platform candidate is being implemented on
-  `contracts/issue-20-web-platform`; rendered components and browser QA still
-  cannot consume it before the exact contract PR is approved and merged.
-  Server-bound photo/link intake plus official-source and Web Search progress
-  remain separately gated by the Issue #21 candidate and its own exact contract
-  PR.
+- **Current blockers:** Issue #21 exact contract PR #30 is merged to `main`, so
+  its `web-experience/0.1.0` candidate is available to dependent feature code.
+  Issue #20 retains all-owner proposal approval and its exact Next.js/React
+  platform candidate is under review on PR #31; rendered components and browser
+  QA cannot consume that platform candidate before the exact contract PR is
+  approved and merged.
 - **Completion evidence:** PR #24 feature HEAD
   `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
   `952b357fba526068a11597f490eea61fcccbba58`.
@@ -301,7 +303,7 @@ parallel against the frozen interfaces and deterministic fakes.
 - **Owner:** Youn
 - **Branch:** `ci/u2-validation-foundation`
 - **Dependency:** U1.6
-- **Status:** REVIEW
+- **Status:** DONE
 - **Scope:** lockfile install, lint, typecheck, unit/integration tests, build,
   secret-pattern validation, and repository review-enforcement reevaluation.
 - **Acceptance:** required checks run on every PR; provider network is denied in
@@ -311,6 +313,9 @@ parallel against the frozen interfaces and deterministic fakes.
   fixture, security, workflow, and network-denial checks are executable.
   Lint and Production build remain explicitly deferred because the repository
   has no approved command for either on the U1.6 baseline.
+- **Completion evidence:** PR #26 feature HEAD
+  `e0a0ed6fae816e373efbc3afdb09f7ac4b79fc1b` merged to `main` as
+  `da66876fa5026db80921f50b50987361f7040fed`.
 
 ## Milestone S1 - Submission vertical slice
 
@@ -560,13 +565,20 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-The current platform-contract action is Issue #20 on
-`contracts/issue-20-web-platform`, created from current `main` at
-`da66876fa5026db80921f50b50987361f7040fed`. Its exact Next.js `16.2.10`,
-React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
-dependent framework implementation until its dedicated exact-HEAD contract PR
-receives all-owner approval and merges.
+U2 Core Integration is complete. The Issue #21 contract action on
+`contracts/issue-21-web-experience` is complete: PR #30 exact HEAD
+`913458fcb2497bf424c3a330826e131101fcfc34` merged to canonical `main` as
+`c04305e421657863d3c0c06fdfe3f90192a1593f`, so the approved
+`web-experience/0.1.0` candidate is available to dependent feature code.
 
-Draft PR #28 remains preserved on `design/s1-6-explanation-policy` and is not
-a dependency for Issue #20. Draft PR #30 remains a separate Issue #21 contract
-candidate; neither draft is completed before this platform-contract work.
+PR #28's docs-only S1.6 policy approval remains merged in canonical `main` at
+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`. It does not authorize UI code or
+production explanation-renderer integration before the remaining contract and
+canonical-fixture gates complete.
+
+The current platform-contract action is Issue #20 on
+`contracts/issue-20-web-platform`, synchronized with canonical `main` at
+`c04305e421657863d3c0c06fdfe3f90192a1593f`. Its exact Next.js `16.2.10`,
+React `19.2.7`, and React DOM `19.2.7` candidate remains unavailable to
+dependent framework implementation until PR #31 receives exact-HEAD all-owner
+approval and merges. S1 implementation has not started.

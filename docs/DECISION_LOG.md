@@ -312,7 +312,32 @@
 - **Status:** Accepted
 - **Date:** 2026-07-19
 
-## U-015 - Next.js web application platform candidate
+## U-015 - Sensitive intake and UI-safe acquisition progress candidate
+
+- **Decision direction:** Add a dedicated `web-experience/0.1.0` candidate
+  with `SubmissionIntakeRequest` and `UiWorkflowProgress`.
+- **Sensitive boundary:** Intake permits a user link, opaque transient photo
+  handles, or both, rejects empty input, and leaves correlation solely in
+  `PortInvocationContext`. Raw input cannot enter logs, errors, persistence,
+  cache identity, observability content, progress, or UI responses.
+- **Progress boundary:** UI progress is limited to official-source lookup or
+  Web Search fallback within `source_acquisition`, using only `in_progress`
+  or phase-local `complete`. It cannot duplicate confirmation, failure,
+  timeout, canonical success, publication, or final workflow result meaning.
+- **Compatibility:** The dedicated public entry point adds a candidate-only
+  UI-safe event union and port. Frozen `module-interfaces/1.0.0`
+  `UiSafeOperationalEvent`, `UiOperationalEventPort`, and their runtime schema
+  remain unchanged, as do frozen DTO, error, outcome, invocation, persistence,
+  cache, environment, and provider meanings.
+- **Operational scope:** Network-free schemas, fixtures, and fakes only. No
+  provider, database, migration, Preview, Production, Vercel, or deployment
+  action is authorized.
+- **Approval evidence:** Youn, YTW, and Juhyung approved the complete revised
+  Issue #21 direction. Exact contract PR approval and merge remain required.
+- **Status:** Candidate - exact contract PR approval pending
+- **Date:** 2026-07-21
+
+## U-016 - Next.js web application platform candidate
 
 - **Decision direction:** Freeze the `apps/web` application baseline as
   Next.js App Router `16.2.10`, React `19.2.7`, and React DOM `19.2.7`.

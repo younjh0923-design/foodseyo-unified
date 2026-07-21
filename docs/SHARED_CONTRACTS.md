@@ -31,6 +31,28 @@ merges to `main`.
 
 ## Contract groups
 
+### Web-experience candidate
+
+`WEB_EXPERIENCE.md` and
+`@foodseyo/contracts/web-experience` define the approved-direction Issue #21
+candidate at `web-experience/0.1.0`. It adds a sensitive request-only
+`SubmissionIntakeRequest` and a UI-safe non-terminal `UiWorkflowProgress`.
+
+The intake supports link-only, photo-only, or combined submissions while
+rejecting empty input and keeping correlation exclusively in
+`PortInvocationContext`. Progress is limited to official-source lookup or Web
+Search fallback at `source_acquisition`, with `in_progress` or phase-local
+`complete` only. It cannot carry confirmation, failure, terminal success, raw
+input, provider detail, menu meaning, database data, or ORM types.
+
+The candidate public entry point defines its own UI-safe event union and port.
+The frozen `module-interfaces/1.0.0` `UiSafeOperationalEvent`,
+`UiOperationalEventPort`, and runtime schema remain unchanged. The candidate
+does not reinterpret the frozen restaurant, outcome, error, canonical,
+publication, persistence, cache, environment, or provider contracts. It
+remains unavailable to feature code until the exact contract PR receives
+all-owner approval and merges to `main`.
+
 ### Module interfaces
 
 `MODULE_INTERFACES.md` and
