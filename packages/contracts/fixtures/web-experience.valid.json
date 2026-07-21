@@ -1,0 +1,49 @@
+{
+  "intakeLinkOnly": {
+    "contractVersion": "web-experience/0.1.0",
+    "userSuppliedLink": "https://fixture.example/menu",
+    "uploadedPhotoHandles": [],
+    "requestedAt": "2026-07-21T14:00:00.000Z"
+  },
+  "intakePhotoOnly": {
+    "contractVersion": "web-experience/0.1.0",
+    "userSuppliedLink": null,
+    "uploadedPhotoHandles": [
+      "upload.fixture-photo-01"
+    ],
+    "requestedAt": "2026-07-21T14:00:00.000Z"
+  },
+  "intakeCombined": {
+    "contractVersion": "web-experience/0.1.0",
+    "userSuppliedLink": "https://fixture.example/restaurant",
+    "uploadedPhotoHandles": [
+      "upload.fixture-photo-01",
+      "upload.fixture-photo-02"
+    ],
+    "requestedAt": "2026-07-21T14:00:00.000Z"
+  },
+  "progressOfficialInProgress": {
+    "contractVersion": "web-experience/0.1.0",
+    "stage": "source_acquisition",
+    "phase": "official_source_lookup",
+    "state": "in_progress"
+  },
+  "progressOfficialComplete": {
+    "contractVersion": "web-experience/0.1.0",
+    "stage": "source_acquisition",
+    "phase": "official_source_lookup",
+    "state": "complete"
+  },
+  "progressWebSearchInProgress": {
+    "contractVersion": "web-experience/0.1.0",
+    "stage": "source_acquisition",
+    "phase": "web_search_fallback",
+    "state": "in_progress"
+  },
+  "progressWebSearchComplete": {
+    "contractVersion": "web-experience/0.1.0",
+    "stage": "source_acquisition",
+    "phase": "web_search_fallback",
+    "state": "complete"
+  }
+}

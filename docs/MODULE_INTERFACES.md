@@ -10,6 +10,21 @@ feature code may consume it from that frozen baseline.
 U1.5 adds no provider, database, UI, transport, deployment, or feature
 implementation. It wraps the existing U1.3 DTOs; it does not redefine them.
 
+## Candidate web-experience extension
+
+Issue #21 adds `UiWorkflowProgress` to `UiSafeOperationalEvent` as an
+additive candidate member governed by `web-experience/0.1.0`. The existing
+`module-interfaces/1.0.0` invocation, result, restaurant confirmation,
+outcome, error, analysis, and publication meanings remain unchanged.
+
+The progress member is limited to non-terminal `source_acquisition` phases.
+Confirmation remains in `RestaurantResolution`/`PublicOutcome`; failures remain
+`PublicOutcome` or `PublicErrorEnvelope`; correlation, cancellation, and
+timeout remain in `PortInvocationContext` and `UPSTREAM_TIMEOUT`.
+
+The candidate is unavailable to feature code until its exact contract PR
+receives all-owner approval and merges. See `WEB_EXPERIENCE.md`.
+
 ## Shared invocation and result discipline
 
 Every server-side port receives `PortInvocationContext` with:

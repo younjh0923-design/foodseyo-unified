@@ -1273,7 +1273,11 @@ assert.match(
 );
 assert.match(webFoundation, /Issue #20/);
 assert.match(webFoundation, /Issue #21/);
-assert.match(webFoundation, /Proposed\s+shapes are not consumed/);
+assert.match(webFoundation, /all-owner proposal approval/);
+assert.match(
+  webFoundation,
+  /feature code still\s+cannot consume it before the exact contract PR is approved and merged/,
+);
 assertTaskStatus(
   taskMaster,
   "### U2.5 Continuous integration",
@@ -1293,32 +1297,30 @@ const immediateNextAction = markdownTaskSection(
   "## Immediate next action",
 );
 assert.match(immediateNextAction, /U2 Core Integration is complete\./);
+assert.match(immediateNextAction, /current contract action is Issue #21/i);
+assert.match(
+  immediateNextAction,
+  /`contracts\/issue-21-web-experience`[\s\S]+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`/,
+);
+assert.match(
+  immediateNextAction,
+  /`web-experience\/0\.1\.0` candidate remains unavailable[\s\S]+exact-HEAD contract PR receives all-owner approval and merges/,
+);
 assertOrdered(immediateNextAction, "post-U2 contract order", [
-  "next work is the Issue #21",
-  "#20 platform contract PR",
+  "current contract action is Issue #21",
+  "following contract action is the Issue #20",
 ]);
 assert.match(
   immediateNextAction,
-  /next work is the Issue #21\s+intake\/progress contract PR/i,
+  /Issues #21 and #20 are `status:approved`/i,
 );
 assert.match(
   immediateNextAction,
-  /following work is the Issue\s+#20 platform contract PR/i,
+  /candidate\s+shapes remain unavailable[\s\S]+respective exact contract PRs receive[\s\S]+all-owner approval and merge/i,
 );
-assert.match(
-  immediateNextAction,
-  /Issue #20 remains\s+`status:proposed`/i,
-  "Issue #20 must remain status:proposed",
-);
-assert.match(
-  immediateNextAction,
-  /Issue #21 remains\s+`status:proposed`/i,
-  "Issue #21 must remain status:proposed",
-);
-assert.match(
-  immediateNextAction,
-  /proposed types\s+and shapes remain unimplemented and unused/i,
-);
+assert.match(immediateNextAction, /Issue #20 remains a separate platform contract/);
+assert.match(immediateNextAction, /S1 implementation has not started\./);
+assert.doesNotMatch(immediateNextAction, /Draft PR #28 remains preserved/);
 assert.doesNotMatch(
   immediateNextAction,
   /(?:finish|review|approve|merge|integrat\w*)[^.\n]*PR #25|PR #25[^.\n]*(?:pending|review|approve|merge|integrat\w*)/i,

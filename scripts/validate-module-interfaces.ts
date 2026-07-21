@@ -6,6 +6,7 @@ import {
   ContractValidationError,
   BOUNDARY_DTO_SCHEMAS,
   AnalysisApplicationResultSchema,
+  CANDIDATE_CONTRACT_VERSIONS,
   CONTRACT_STATUS,
   CONTRACT_VERSIONS,
   MODULE_INTERFACE_VERSION,
@@ -33,6 +34,7 @@ import {
   type RestaurantResolution,
   type SafeObservabilityEvent,
 } from "../packages/contracts/src/index.js";
+import { UiWorkflowProgressSchema } from "../packages/contracts/src/web-experience.js";
 import { FakeAnalysisPublicationPort } from "../packages/database/src/index.js";
 import { FakeDishKnowledgePort } from "../packages/dish-knowledge/src/index.js";
 import {
@@ -124,6 +126,12 @@ const publicError = parseBoundaryFixture<PublicErrorEnvelope>(
   "PublicErrorEnvelope",
   "publicErrorEnvelope",
 );
+const uiWorkflowProgress = UiWorkflowProgressSchema.parse({
+  contractVersion: CANDIDATE_CONTRACT_VERSIONS.webExperience,
+  stage: "source_acquisition",
+  phase: "official_source_lookup",
+  state: "in_progress",
+});
 
 assert(isRecord(moduleFixtures.invocationContext));
 assert(isRecord(moduleFixtures.explanation));
@@ -216,10 +224,15 @@ assert.equal(restaurantFake.callCount, 3);
 const uiEventFake = new FakeUiOperationalEventPort();
 await uiEventFake.emit(restaurantResolution, context);
 await uiEventFake.emit(publicOutcome, context);
+await uiEventFake.emit(uiWorkflowProgress, context);
 await uiEventFake.emit(publicOutcome, abortedContext);
 await uiEventFake.emit(publicOutcome, timedOutContext);
-assert.equal(uiEventFake.callCount, 4);
-assert.deepEqual(uiEventFake.events, [restaurantResolution, publicOutcome]);
+assert.equal(uiEventFake.callCount, 5);
+assert.deepEqual(uiEventFake.events, [
+  restaurantResolution,
+  publicOutcome,
+  uiWorkflowProgress,
+]);
 
 const sourceFake = new FakeMenuSourceAcquisitionPort(plan(menuSourceInput));
 assertResultStatus(

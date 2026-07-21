@@ -131,8 +131,8 @@ assert.equal(
 );
 assert.equal(
   rootManifest.scripts["test:unit"],
-  "pnpm validate:contracts && pnpm validate:boundary-dtos",
-  "unit validation must preserve contracts and boundary DTO checks",
+  "pnpm validate:contracts && pnpm validate:boundary-dtos && pnpm validate:web-experience",
+  "unit validation must preserve contracts, boundary DTOs, and web-experience checks",
 );
 assert.equal(
   rootManifest.scripts["test:integration"],

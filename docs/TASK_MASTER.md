@@ -290,8 +290,10 @@ marked `DONE`.
   implemented on `ui/result-experience-foundation`.
 - **Current blockers:** rendered components and browser QA wait for platform
   contract Issue #20; server-bound photo/link intake plus official-source and
-  Web Search progress wait for cross-workstream boundary Issue #21. Proposed
-  shapes are not consumed before their contract PRs merge.
+  Web Search progress wait for cross-workstream boundary Issue #21. Issue #21
+  has all-owner proposal approval and its `web-experience/0.1.0` candidate is
+  being implemented on `contracts/issue-21-web-experience`; feature code still
+  cannot consume it before the exact contract PR is approved and merged.
 - **Completion evidence:** PR #24 feature HEAD
   `65223f0b97ce3f4d58a1eb042d0ec390e6c5a82b` merged to `main` as
   `952b357fba526068a11597f490eea61fcccbba58`.
@@ -563,8 +565,15 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-U2 Core Integration is complete. The next work is the Issue #21
-intake/progress contract PR. After it merges, the following work is the Issue
-#20 platform contract PR. Issue #21 remains `status:proposed`; Issue #20 remains
-`status:proposed`. Their proposed types and shapes remain unimplemented and unused.
-S1 implementation has not started.
+U2 Core Integration is complete. The current contract action is Issue #21 on
+`contracts/issue-21-web-experience`, rebased onto canonical `main` at
+`142330f5b0cb7b10f820614cd76a8d01a2643ffa`. The approved-direction
+`web-experience/0.1.0` candidate remains unavailable to feature code until
+its dedicated exact-HEAD contract PR receives all-owner approval and merges.
+
+After Issue #21 merges, the following contract action is the Issue #20
+platform contract PR. Issues #21 and #20 are `status:approved`; their candidate
+shapes remain unavailable until their respective exact contract PRs receive
+all-owner approval and merge. Issue #20 remains a separate platform contract
+and does not authorize framework implementation before its own exact contract
+PR merges. S1 implementation has not started.
