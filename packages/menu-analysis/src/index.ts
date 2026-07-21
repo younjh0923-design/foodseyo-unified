@@ -35,6 +35,9 @@ import {
 } from "@foodseyo/contracts";
 
 export * from "./canonical-pipeline.js";
+export {
+  CompactMenuExtractionService,
+} from "./compact-menu-extraction-service.js";
 
 const contractValuesEqual = (left: unknown, right: unknown): boolean => {
   if (Object.is(left, right)) {
