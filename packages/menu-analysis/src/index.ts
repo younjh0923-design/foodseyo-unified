@@ -34,6 +34,10 @@ import {
   type RestaurantResolution,
 } from "@foodseyo/contracts";
 
+export {
+  CompactMenuExtractionService,
+} from "./compact-menu-extraction-service.js";
+
 const contractValuesEqual = (left: unknown, right: unknown): boolean => {
   if (Object.is(left, right)) {
     return true;
