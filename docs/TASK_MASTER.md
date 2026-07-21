@@ -565,5 +565,6 @@ already in S1-S3. The items below extend its breadth after submission.
 
 U2 Core Integration is complete. The next work is the Issue #21
 intake/progress contract PR. After it merges, the following work is the Issue
-#20 platform contract PR. Both issues remain proposals; their proposed types
-and shapes remain unimplemented and unused. S1 implementation has not started.
+#20 platform contract PR. Issue #21 remains `status:proposed`; Issue #20 remains
+`status:proposed`. Their proposed types and shapes remain unimplemented and unused.
+S1 implementation has not started.

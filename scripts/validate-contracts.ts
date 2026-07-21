@@ -1307,6 +1307,16 @@ assert.match(
 );
 assert.match(
   immediateNextAction,
+  /Issue #20 remains\s+`status:proposed`/i,
+  "Issue #20 must remain status:proposed",
+);
+assert.match(
+  immediateNextAction,
+  /Issue #21 remains\s+`status:proposed`/i,
+  "Issue #21 must remain status:proposed",
+);
+assert.match(
+  immediateNextAction,
   /proposed types\s+and shapes remain unimplemented and unused/i,
 );
 assert.doesNotMatch(
