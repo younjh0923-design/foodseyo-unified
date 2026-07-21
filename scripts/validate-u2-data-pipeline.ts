@@ -700,7 +700,7 @@ for (const packageName of ["menu-analysis", "merge-policy", "database"]) {
     "@foodseyo/contracts": "workspace:*",
   });
 }
-assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/1.0.0");
+assert.equal(CONTRACT_VERSIONS.boundaryDtos, "boundary-dtos/1.1.0");
 assert.equal(CONTRACT_VERSIONS.mergePolicy, "merge-policy/1.0.0");
 
 console.log("U2.1 data and pipeline foundation validation passed.");
