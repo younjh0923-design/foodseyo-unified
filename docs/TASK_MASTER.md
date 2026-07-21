@@ -397,6 +397,11 @@ marked `DONE`.
   basis, source/general separation, semantic issue detection.
 - **Acceptance:** provider strings cannot bypass vocabulary; unknown and safety
   rules hold; every source-stated claim has source indexes.
+- **Fixture integration evidence:** the provider-independent minimum canonical
+  publication pipeline validates source and restaurant bindings, preserves
+  extracted menu facts, and persists only after frozen canonical validation.
+  It uses the PR #33 public repository for menu-only or atomic confirmed
+  publication. Live S1.4 provider composition remains blocked by S1.4.
 
 ### S1.6 Juhyung menu and dish explanation
 

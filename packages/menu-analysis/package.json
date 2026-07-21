@@ -7,12 +7,15 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "test": "tsx tests/canonical-pipeline.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@foodseyo/contracts": "workspace:*"
+    "@foodseyo/contracts": "workspace:*",
+    "@foodseyo/database": "workspace:*"
   },
   "devDependencies": {
+    "tsx": "4.20.6",
     "typescript": "5.9.3"
   }
 }
