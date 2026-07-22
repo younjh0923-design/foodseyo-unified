@@ -8,7 +8,8 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx tests/foundation.test.ts"
+    "build": "next build",
+    "test": "tsx tests/foundation.test.ts && tsx tests/restaurant-confirmation-ui.test.ts"
   },
   "dependencies": {
     "@foodseyo/contracts": "workspace:*",
@@ -18,6 +19,8 @@
   },
   "devDependencies": {
     "@foodseyo/menu-analysis": "workspace:*",
+    "@types/node": "26.1.1",
+    "@types/react": "19.2.17",
     "tsx": "4.20.6",
     "typescript": "5.9.3"
   }

@@ -1,0 +1,164 @@
+{
+  "draft": {
+    "linkInput": "https://example.invalid/fixture-restaurant",
+    "photos": [
+      {
+        "clientId": "fixture-menu-photo-1",
+        "byteCount": 2048
+      }
+    ]
+  },
+  "resolutions": {
+    "candidate": {
+      "contractVersion": "restaurant-resolution/1.0.0",
+      "state": "candidate",
+      "candidates": [
+        {
+          "contractVersion": "restaurant-resolution/1.0.0",
+          "candidateId": "11111111-1111-4111-8111-111111111111",
+          "googlePlaceId": "fixture_google_place_candidate_001",
+          "displayName": "하버 누들 하우스",
+          "fullAddress": "미국 매사추세츠주 보스턴 피어 스트리트 18",
+          "shortAddress": "피어 스트리트 18",
+          "location": {
+            "latitude": 42.3601,
+            "longitude": -71.0589
+          },
+          "matchSignals": ["name", "address", "visual_text"],
+          "rank": 1
+        },
+        {
+          "contractVersion": "restaurant-resolution/1.0.0",
+          "candidateId": "22222222-2222-4222-8222-222222222222",
+          "googlePlaceId": "fixture_google_place_candidate_002",
+          "displayName": "하버 누들 하우스 케임브리지 리버사이드 패밀리 다이닝룸",
+          "fullAddress": "미국 매사추세츠주 케임브리지 리버 레인 72, 리버사이드 상점가 2층",
+          "shortAddress": "리버 레인 72",
+          "location": {
+            "latitude": 42.3736,
+            "longitude": -71.1097
+          },
+          "matchSignals": ["name", "location", "user_link"],
+          "rank": 2
+        }
+      ],
+      "selectedCandidateId": null,
+      "restaurantId": null,
+      "confirmationEvidence": null,
+      "requiresUserConfirmation": true,
+      "canContinueMenuOnly": true,
+      "resolvedAt": null
+    },
+    "conflicting": {
+      "contractVersion": "restaurant-resolution/1.0.0",
+      "state": "conflicting",
+      "candidates": [
+        {
+          "contractVersion": "restaurant-resolution/1.0.0",
+          "candidateId": "11111111-1111-4111-8111-111111111111",
+          "googlePlaceId": "fixture_google_place_candidate_001",
+          "displayName": "하버 누들 하우스",
+          "fullAddress": "미국 매사추세츠주 보스턴 피어 스트리트 18",
+          "shortAddress": "피어 스트리트 18",
+          "location": {
+            "latitude": 42.3601,
+            "longitude": -71.0589
+          },
+          "matchSignals": ["name", "address", "visual_text"],
+          "rank": 1
+        },
+        {
+          "contractVersion": "restaurant-resolution/1.0.0",
+          "candidateId": "22222222-2222-4222-8222-222222222222",
+          "googlePlaceId": "fixture_google_place_candidate_002",
+          "displayName": "하버 누들 하우스 케임브리지 리버사이드 패밀리 다이닝룸",
+          "fullAddress": "미국 매사추세츠주 케임브리지 리버 레인 72, 리버사이드 상점가 2층",
+          "shortAddress": "리버 레인 72",
+          "location": {
+            "latitude": 42.3736,
+            "longitude": -71.1097
+          },
+          "matchSignals": ["name", "location", "user_link"],
+          "rank": 2
+        }
+      ],
+      "selectedCandidateId": null,
+      "restaurantId": null,
+      "confirmationEvidence": null,
+      "requiresUserConfirmation": true,
+      "canContinueMenuOnly": true,
+      "resolvedAt": null
+    },
+    "rejected": {
+      "contractVersion": "restaurant-resolution/1.0.0",
+      "state": "rejected",
+      "candidates": [],
+      "selectedCandidateId": null,
+      "restaurantId": null,
+      "confirmationEvidence": null,
+      "requiresUserConfirmation": false,
+      "canContinueMenuOnly": true,
+      "resolvedAt": null
+    },
+    "user_confirmed": {
+      "contractVersion": "restaurant-resolution/1.0.0",
+      "state": "user_confirmed",
+      "candidates": [
+        {
+          "contractVersion": "restaurant-resolution/1.0.0",
+          "candidateId": "11111111-1111-4111-8111-111111111111",
+          "googlePlaceId": "fixture_google_place_candidate_001",
+          "displayName": "하버 누들 하우스",
+          "fullAddress": "미국 매사추세츠주 보스턴 피어 스트리트 18",
+          "shortAddress": "피어 스트리트 18",
+          "location": {
+            "latitude": 42.3601,
+            "longitude": -71.0589
+          },
+          "matchSignals": ["name", "address", "visual_text"],
+          "rank": 1
+        }
+      ],
+      "selectedCandidateId": "11111111-1111-4111-8111-111111111111",
+      "restaurantId": "33333333-3333-4333-8333-333333333333",
+      "confirmationEvidence": {
+        "kind": "user_action",
+        "actionRef": "action:fixture-confirmation",
+        "recordedAt": "2026-07-21T15:00:00.000Z"
+      },
+      "requiresUserConfirmation": false,
+      "canContinueMenuOnly": true,
+      "resolvedAt": "2026-07-21T15:00:00.000Z"
+    },
+    "externally_verified": {
+      "contractVersion": "restaurant-resolution/1.0.0",
+      "state": "externally_verified",
+      "candidates": [
+        {
+          "contractVersion": "restaurant-resolution/1.0.0",
+          "candidateId": "22222222-2222-4222-8222-222222222222",
+          "googlePlaceId": "fixture_google_place_candidate_002",
+          "displayName": "하버 누들 하우스 케임브리지 리버사이드 패밀리 다이닝룸",
+          "fullAddress": "미국 매사추세츠주 케임브리지 리버 레인 72, 리버사이드 상점가 2층",
+          "shortAddress": "리버 레인 72",
+          "location": {
+            "latitude": 42.3736,
+            "longitude": -71.1097
+          },
+          "matchSignals": ["name", "location", "user_link"],
+          "rank": 1
+        }
+      ],
+      "selectedCandidateId": "22222222-2222-4222-8222-222222222222",
+      "restaurantId": "44444444-4444-4444-8444-444444444444",
+      "confirmationEvidence": {
+        "kind": "external_evidence",
+        "sourceRefs": ["55555555-5555-4555-8555-555555555555"],
+        "recordedAt": "2026-07-21T15:05:00.000Z"
+      },
+      "requiresUserConfirmation": false,
+      "canContinueMenuOnly": true,
+      "resolvedAt": "2026-07-21T15:05:00.000Z"
+    }
+  }
+}

@@ -126,7 +126,13 @@ for (const screen of [
 
 assert.equal(restaurantScreen.candidates.length, 1);
 assert.equal(restaurantScreen.candidates[0]?.name, "Fixture Restaurant");
+assert.deepEqual(restaurantScreen.candidates[0]?.matchReasons, [
+  "식당 이름 단서",
+  "주소 단서",
+  "입력한 링크 단서",
+]);
 assert.equal("googlePlaceId" in (restaurantScreen.candidates[0] ?? {}), false);
+assert.equal("rank" in (restaurantScreen.candidates[0] ?? {}), false);
 
 const secondCandidate = {
   ...resolution.candidates[0]!,
@@ -192,22 +198,22 @@ for (const expected of webFixture.restaurantResolutionStates) {
   if (expected.state === "candidate" || expected.state === "conflicting") {
     assert(
       screen.candidates.every((candidate) => candidate.isSelected === false),
-      "unconfirmed rank-one candidate must not be auto-selected",
+      "미확인 첫 후보가 자동 선택되면 안 됩니다",
     );
   }
   if (expected.state === "conflicting") {
-    assert.match(screen.description, /different locations/i);
+    assert.match(screen.description, /서로 다른 지점/);
   }
   if (expected.state === "user_confirmed") {
-    assert.match(screen.title, /confirmed/i);
+    assert.match(screen.title, /선택한 식당/);
     assert.equal(screen.candidates[0]?.isSelected, true);
   }
   if (expected.state === "externally_verified") {
-    assert.match(screen.title, /verified/i);
+    assert.match(screen.title, /확인된 식당/);
     assert.equal(screen.candidates[0]?.isSelected, true);
   }
   if (expected.state === "rejected") {
-    assert.match(screen.description, /menu-photo-only/i);
+    assert.match(screen.description, /메뉴 사진만으로/);
   }
 }
 
@@ -294,7 +300,7 @@ assert(
   ),
 );
 assert.deepEqual(
-  [BLOCKED_UI_BINDINGS.framework.issue],
+  Object.values(BLOCKED_UI_BINDINGS),
   webFixture.blockedContractIssues,
 );
 
