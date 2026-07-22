@@ -56,6 +56,10 @@ constrained to the exact confirmed menu.
 Safety-related assistant output is guarded after provider validation: an
 allergen/dietary guarantee is replaced by the canonical ask-the-restaurant
 caveat and cannot carry suggested menu IDs.
+The assistant's strict provider schema uses only supported Structured Outputs
+keywords. Duplicate menu suggestions and malformed output are rejected after
+the provider call, while unsupported claims about a restaurant's actual recipe
+or preparation are replaced with a direct restaurant-reconfirmation caveat.
 
 Server-bound photo/link intake and UI-safe official-source/Web Search progress
 are defined by `@foodseyo/contracts/web-experience`. Issue #21's exact PR #30

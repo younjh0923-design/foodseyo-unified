@@ -583,6 +583,41 @@ const resolution = RestaurantResolutionSchema.parse({
   const menuItemId = guidanceItem?.menuItemId;
   if (!menuItemId) throw new Error("fixture menu item expected");
   let callCount = 0;
+  const requestBodies: unknown[] = [];
+  const providerOutputs = [
+    {
+      items: [
+        {
+          menuItemId,
+          basicTastes: ["umami"],
+          flavorNotes: ["garlicky"],
+          textures: ["chewy"],
+          heat: "mild",
+          richness: "moderate",
+          heatAdjustability: null,
+          ingredients: [{ name: "noodles", basis: "source_stated" }],
+          orderTip: "Choose this for a savory, chewy dish.",
+        },
+      ],
+    },
+    {
+      answer: "The noodle bowl is the closest savory option.",
+      suggestedMenuItemIds: [menuItemId],
+    },
+    {
+      answer: "The noodle bowl is the closest savory option.",
+      suggestedMenuItemIds: [menuItemId, menuItemId],
+    },
+    { answer: "This response is missing its recommendation list." },
+    {
+      answer: "This dish is allergen-safe.",
+      suggestedMenuItemIds: [menuItemId],
+    },
+    {
+      answer: "The restaurant's actual recipe uses peanut oil.",
+      suggestedMenuItemIds: [menuItemId],
+    },
+  ];
   const guidanceService = new OpenAIMenuGuidanceService(
     {
       OPENAI_API_KEY: "network-free-key",
@@ -590,8 +625,9 @@ const resolution = RestaurantResolutionSchema.parse({
       OPENAI_EXPLANATION_MODEL: "model:assistant",
     },
     {
-      fetchImplementation: async () => {
+      fetchImplementation: async (_input, init) => {
         callCount += 1;
+        requestBodies.push(JSON.parse(String(init?.body)));
         return Response.json({
           output: [
             {
@@ -599,34 +635,7 @@ const resolution = RestaurantResolutionSchema.parse({
               content: [
                 {
                   type: "output_text",
-                  text:
-                    callCount === 1
-                      ? JSON.stringify({
-                          items: [
-                            {
-                              menuItemId,
-                              basicTastes: ["umami"],
-                              flavorNotes: ["garlicky"],
-                              textures: ["chewy"],
-                              heat: "mild",
-                              richness: "moderate",
-                              heatAdjustability: null,
-                              ingredients: [
-                                { name: "noodles", basis: "source_stated" },
-                              ],
-                              orderTip: "Choose this for a savory, chewy dish.",
-                            },
-                          ],
-                        })
-                      : callCount === 2
-                        ? JSON.stringify({
-                          answer: "The noodle bowl is the closest savory option.",
-                          suggestedMenuItemIds: [menuItemId],
-                        })
-                        : JSON.stringify({
-                            answer: "This dish is allergen-safe.",
-                            suggestedMenuItemIds: [menuItemId],
-                          }),
+                  text: JSON.stringify(providerOutputs[callCount - 1]),
                 },
               ],
             },
@@ -683,6 +692,38 @@ const resolution = RestaurantResolutionSchema.parse({
   if (answer.status === "success") {
     assert.deepEqual(answer.value.suggestedMenuItemIds, [menuItemId]);
   }
+  const assistantRequest = requestBodies[1] as {
+    instructions: string;
+    text: { format: { schema: unknown } };
+  };
+  assert.equal(
+    JSON.stringify(assistantRequest.text.format.schema).includes("uniqueItems"),
+    false,
+  );
+  assert.match(
+    assistantRequest.instructions,
+    /Never claim to know the restaurant's actual recipe/iu,
+  );
+  const duplicateAnswer = await guidanceService.answer(
+    resultScreen,
+    "What should I order?",
+    "en",
+    context,
+  );
+  assert.equal(duplicateAnswer.status, "error");
+  if (duplicateAnswer.status === "error") {
+    assert.equal(duplicateAnswer.error.error.code, "INVALID_UPSTREAM_RESULT");
+  }
+  const malformedAnswer = await guidanceService.answer(
+    resultScreen,
+    "What should I order?",
+    "en",
+    context,
+  );
+  assert.equal(malformedAnswer.status, "error");
+  if (malformedAnswer.status === "error") {
+    assert.equal(malformedAnswer.error.error.code, "INVALID_UPSTREAM_RESULT");
+  }
   const allergyAnswer = await guidanceService.answer(
     resultScreen,
     "Is this safe for a peanut allergy?",
@@ -697,6 +738,18 @@ const resolution = RestaurantResolutionSchema.parse({
       /can't confirm allergen or dietary safety/iu,
     );
     assert.deepEqual(allergyAnswer.value.suggestedMenuItemIds, []);
+  }
+  const recipeAnswer = await guidanceService.answer(
+    resultScreen,
+    "How does this restaurant make the noodle bowl?",
+    "en",
+    context,
+  );
+  assert.equal(recipeAnswer.status, "success");
+  if (recipeAnswer.status === "success") {
+    assert.doesNotMatch(recipeAnswer.value.answer, /uses peanut oil/iu);
+    assert.match(recipeAnswer.value.answer, /does not confirm.*actual recipe/iu);
+    assert.deepEqual(recipeAnswer.value.suggestedMenuItemIds, []);
   }
 }
 

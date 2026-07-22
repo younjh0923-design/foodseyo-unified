@@ -26,9 +26,15 @@ const SAFETY_QUESTION_PATTERN =
   /\b(?:allerg(?:y|en|ic)|celiac|gluten[- ]free|dietary safety|safe to eat)\b|알레르기|알러지|식이 안전|먹어도 (?:돼|되)/iu;
 const UNSAFE_GUARANTEE_PATTERN =
   /\b(?:allergen[- ](?:free|safe)|allergy[- ]safe|safe for (?:a |your |people with )?(?:allerg|celiac)|guaranteed (?:safe|free)|contains no allergens?)\b|(?:알레르기|알러지|식이).{0,24}(?:안전|없(?:습니다|어요|음)|보장)/iu;
+const UNVERIFIED_RECIPE_CLAIM_PATTERN =
+  /\b(?:the|this) restaurant(?:'s)?\s+(?:(?:actual|real)\s+)?(?:recipe|ingredients?|preparation)\b|\b(?:the|this) restaurant\s+(?:uses|makes|prepares|cooks)\b|(?:이|해당)?\s*식당(?:의|은|에서는)?.{0,24}(?:실제\s*)?(?:레시피|조리법|재료를\s*사용)/iu;
 const SAFETY_CAVEAT: Readonly<Record<UiLanguage, string>> = {
   en: "I can't confirm allergen or dietary safety from this menu. Ask the restaurant directly before ordering.",
   ko: "이 메뉴 정보만으로 알레르기 또는 식이 안전을 확인할 수 없습니다. 주문 전에 식당에 직접 문의하세요.",
+};
+const RECIPE_CAVEAT: Readonly<Record<UiLanguage, string>> = {
+  en: "The supplied menu does not confirm this restaurant's actual recipe or preparation. Ask the restaurant directly for that information.",
+  ko: "제공된 메뉴만으로는 이 식당의 실제 레시피나 조리법을 확인할 수 없습니다. 식당에 직접 문의하세요.",
 };
 
 interface GuidanceDependencies {
@@ -156,7 +162,6 @@ const assistantSchema = {
     suggestedMenuItemIds: {
       type: "array",
       maxItems: 5,
-      uniqueItems: true,
       items: { type: "string" },
     },
   },
@@ -386,6 +391,7 @@ export class OpenAIMenuGuidanceService {
               "Answer only from the supplied confirmed restaurant menu and source-bound dish facts.",
               "Recommend only menuItemIds that appear in the supplied menu.",
               "Clearly say when information is unknown.",
+              "Never claim to know the restaurant's actual recipe, ingredients, or preparation unless the supplied menu facts state it.",
               "Never guarantee allergen or dietary safety; tell the user to ask the restaurant when safety matters.",
               `Answer in ${language === "ko" ? "Korean" : "English"}.`,
             ].join(" "),
@@ -442,6 +448,8 @@ export class OpenAIMenuGuidanceService {
     if (
       !isRecord(decoded) ||
       !Array.isArray(decoded.suggestedMenuItemIds) ||
+      new Set(decoded.suggestedMenuItemIds).size !==
+        decoded.suggestedMenuItemIds.length ||
       decoded.suggestedMenuItemIds.some(
         (id) =>
           typeof id !== "string" ||
@@ -457,8 +465,12 @@ export class OpenAIMenuGuidanceService {
     const safetyRelevant =
       SAFETY_QUESTION_PATTERN.test(question) ||
       SAFETY_QUESTION_PATTERN.test(answer);
-    const safeAnswer = UNSAFE_GUARANTEE_PATTERN.test(answer)
+    const unsafeGuarantee = UNSAFE_GUARANTEE_PATTERN.test(answer);
+    const unverifiedRecipeClaim = UNVERIFIED_RECIPE_CLAIM_PATTERN.test(answer);
+    const safeAnswer = unsafeGuarantee
       ? SAFETY_CAVEAT[language]
+      : unverifiedRecipeClaim
+        ? RECIPE_CAVEAT[language]
       : safetyRelevant && !answer.includes(SAFETY_CAVEAT[language])
         ? `${answer} ${SAFETY_CAVEAT[language]}`
         : answer;
@@ -466,7 +478,7 @@ export class OpenAIMenuGuidanceService {
       status: "success",
       value: {
         answer: safeAnswer,
-        suggestedMenuItemIds: UNSAFE_GUARANTEE_PATTERN.test(answer)
+        suggestedMenuItemIds: unsafeGuarantee || unverifiedRecipeClaim
           ? []
           : (decoded.suggestedMenuItemIds as readonly string[]),
       },

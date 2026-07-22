@@ -633,7 +633,9 @@ Maps short-link redirects, localhost/private-address rejection, non-automatic
 general-link candidates, official-source failure into Web Search fallback,
 zero persistence before confirmation, image-only continuation when no
 restaurant candidate exists, evidence-basis separation in Dish Detail,
-assistant allergen-safety refusal, and provider-ID/secret non-exposure. The
+assistant strict-schema compatibility, duplicate and malformed response
+rejection, allergen-safety refusal, unsupported restaurant-recipe claim
+normalization, and provider-ID/secret non-exposure. The
 menu-only continuation persists an `analysis_only` canonical record without
 restaurant publication rows. No Preview or Production migration is authorized
 by this audit.
