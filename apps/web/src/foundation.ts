@@ -19,6 +19,8 @@ import {
   type RestaurantResolution,
 } from "@foodseyo/contracts";
 
+export type UiLanguage = "en" | "ko";
+
 /**
  * These are app-private presentation models. They never cross a package,
  * provider, persistence, or cache boundary and are not shared contract DTOs.
@@ -173,8 +175,10 @@ export const MOBILE_ACCESSIBILITY_REQUIREMENTS = Object.freeze({
 
 export const BLOCKED_UI_BINDINGS = Object.freeze({});
 
-const SAFETY_NOTICE =
-  "Ingredient and sensory information does not confirm allergen or dietary safety. Ask the restaurant when safety matters.";
+const SAFETY_NOTICE: Readonly<Record<UiLanguage, string>> = {
+  en: "Ingredient and sensory information does not confirm allergen or dietary safety. Ask the restaurant when safety matters.",
+  ko: "재료와 맛 정보만으로 알레르기 또는 식이 안전을 확인할 수 없습니다. 안전이 중요하다면 식당에 직접 문의하세요.",
+};
 
 const EVIDENCE_PRESENTATION = {
   source_stated: {
@@ -227,43 +231,80 @@ const OUTCOME_COPY = {
 >;
 
 const RESTAURANT_RESOLUTION_COPY = {
-  candidate: {
-    title: "어느 식당인가요?",
-    description: "가능한 식당 후보예요. 후보 정보만으로 지점이 확정되지 않으니 직접 선택해 주세요.",
+  en: {
+    candidate: {
+      title: "Which restaurant is this?",
+      description: "These are possible matches. Select the correct location before anything is saved.",
+    },
+    conflicting: {
+      title: "The restaurant clues conflict",
+      description: "The available clues point to different locations. Select the correct one to continue.",
+    },
+    user_confirmed: {
+      title: "Selected restaurant",
+      description: "You selected this location. Menu analysis can continue.",
+    },
+    externally_verified: {
+      title: "Confirmed restaurant",
+      description: "External information confirmed this location. Menu analysis can continue.",
+    },
+    rejected: {
+      title: "We could not identify the restaurant",
+      description: "Try again with the restaurant name or a clearer menu photo.",
+    },
   },
-  conflicting: {
-    title: "식당 단서가 서로 달라요",
-    description:
-      "확인된 단서가 서로 다른 지점을 가리켜요. 올바른 지점을 선택하거나 메뉴 사진만으로 계속할 수 있어요.",
-  },
-  user_confirmed: {
-    title: "선택한 식당",
-    description: "사용자가 이 지점을 선택했어요. 메뉴 분석을 계속할 수 있어요.",
-  },
-  externally_verified: {
-    title: "확인된 식당",
-    description:
-      "외부 확인 정보로 이 지점이 확인됐어요. 메뉴 분석을 계속할 수 있어요.",
-  },
-  rejected: {
-    title: "식당을 확인하지 못했어요",
-    description:
-      "식당 찾기를 다시 시도하거나 메뉴 사진만으로 계속할 수 있어요.",
+  ko: {
+    candidate: {
+      title: "어느 식당인가요?",
+      description: "가능한 식당 후보예요. 후보 정보만으로 지점이 확정되지 않으니 직접 선택해 주세요.",
+    },
+    conflicting: {
+      title: "식당 단서가 서로 달라요",
+      description: "확인된 단서가 서로 다른 지점을 가리켜요. 올바른 지점을 선택해 주세요.",
+    },
+    user_confirmed: {
+      title: "선택한 식당",
+      description: "사용자가 이 지점을 선택했어요. 메뉴 분석을 계속할 수 있어요.",
+    },
+    externally_verified: {
+      title: "확인된 식당",
+      description: "외부 확인 정보로 이 지점이 확인됐어요. 메뉴 분석을 계속할 수 있어요.",
+    },
+    rejected: {
+      title: "식당을 확인하지 못했어요",
+      description: "식당을 확인하지 못했지만 메뉴 사진만으로 계속할 수 있어요.",
+    },
   },
 } as const satisfies Readonly<
   Record<
-    RestaurantResolution["state"],
-    { readonly title: string; readonly description: string }
+    UiLanguage,
+    Readonly<
+      Record<
+        RestaurantResolution["state"],
+        { readonly title: string; readonly description: string }
+      >
+    >
   >
 >;
 
 const RESTAURANT_MATCH_SIGNAL_COPY = {
-  name: "식당 이름 단서",
-  address: "주소 단서",
-  location: "위치 단서",
-  user_link: "입력한 링크 단서",
-  visual_text: "사진 속 글자 단서",
-} as const satisfies Readonly<Record<RestaurantMatchSignal, string>>;
+  en: {
+    name: "Restaurant name",
+    address: "Address",
+    location: "Location",
+    user_link: "Submitted link",
+    visual_text: "Text visible in the photo",
+  },
+  ko: {
+    name: "식당 이름 단서",
+    address: "주소 단서",
+    location: "위치 단서",
+    user_link: "입력한 링크 단서",
+    visual_text: "사진 속 글자 단서",
+  },
+} as const satisfies Readonly<
+  Record<UiLanguage, Readonly<Record<RestaurantMatchSignal, string>>>
+>;
 
 const cloneDraft = (draft: LocalInputDraft): LocalInputDraft => ({
   linkInput: draft.linkInput,
@@ -385,9 +426,10 @@ export const buildUploadReviewScreen = (
 export const buildRestaurantSelectionScreen = (
   draft: LocalInputDraft,
   resolution: RestaurantResolution,
+  language: UiLanguage = "ko",
 ): RestaurantSelectionScreenView => {
   const parsed = RestaurantResolutionSchema.parse(resolution);
-  const copy = RESTAURANT_RESOLUTION_COPY[parsed.state];
+  const copy = RESTAURANT_RESOLUTION_COPY[language][parsed.state];
   const canSelectCandidate =
     parsed.state === "candidate" || parsed.state === "conflicting";
   const controls: AccessibleControl[] = [];
@@ -395,8 +437,8 @@ export const buildRestaurantSelectionScreen = (
   if (parsed.state === "rejected") {
     controls.push({
       id: "retry-restaurant-matching",
-      label: "식당 다시 찾기",
-      ariaLabel: "식당 후보를 다시 찾아보기",
+      label: language === "ko" ? "식당 다시 찾기" : "Find the restaurant again",
+      ariaLabel: language === "ko" ? "식당 후보를 다시 찾아보기" : "Search for restaurant matches again",
       keyboardAction: "activate",
     });
   }
@@ -404,15 +446,15 @@ export const buildRestaurantSelectionScreen = (
   if (parsed.state === "user_confirmed" || parsed.state === "externally_verified") {
     controls.push({
       id: "continue-analysis",
-      label: "메뉴 분석 계속",
-      ariaLabel: "확인된 식당으로 메뉴 분석 계속하기",
+      label: language === "ko" ? "메뉴 분석 계속" : "Continue menu analysis",
+      ariaLabel: language === "ko" ? "확인된 식당으로 메뉴 분석 계속하기" : "Continue menu analysis with the confirmed restaurant",
       keyboardAction: "activate",
     });
   } else {
     controls.push({
       id: "continue-menu-only",
-      label: "메뉴 사진만으로 계속",
-      ariaLabel: "식당을 확정하지 않고 메뉴 사진만으로 계속하기",
+      label: language === "ko" ? "메뉴 사진만으로 계속" : "Continue with the menu photo",
+      ariaLabel: language === "ko" ? "식당을 확정하지 않고 메뉴 사진만으로 계속하기" : "Continue without confirming a restaurant",
       keyboardAction: "activate",
     });
   }
@@ -429,19 +471,22 @@ export const buildRestaurantSelectionScreen = (
       candidateId: candidate.candidateId,
       name: candidate.displayName,
       address:
-        candidate.fullAddress ?? candidate.shortAddress ?? "주소 정보 미확인",
+        candidate.fullAddress ?? candidate.shortAddress ??
+        (language === "ko" ? "주소 정보 미확인" : "Address not confirmed"),
       matchReasons: candidate.matchSignals.map(
-        (signal) => RESTAURANT_MATCH_SIGNAL_COPY[signal],
+        (signal) => RESTAURANT_MATCH_SIGNAL_COPY[language][signal],
       ),
       isSelected: candidate.candidateId === parsed.selectedCandidateId,
       canSelect: canSelectCandidate,
-      confirmLabel: canSelectCandidate ? "이 식당 선택" : null,
+      confirmLabel: canSelectCandidate
+        ? language === "ko" ? "이 식당 선택" : "Select this restaurant"
+        : null,
       confirmAriaLabel: canSelectCandidate
         ? `${candidate.displayName}, ${
             candidate.fullAddress ??
             candidate.shortAddress ??
             "표시된 주소"
-          } 선택`
+          } ${language === "ko" ? "선택" : "select"}`
         : null,
     })),
     controls,
@@ -540,8 +585,13 @@ const currencyFractionDigits = (currency: string): number => {
   return DEFAULT_CURRENCY_FRACTION_DIGITS;
 };
 
-export const formatMenuItemPrice = (item: MenuItem): string => {
-  if (item.price === null) return "Price not confirmed";
+export const formatMenuItemPrice = (
+  item: MenuItem,
+  language: UiLanguage = "en",
+): string => {
+  if (item.price === null) {
+    return language === "ko" ? "가격 미확인" : "Price not confirmed";
+  }
   const { amountMinor, currency } = item.price;
   const fractionDigits = currencyFractionDigits(currency);
   const minorAmount = BigInt(amountMinor);
@@ -553,7 +603,7 @@ export const formatMenuItemPrice = (item: MenuItem): string => {
     .padStart(fractionDigits, "0");
 
   try {
-    const formatter = new Intl.NumberFormat("en", {
+    const formatter = new Intl.NumberFormat(language === "ko" ? "ko-KR" : "en-US", {
       style: "currency",
       currency,
       minimumFractionDigits: fractionDigits,
@@ -675,6 +725,7 @@ const selectedRestaurant = (analysis: CanonicalMenuAnalysis) => {
 export const buildResultScreen = (
   draft: LocalInputDraft,
   analysis: CanonicalMenuAnalysis,
+  language: UiLanguage = "en",
 ): ResultScreenView => {
   const parsed = CanonicalMenuAnalysisSchema.parse(analysis);
   const restaurant = selectedRestaurant(parsed);
@@ -696,34 +747,40 @@ export const buildResultScreen = (
       return {
         menuItemId: item.menuItemId,
         name: item.name,
-        description: item.description ?? "Description not confirmed",
-        price: formatMenuItemPrice(item),
+        description:
+          item.description ??
+          (language === "ko" ? "설명 미확인" : "Description not confirmed"),
+        price: formatMenuItemPrice(item, language),
         sectionIndex: item.sectionIndex,
         itemIndex: item.itemIndex,
         dishResolved: profile !== null,
         dishStatusMessage:
           profile !== null
-            ? "Dish details available"
+            ? language === "ko" ? "음식 상세 정보가 있어요" : "Dish details available"
             : unresolved
-              ? "Dish match unresolved; the menu item remains available."
-              : "Dish details are not confirmed.",
+              ? language === "ko" ? "음식 일치는 확인되지 않았지만 메뉴 항목은 볼 수 있어요." : "Dish match unresolved; the menu item remains available."
+              : language === "ko" ? "음식 상세 정보가 확인되지 않았어요." : "Dish details are not confirmed.",
         facts: projectProfileFacts(profile),
-        safetyNotice: SAFETY_NOTICE,
-        openDetailLabel: "View details",
-        openDetailAriaLabel: `View details for ${item.name}`,
+        safetyNotice: SAFETY_NOTICE[language],
+        openDetailLabel: language === "ko" ? "상세 보기" : "View details",
+        openDetailAriaLabel:
+          language === "ko" ? `${item.name} 상세 보기` : `View details for ${item.name}`,
       };
     });
 
   return {
     kind: "overview",
     draft: cloneDraft(draft),
-    title: restaurant === null ? "Menu overview" : `${restaurant.displayName} menu`,
+    title:
+      restaurant === null
+        ? language === "ko" ? "메뉴 개요" : "Menu overview"
+        : language === "ko" ? `${restaurant.displayName} 메뉴` : `${restaurant.displayName} menu`,
     restaurantName: restaurant?.displayName ?? null,
     restaurantAddress:
       restaurant?.fullAddress ?? restaurant?.shortAddress ?? null,
     isMenuOnlyAnalysis: parsed.publicationState === "analysis_only",
     menuItems,
-    safetyNotice: SAFETY_NOTICE,
+    safetyNotice: SAFETY_NOTICE[language],
     controls: menuItems.map((item) => ({
       id: `detail-${item.menuItemId}`,
       label: item.openDetailLabel,

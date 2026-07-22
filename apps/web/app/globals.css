@@ -107,6 +107,29 @@ input:focus-visible {
   justify-self: start;
 }
 
+.language-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.language-button {
+  min-height: 56px;
+  border: 2px solid var(--ink);
+  border-radius: 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.8rem 1rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.language-button:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
 .primary-button:disabled {
   border-color: #b6b1a8;
   background: #b6b1a8;
@@ -387,11 +410,16 @@ article.candidate-card {
     position: static;
     margin-top: 0.2rem;
   }
+
+  .language-options {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .candidate-card,
-  .primary-button {
+  .primary-button,
+  .language-button {
     transition: border-color 150ms ease, box-shadow 150ms ease,
       background-color 150ms ease;
   }

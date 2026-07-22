@@ -109,6 +109,7 @@ const analyzeResult = await service.analyze({
   bytes: new Uint8Array([1, 2, 3, 4]),
   mediaType: "image/jpeg",
   restaurantName: null,
+  language: "en",
   signal: new AbortController().signal,
 });
 assert.equal(analyzeResult.status, "success");
@@ -116,6 +117,7 @@ assert.equal(extractionCalls, 1);
 assert.equal(candidateCalls, 1);
 if (analyzeResult.status !== "success") throw new Error("analysis failed");
 assert.equal(analyzeResult.value.restaurantScreen.requiresUserConfirmation, true);
+assert.equal(analyzeResult.value.restaurantScreen.title, "Which restaurant is this?");
 assert.equal(analyzeResult.value.restaurantScreen.candidates[0]?.isSelected, false);
 assert.equal(analyzeResult.value.resultPreview.isMenuOnlyAnalysis, true);
 assert.equal(
@@ -145,6 +147,7 @@ assert.equal(confirmed.value.publicationStatus, "published");
 assert.equal(confirmed.value.result.restaurantName, candidate.displayName);
 assert.equal(confirmed.value.result.menuItems[0]?.name, "Test Noodle Bowl");
 assert.equal(confirmed.value.result.isMenuOnlyAnalysis, false);
+assert.equal(confirmed.value.result.title, "Test Noodle House menu");
 assert.deepEqual(inner.snapshotCounts(), {
   analysisContracts: 1,
   analysisRuns: 1,

@@ -56,9 +56,10 @@ import {
   createLocalInputDraft,
   type RestaurantSelectionScreenView,
   type ResultScreenView,
+  type UiLanguage,
 } from "./foundation.js";
 
-const ANALYSIS_TOKEN_VERSION = 1;
+const ANALYSIS_TOKEN_VERSION = 2;
 const ANALYSIS_TOKEN_TTL_MS = 15 * 60 * 1000;
 const ANALYSIS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const OWNER_LEASE_MS = 90 * 1000;
@@ -76,6 +77,7 @@ export interface LiveAnalyzeInput {
   readonly bytes: Uint8Array;
   readonly mediaType: (typeof LIVE_MENU_MEDIA_TYPES)[number];
   readonly restaurantName: string | null;
+  readonly language: UiLanguage;
   readonly signal: AbortSignal;
 }
 
@@ -99,11 +101,12 @@ export interface LiveConfirmSuccess {
 }
 
 interface TokenPayload {
-  readonly version: 1;
+  readonly version: 2;
   readonly expiresAt: string;
   readonly extraction: CompactMenuExtraction;
   readonly resolution: RestaurantResolution;
   readonly byteCount: number;
+  readonly language: UiLanguage;
 }
 
 export interface LiveRestaurantConfirmationDependencies {
@@ -243,7 +246,9 @@ const versionVector = (modelVersion: string): SemanticVersionVector => ({
 const resultForCanonical = (
   analysis: CanonicalMenuAnalysis,
   byteCount: number,
-): ResultScreenView => buildResultScreen(previewDraft(byteCount), analysis);
+  language: UiLanguage,
+): ResultScreenView =>
+  buildResultScreen(previewDraft(byteCount), analysis, language);
 
 export class LiveRestaurantConfirmationService {
   readonly #tokenKey: Buffer;
@@ -378,14 +383,23 @@ export class LiveRestaurantConfirmationService {
       extraction,
       resolution,
       byteCount: input.bytes.byteLength,
+      language: input.language,
     });
     const draft = previewDraft(input.bytes.byteLength);
     return {
       status: "success",
       value: {
         analysisToken: token,
-        restaurantScreen: buildRestaurantSelectionScreen(draft, resolution),
-        resultPreview: buildResultScreen(draft, canonicalResult.value),
+        restaurantScreen: buildRestaurantSelectionScreen(
+          draft,
+          resolution,
+          input.language,
+        ),
+        resultPreview: buildResultScreen(
+          draft,
+          canonicalResult.value,
+          input.language,
+        ),
       },
     };
   }
@@ -474,7 +488,11 @@ export class LiveRestaurantConfirmationService {
       ) {
         return { status: "error", error: publicError("INVALID_INPUT", context) };
       }
-      return this.successFromCanonical(reusable, token.byteCount);
+      return this.successFromCanonical(
+        reusable,
+        token.byteCount,
+        token.language,
+      );
     }
 
     const runId = this.dependencies.generateId();
@@ -487,7 +505,11 @@ export class LiveRestaurantConfirmationService {
       ).toISOString(),
     });
     if (owner.status === "reusable") {
-      return this.successFromCanonical(owner.analysis, token.byteCount);
+      return this.successFromCanonical(
+        owner.analysis,
+        token.byteCount,
+        token.language,
+      );
     }
     if (owner.status === "waiting") {
       const waited = await this.dependencies.repository.waitForReusableCanonicalAnalysis(
@@ -496,7 +518,11 @@ export class LiveRestaurantConfirmationService {
         () => this.dependencies.now().toISOString(),
       );
       return waited.status === "reusable"
-        ? this.successFromCanonical(waited.analysis, token.byteCount)
+        ? this.successFromCanonical(
+            waited.analysis,
+            token.byteCount,
+            token.language,
+          )
         : {
             status: "error",
             error: publicError("ANALYSIS_TEMPORARILY_UNAVAILABLE", context),
@@ -590,12 +616,17 @@ export class LiveRestaurantConfirmationService {
       }
       return pipelineResult;
     }
-    return this.successFromCanonical(pipelineResult.value, token.byteCount);
+    return this.successFromCanonical(
+      pipelineResult.value,
+      token.byteCount,
+      token.language,
+    );
   }
 
   private successFromCanonical(
     analysis: CanonicalMenuAnalysis,
     byteCount: number,
+    language: UiLanguage,
   ): PortResult<LiveConfirmSuccess> {
     if (analysis.publicationState !== "eligible" || analysis.menuVersion === null) {
       const context = contextFor(new AbortController().signal);
@@ -607,7 +638,7 @@ export class LiveRestaurantConfirmationService {
         analysisId: analysis.analysisId,
         menuVersionId: analysis.menuVersion.menuVersionId,
         publicationStatus: "published",
-        result: resultForCanonical(analysis, byteCount),
+        result: resultForCanonical(analysis, byteCount, language),
       },
     };
   }
@@ -649,7 +680,8 @@ export class LiveRestaurantConfirmationService {
     if (
       parsed.version !== ANALYSIS_TOKEN_VERSION ||
       typeof parsed.expiresAt !== "string" ||
-      typeof parsed.byteCount !== "number"
+      typeof parsed.byteCount !== "number" ||
+      (parsed.language !== "en" && parsed.language !== "ko")
     ) {
       throw new TypeError("invalid analysis token");
     }
@@ -659,6 +691,7 @@ export class LiveRestaurantConfirmationService {
       extraction: CompactMenuExtractionSchema.parse(parsed.extraction),
       resolution: RestaurantResolutionSchema.parse(parsed.resolution),
       byteCount: parsed.byteCount,
+      language: parsed.language,
     };
   }
 }

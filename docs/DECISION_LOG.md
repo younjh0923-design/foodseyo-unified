@@ -440,3 +440,17 @@
   preview controls are removed from the user route.
 - **Status:** Accepted submission integration
 - **Date:** 2026-07-21
+
+## U-019 - Offer English and Korean as an app-private presentation setting
+
+- **Decision:** The root screen requires an explicit English or 한국어 choice.
+  The choice is kept in the route and a first-party cookie for document
+  language/accessibility, then carried inside the server-sealed analysis token
+  through restaurant confirmation and the saved result.
+- **Source honesty:** Only application controls, status, safety, and fallback
+  copy are localized. Provider-returned restaurant names, addresses, menu item
+  names, and descriptions remain unchanged.
+- **Compatibility:** `UiLanguage` is private to `apps/web`; no shared contract,
+  database schema, migration, provider prompt, or publication receipt changes.
+- **Status:** Accepted submission UI behavior
+- **Date:** 2026-07-22

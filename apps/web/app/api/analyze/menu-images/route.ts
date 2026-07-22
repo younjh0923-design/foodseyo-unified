@@ -38,20 +38,26 @@ export async function POST(request: Request): Promise<Response> {
   }
   const keys = [...form.keys()];
   if (
-    keys.some((key) => key !== "image" && key !== "restaurantName") ||
+    keys.some(
+      (key) =>
+        key !== "image" && key !== "restaurantName" && key !== "language",
+    ) ||
     keys.filter((key) => key === "image").length !== 1 ||
-    keys.filter((key) => key === "restaurantName").length > 1
+    keys.filter((key) => key === "restaurantName").length > 1 ||
+    keys.filter((key) => key === "language").length > 1
   ) {
     return errorResponse("INVALID_INPUT");
   }
   const image = form.get("image");
   const restaurantNameValue = form.get("restaurantName");
+  const languageValue = form.get("language");
   if (
     !(image instanceof File) ||
     !LIVE_MENU_MEDIA_TYPES.includes(
       image.type as (typeof LIVE_MENU_MEDIA_TYPES)[number],
     ) ||
-    (restaurantNameValue !== null && typeof restaurantNameValue !== "string")
+    (restaurantNameValue !== null && typeof restaurantNameValue !== "string") ||
+    (languageValue !== null && languageValue !== "en" && languageValue !== "ko")
   ) {
     return errorResponse("INVALID_INPUT");
   }
@@ -63,6 +69,7 @@ export async function POST(request: Request): Promise<Response> {
       mediaType: image.type as (typeof LIVE_MENU_MEDIA_TYPES)[number],
       restaurantName:
         typeof restaurantNameValue === "string" ? restaurantNameValue : null,
+      language: languageValue === "en" ? "en" : "ko",
       signal: request.signal,
     });
     if (result.status !== "success") {

@@ -609,6 +609,11 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
+Submission UI localization is implemented on `submission-team-integration`:
+the first screen offers English and 한국어, and the selected language is
+preserved across upload, restaurant confirmation, errors, and results without
+changing menu source content, shared contracts, or database schema.
+
 U2 Core Integration is complete. The Issue #21 contract action on
 `contracts/issue-21-web-experience` is complete: PR #30 exact HEAD
 `913458fcb2497bf424c3a330826e131101fcfc34` merged to canonical `main` as

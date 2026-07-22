@@ -21,6 +21,13 @@ packages. The former fixture banner, state-preview toolbar, hard-coded
 candidates, and browser-only confirmation simulation were removed. See
 `FOUNDATION_REQUIREMENTS.md`.
 
+The root route presents an English/한국어 language choice before upload. The
+choice is carried through the analysis request and encrypted continuation token
+so upload, restaurant confirmation, errors, and saved-result UI remain in the
+selected language. Restaurant names, addresses, and menu content remain
+source-honest and are not translated. This is an app-private presentation
+setting; shared contracts and the database schema are unchanged.
+
 The two App Router handlers are the only web-to-server composition boundary:
 `POST /api/analyze/menu-images` and `POST /api/restaurant/confirm`. They return
 only frozen public errors and approved view models; raw image bytes and private
