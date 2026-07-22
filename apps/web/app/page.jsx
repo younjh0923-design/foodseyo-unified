@@ -10,7 +10,7 @@ export default function HomePage() {
         정보가 섞이지 않도록 합니다.
       </p>
       <Link className="primary-link" href="/restaurant-confirmation">
-        식당 후보 확인 미리보기
+        메뉴 사진 분석하기
       </Link>
     </main>
   );

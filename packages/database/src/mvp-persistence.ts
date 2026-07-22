@@ -214,6 +214,11 @@ export interface SqlTransactionRunner {
   ): Promise<SqlQueryResult<Row>>;
 }
 
+export interface ActiveRestaurantMenuVersion {
+  readonly menuVersionId: string;
+  readonly versionOrdinal: number;
+}
+
 const asExecutor = (client: PoolClient): SqlExecutor => ({
   query: async <Row extends QueryResultRow>(
     text: string,
@@ -562,6 +567,29 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
     validateIdentity(identity);
     requireTimestamp(observedAt, "observedAt");
     return findReusable(this.sql, identity, observedAt);
+  }
+
+  async findActiveRestaurantMenuVersion(
+    restaurantId: string,
+    menuScope: string,
+  ): Promise<ActiveRestaurantMenuVersion | null> {
+    requireUuid(restaurantId, "restaurantId");
+    requireNonblank(menuScope, "menuScope");
+    const result = await this.sql.query<{
+      readonly id: string;
+      readonly version_ordinal: number;
+    }>(
+      `select id, version_ordinal
+         from restaurant_menu_versions
+        where restaurant_id = $1 and menu_scope = $2 and state = 'active'
+        order by version_ordinal desc
+        limit 1`,
+      [restaurantId, menuScope],
+    );
+    const row = result.rows[0];
+    return row
+      ? { menuVersionId: row.id, versionOrdinal: row.version_ordinal }
+      : null;
   }
 
   async acquireAnalysisOwner(

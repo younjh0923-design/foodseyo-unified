@@ -9,16 +9,18 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "next build",
-    "test": "tsx tests/foundation.test.ts && tsx tests/restaurant-confirmation-ui.test.ts"
+    "test": "tsx tests/foundation.test.ts && tsx tests/restaurant-confirmation-ui.test.ts && tsx tests/live-restaurant-confirmation-server.test.ts"
   },
   "dependencies": {
     "@foodseyo/contracts": "workspace:*",
+    "@foodseyo/database": "workspace:*",
+    "@foodseyo/menu-analysis": "workspace:*",
+    "@foodseyo/restaurant-resolution": "workspace:*",
     "next": "16.2.10",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },
   "devDependencies": {
-    "@foodseyo/menu-analysis": "workspace:*",
     "@types/node": "26.1.1",
     "@types/react": "19.2.17",
     "tsx": "4.20.6",

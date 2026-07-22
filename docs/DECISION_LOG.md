@@ -417,3 +417,26 @@
   runtime-validated frozen five-field receipt without duplicates.
 - **Status:** Accepted implementation baseline
 - **Date:** 2026-07-21
+
+## U-018 - Compose the submission uploaded-menu path without contract expansion
+
+- **Decision:** The submission application composes the merged UI, Google
+  Places adapter, compact OpenAI image extraction, canonical validation, and
+  MVP persistence repository through two server-only App Router handlers.
+- **Confirmation boundary:** Analysis returns only UI-safe restaurant
+  candidates plus an authenticated, encrypted, fifteen-minute continuation
+  token. No restaurant or canonical analysis is written before the user
+  explicitly selects a candidate. Confirmation opens the token server-side and
+  calls the existing atomic eligible-publication path.
+- **Provider bound:** One menu image produces one bounded OpenAI Responses API
+  request. Confirmation reuses the sealed extraction and cannot trigger a
+  second extraction request. Google Place IDs remain server-only.
+- **Database bound:** Runtime uses only pooled `DATABASE_URL`; no migration
+  credential, schema creation, schema alteration, or migration execution is
+  permitted. The existing eleven-table schema and frozen publication receipt
+  remain unchanged.
+- **Compatibility:** No shared domain DTO, public error, environment registry,
+  database schema, or migration is added. The former fixture-only UI and state
+  preview controls are removed from the user route.
+- **Status:** Accepted submission integration
+- **Date:** 2026-07-21

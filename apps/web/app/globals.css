@@ -32,12 +32,14 @@ body {
 }
 
 button,
-a {
+a,
+input {
   font: inherit;
 }
 
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+input:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
@@ -111,65 +113,51 @@ a:focus-visible {
   cursor: not-allowed;
 }
 
-.preview-toolbar {
-  border-bottom: 1px solid var(--line);
-  background: rgba(255, 253, 248, 0.9);
-  padding: 0.75rem 1rem;
-}
-
-.preview-toolbar fieldset {
-  width: min(100%, 48rem);
-  border: 0;
-  margin: 0 auto;
-  padding: 0;
-}
-
-.preview-toolbar legend {
-  padding: 0 0 0.4rem;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.preview-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.2rem 0.1rem 0.4rem;
-}
-
-.preview-options button {
-  min-height: 44px;
-  flex: 0 0 auto;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  padding: 0.55rem 0.9rem;
-  font-weight: 700;
-}
-
-.preview-options button[aria-pressed="true"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: white;
-}
-
 .confirmation-shell {
   padding-block: 1.25rem 3rem;
 }
 
-.fixture-banner {
+.upload-form {
   display: grid;
-  gap: 0.25rem;
-  border: 1px solid #e9be80;
-  border-radius: 1rem;
-  background: #fff4d9;
-  padding: 0.85rem 1rem;
-  color: #69430b;
-  font-size: 0.88rem;
-  line-height: 1.45;
+  gap: 0.65rem;
+}
+
+.field-label {
+  margin-top: 0.5rem;
+  font-weight: 850;
+}
+
+.field-label span,
+.field-help {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.field-help {
+  margin: -0.25rem 0 0.5rem;
+}
+
+.file-input,
+.text-input {
+  min-height: 48px;
+  width: 100%;
+  border: 2px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.75rem;
+}
+
+.file-input::file-selector-button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  margin-right: 0.75rem;
+  background: var(--ink);
+  color: white;
+  padding-inline: 0.85rem;
+  font-weight: 750;
 }
 
 .page-header {
@@ -327,6 +315,42 @@ article.candidate-card {
 .action-stack {
   display: grid;
   gap: 0.65rem;
+}
+
+.menu-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.menu-card {
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--paper);
+  padding: 1rem;
+}
+
+.menu-card-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.menu-card h3,
+.menu-card p {
+  margin: 0;
+}
+
+.menu-card p,
+.safety-notice {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.safety-notice {
+  border-left: 3px solid var(--line);
+  padding-left: 0.75rem;
 }
 
 .secondary-button {

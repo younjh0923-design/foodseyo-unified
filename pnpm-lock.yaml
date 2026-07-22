@@ -32,6 +32,15 @@ importers:
       '@foodseyo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@foodseyo/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@foodseyo/menu-analysis':
+        specifier: workspace:*
+        version: link:../../packages/menu-analysis
+      '@foodseyo/restaurant-resolution':
+        specifier: workspace:*
+        version: link:../../packages/restaurant-resolution
       next:
         specifier: 16.2.10
         version: 16.2.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -42,9 +51,6 @@ importers:
         specifier: 19.2.7
         version: 19.2.7(react@19.2.7)
     devDependencies:
-      '@foodseyo/menu-analysis':
-        specifier: workspace:*
-        version: link:../../packages/menu-analysis
       '@types/node':
         specifier: 26.1.1
         version: 26.1.1

@@ -384,6 +384,12 @@ marked `DONE`.
   configuration choice.
 - **Acceptance:** invalid, incomplete, timeout, refusal, and oversized cases
   have typed safe outcomes; automated tests make zero OpenAI calls.
+- **Submission integration evidence:** the uploaded-image subset now has a
+  server-only Responses API adapter behind the existing compact extraction
+  port. Its exact structured-output mapping, transient image handling, and safe
+  failure behavior are covered by a network-free injected-transport test. The
+  broader official-source and Web Search dependencies keep the full task
+  status `BLOCKED`.
 
 ### S1.5 Canonical normalization and validation
 
@@ -401,7 +407,8 @@ marked `DONE`.
   publication pipeline validates source and restaurant bindings, preserves
   extracted menu facts, and persists only after frozen canonical validation.
   It uses the PR #33 public repository for menu-only or atomic confirmed
-  publication. Live S1.4 provider composition remains blocked by S1.4.
+  publication. The submission integration now composes the uploaded-image S1.4
+  adapter through this pipeline without changing a shared contract or schema.
 
 ### S1.6 Juhyung menu and dish explanation
 
@@ -432,6 +439,12 @@ marked `DONE`.
 - **Acceptance:** one coherent walkthrough exercises the official-source route
   and one exercises the Web Search fallback; no dead control; error recovery
   does not lose selected inputs unless privacy policy requires it.
+- **Submission integration evidence:** the mobile uploaded-image path is live
+  on `submission-team-integration`: upload, one server analysis call, UI-safe
+  Google candidate presentation, explicit user confirmation, canonical
+  validation, and atomic Neon publication. Fixture and state-preview controls
+  are absent. The broader link/fallback/Dish Detail scope keeps the full task
+  status `BLOCKED`.
 
 ## Milestone S2 - Required database persistence and reuse
 

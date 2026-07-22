@@ -133,17 +133,27 @@ const collectSourceFiles = async (directory: string): Promise<void> => {
 };
 const forbiddenServerImport =
   /\b(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)["'](?:openai(?:\/|["'])|@google|@neondatabase|drizzle|@foodseyo\/(?:database|source-acquisition|restaurant-resolution)(?:\/|["']))/u;
+const isApprovedServerModule = (file: string): boolean => {
+  const normalized = file.replaceAll("\\", "/");
+  return (
+    /apps\/web\/app\/api\/.+\/route\.ts$/u.test(normalized) ||
+    /apps\/web\/src\/[^/]+-server\.ts$/u.test(normalized) ||
+    /apps\/web\/tests\/.+\.test\.ts$/u.test(normalized)
+  );
+};
 const assertBrowserBoundary = (file: string, source: string): void => {
   assert.doesNotMatch(
     source,
     /NEXT_PUBLIC_/u,
     file + " must not expose a public secret",
   );
-  assert.doesNotMatch(
-    source,
-    forbiddenServerImport,
-    file + " must preserve the server-only provider and database boundary",
-  );
+  if (!isApprovedServerModule(file)) {
+    assert.doesNotMatch(
+      source,
+      forbiddenServerImport,
+      file + " must preserve the server-only provider and database boundary",
+    );
+  }
 };
 
 for (const [file, source] of [
@@ -165,6 +175,16 @@ for (const [file, source] of [
     () => assertBrowserBoundary(file, source),
     /must preserve the server-only provider and database boundary/u,
     file + " must be covered by the browser-boundary validator",
+  );
+}
+
+for (const [file, source] of [
+  ["apps/web/app/api/analyze/menu-images/route.ts", 'import "@foodseyo/database";'],
+  ["apps/web/src/live-analysis-server.ts", 'import "@foodseyo/restaurant-resolution";'],
+] as const) {
+  assert.doesNotThrow(
+    () => assertBrowserBoundary(file, source),
+    file + " must permit server-only composition",
   );
 }
 

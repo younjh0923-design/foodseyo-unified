@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-
-const STATE_LABELS = {
-  candidate: "후보",
-  conflicting: "단서 충돌",
-  rejected: "후보 없음",
-  user_confirmed: "사용자 선택",
-  externally_verified: "외부 확인",
-};
+import React, { useRef, useState } from "react";
 
 const EMPTY_CALLBACK = () => {};
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp";
+
+const safeErrorMessage = (payload, fallback) =>
+  typeof payload?.error?.message === "string" ? payload.error.message : fallback;
 
 export function RestaurantConfirmationPanel({
   screen,
@@ -20,8 +16,6 @@ export function RestaurantConfirmationPanel({
   onSelect = EMPTY_CALLBACK,
   onConfirm = EMPTY_CALLBACK,
   onRetry = EMPTY_CALLBACK,
-  onMenuOnly = EMPTY_CALLBACK,
-  onContinue = EMPTY_CALLBACK,
 }) {
   const isSubmitting = submissionState === "loading";
   const isError = submissionState === "error";
@@ -36,14 +30,6 @@ export function RestaurantConfirmationPanel({
       aria-labelledby="confirmation-title"
       aria-busy={isSubmitting}
     >
-      <div className="fixture-banner" role="note">
-        <strong>Fixture 미리보기</strong>
-        <span>
-          PR #27 병합 전에는 서버 확인이 연결되지 않습니다. 이 화면의
-          동작은 브라우저 안에서만 유지됩니다.
-        </span>
-      </div>
-
       <header className="page-header">
         <p className="eyebrow">식당 확인</p>
         <h1 id="confirmation-title">{screen.title}</h1>
@@ -58,8 +44,8 @@ export function RestaurantConfirmationPanel({
           </div>
           {canChoose ? (
             <p className="candidate-notice">
-              아래 정보는 후보를 찾은 단서이며, 사용자가 선택하기 전에는
-              지점이 확정되지 않습니다.
+              아래 정보는 메뉴 사진에서 찾은 후보입니다. 직접 선택하기 전에는
+              어떤 식당도 저장하지 않습니다.
             </p>
           ) : null}
           <div className="candidate-list">
@@ -70,9 +56,7 @@ export function RestaurantConfirmationPanel({
                 ? isSelected
                   ? "선택됨"
                   : "선택"
-                : screen.resolutionState === "externally_verified"
-                  ? "외부 확인"
-                  : "사용자 선택";
+                : "확인됨";
               const interactionProps = candidate.canSelect
                 ? {
                     type: "button",
@@ -112,7 +96,7 @@ export function RestaurantConfirmationPanel({
         <section className="empty-state" aria-labelledby="empty-heading">
           <p className="empty-icon" aria-hidden="true">?</p>
           <h2 id="empty-heading">일치하는 식당 후보를 찾지 못했어요</h2>
-          <p>식당을 확정하지 않고 메뉴 사진만으로 계속할 수 있어요.</p>
+          <p>식당 이름을 추가하거나 더 선명한 메뉴 사진으로 다시 시도해 주세요.</p>
         </section>
       )}
 
@@ -121,7 +105,7 @@ export function RestaurantConfirmationPanel({
         role={isError ? "alert" : "status"}
         aria-live={isError ? "assertive" : "polite"}
       >
-        {isSubmitting ? "Fixture 선택을 저장하는 중…" : statusMessage}
+        {isSubmitting ? "식당을 확인하고 메뉴를 저장하는 중…" : statusMessage}
       </div>
 
       <div className="action-stack">
@@ -132,110 +116,192 @@ export function RestaurantConfirmationPanel({
             disabled={!selectedCandidate || isSubmitting}
             onClick={() => onConfirm(selectedCandidate?.candidateId ?? null)}
           >
-            {isSubmitting ? "선택 저장 중…" : "네, 이 식당이에요"}
+            {isSubmitting ? "저장 중…" : "네, 이 식당이에요"}
           </button>
         ) : null}
-
-        {screen.controls.some(
-          (control) => control.id === "retry-restaurant-matching",
-        ) ? (
-          <button className="secondary-button" type="button" onClick={onRetry}>
-            식당 다시 찾기
-          </button>
-        ) : null}
-
-        {screen.controls.some((control) => control.id === "continue-analysis") ? (
-          <button className="primary-button" type="button" onClick={onContinue}>
-            메뉴 분석 계속
-          </button>
-        ) : null}
-
-        {screen.controls.some(
-          (control) => control.id === "continue-menu-only",
-        ) ? (
-          <button className="text-button" type="button" onClick={onMenuOnly}>
-            메뉴 사진만으로 계속
-          </button>
-        ) : null}
+        <button
+          className="secondary-button"
+          type="button"
+          disabled={isSubmitting}
+          onClick={onRetry}
+        >
+          다른 사진으로 다시 찾기
+        </button>
       </div>
     </main>
   );
 }
 
-export function RestaurantConfirmationExperience({ screens }) {
-  const [activeState, setActiveState] = useState("candidate");
+function UploadStep({ onAnalyze, loading, errorMessage }) {
+  const [image, setImage] = useState(null);
+  const [restaurantName, setRestaurantName] = useState("");
+
+  return (
+    <main className="shell confirmation-shell" aria-busy={loading}>
+      <header className="page-header">
+        <p className="eyebrow">Foodseyo</p>
+        <h1>메뉴 사진으로 주문할 음식을 찾아보세요.</h1>
+        <p className="lede">
+          메뉴를 읽고 식당 후보를 보여드린 뒤, 선택한 지점에 분석 결과를 저장합니다.
+        </p>
+      </header>
+      <form
+        className="upload-form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (image && !loading) onAnalyze(image, restaurantName);
+        }}
+      >
+        <label className="field-label" htmlFor="menu-image">메뉴 사진</label>
+        <input
+          className="file-input"
+          id="menu-image"
+          name="menu-image"
+          type="file"
+          accept={ACCEPTED_IMAGE_TYPES}
+          required
+          disabled={loading}
+          onChange={(event) => setImage(event.target.files?.[0] ?? null)}
+        />
+        <p className="field-help">JPG, PNG, WebP · 최대 10MB</p>
+        <label className="field-label" htmlFor="restaurant-name">
+          식당 이름 <span>선택 사항</span>
+        </label>
+        <input
+          className="text-input"
+          id="restaurant-name"
+          name="restaurant-name"
+          type="text"
+          maxLength={200}
+          autoComplete="organization"
+          disabled={loading}
+          value={restaurantName}
+          onChange={(event) => setRestaurantName(event.target.value)}
+          placeholder="예: 간판에 적힌 식당 이름"
+        />
+        {errorMessage ? (
+          <p className="status-message is-error" role="alert">{errorMessage}</p>
+        ) : (
+          <p className="status-message" role="status" aria-live="polite">
+            {loading ? "메뉴를 읽고 식당 후보를 찾는 중…" : ""}
+          </p>
+        )}
+        <button className="primary-button" type="submit" disabled={!image || loading}>
+          {loading ? "분석 중…" : "식당 후보 찾기"}
+        </button>
+      </form>
+    </main>
+  );
+}
+
+function ResultStep({ result, onRestart }) {
+  return (
+    <main className="shell confirmation-shell" aria-labelledby="result-title">
+      <header className="page-header">
+        <p className="eyebrow">분석 완료</p>
+        <h1 id="result-title">{result.title}</h1>
+        {result.restaurantAddress ? <p className="lede">{result.restaurantAddress}</p> : null}
+      </header>
+      <section aria-labelledby="menu-heading">
+        <div className="section-heading"><h2 id="menu-heading">메뉴</h2></div>
+        <div className="menu-list">
+          {result.menuItems.map((item) => (
+            <article className="menu-card" key={item.menuItemId}>
+              <div className="menu-card-heading">
+                <h3>{item.name}</h3>
+                <strong>{item.price}</strong>
+              </div>
+              <p>{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <p className="safety-notice">{result.safetyNotice}</p>
+      <button className="secondary-button" type="button" onClick={onRestart}>
+        다른 메뉴 분석하기
+      </button>
+    </main>
+  );
+}
+
+export function RestaurantConfirmationExperience() {
+  const [stage, setStage] = useState("upload");
+  const [screen, setScreen] = useState(null);
+  const [analysisToken, setAnalysisToken] = useState(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState(null);
   const [submissionState, setSubmissionState] = useState("idle");
   const [statusMessage, setStatusMessage] = useState("");
-  const screen = screens[activeState];
+  const [result, setResult] = useState(null);
+  const confirmationInFlight = useRef(false);
 
-  const previewStates = useMemo(
-    () => Object.keys(STATE_LABELS).filter((state) => screens[state]),
-    [screens],
-  );
-
-  const selectState = (state) => {
-    setActiveState(state);
-    setSelectedCandidateId(
-      screens[state].candidates.find((candidate) => candidate.isSelected)
-        ?.candidateId ?? null,
-    );
+  const reset = () => {
+    confirmationInFlight.current = false;
+    setStage("upload");
+    setScreen(null);
+    setAnalysisToken(null);
+    setSelectedCandidateId(null);
     setSubmissionState("idle");
     setStatusMessage("");
+    setResult(null);
   };
 
-  const previewSubmission = (state) => {
-    setActiveState("candidate");
-    setSelectedCandidateId(screens.candidate.candidates[0]?.candidateId ?? null);
-    setSubmissionState(state);
-    setStatusMessage(
-      state === "error"
-        ? "Fixture 선택을 저장하지 못했어요. 선택 내용은 그대로 남아 있어요."
-        : "",
-    );
-  };
-
-  const confirmFixtureChoice = () => {
+  const analyze = async (image, restaurantName) => {
     setSubmissionState("loading");
     setStatusMessage("");
-    window.setTimeout(() => {
+    const form = new FormData();
+    form.append("image", image);
+    if (restaurantName.trim()) form.append("restaurantName", restaurantName.trim());
+    try {
+      const response = await fetch("/api/analyze/menu-images", {
+        method: "POST",
+        body: form,
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || payload?.ok !== true || !payload.data?.restaurantScreen) {
+        throw new Error(safeErrorMessage(payload, "메뉴 분석을 완료하지 못했어요. 다시 시도해 주세요."));
+      }
+      setScreen(payload.data.restaurantScreen);
+      setAnalysisToken(payload.data.analysisToken);
+      setSelectedCandidateId(null);
       setSubmissionState("idle");
-      setStatusMessage(
-        "Fixture 선택을 로컬에 기록했어요. 아직 서버 확인에는 연결되지 않았어요.",
-      );
-    }, 450);
+      setStage("confirmation");
+    } catch (error) {
+      setSubmissionState("error");
+      setStatusMessage(error instanceof Error ? error.message : "메뉴 분석을 완료하지 못했어요.");
+    }
   };
 
-  const setLocalOutcome = (message) => {
-    setSubmissionState("idle");
-    setStatusMessage(message);
+  const confirm = async (candidateId) => {
+    if (!candidateId || !analysisToken || confirmationInFlight.current) return;
+    confirmationInFlight.current = true;
+    setSubmissionState("loading");
+    setStatusMessage("");
+    try {
+      const response = await fetch("/api/restaurant/confirm", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ analysisToken, selectedCandidateId: candidateId }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || payload?.ok !== true || !payload.data?.result) {
+        throw new Error(safeErrorMessage(payload, "선택한 식당에 메뉴를 저장하지 못했어요. 다시 시도해 주세요."));
+      }
+      setResult(payload.data.result);
+      setSubmissionState("idle");
+      setStage("result");
+    } catch (error) {
+      setSubmissionState("error");
+      setStatusMessage(error instanceof Error ? error.message : "메뉴를 저장하지 못했어요.");
+    } finally {
+      confirmationInFlight.current = false;
+    }
   };
 
-  return (
-    <>
-      <aside className="preview-toolbar" aria-label="Fixture 상태 미리보기">
-        <fieldset>
-          <legend>상태 미리보기</legend>
-          <div className="preview-options">
-            {previewStates.map((state) => (
-              <button
-                type="button"
-                key={state}
-                aria-pressed={activeState === state && submissionState === "idle"}
-                onClick={() => selectState(state)}
-              >
-                {STATE_LABELS[state]}
-              </button>
-            ))}
-            <button type="button" onClick={() => previewSubmission("loading")}>
-              저장 중
-            </button>
-            <button type="button" onClick={() => previewSubmission("error")}>
-              오류
-            </button>
-          </div>
-        </fieldset>
-      </aside>
+  if (stage === "result" && result) {
+    return <ResultStep result={result} onRestart={reset} />;
+  }
+  if (stage === "confirmation" && screen) {
+    return (
       <RestaurantConfirmationPanel
         screen={screen}
         selectedCandidateId={selectedCandidateId}
@@ -246,17 +312,16 @@ export function RestaurantConfirmationExperience({ screens }) {
           setSubmissionState("idle");
           setStatusMessage("");
         }}
-        onConfirm={confirmFixtureChoice}
-        onRetry={() =>
-          setLocalOutcome("다시 찾을 수 있어요. 실제 서버 검색은 아직 연결되지 않았어요.")
-        }
-        onMenuOnly={() =>
-          setLocalOutcome("메뉴 사진만으로 계속할 준비가 되었어요. 실제 서버 연결은 아직 없어요.")
-        }
-        onContinue={() =>
-          setLocalOutcome("확인된 fixture로 메뉴 분석을 계속할 준비가 되었어요.")
-        }
+        onConfirm={confirm}
+        onRetry={reset}
       />
-    </>
+    );
+  }
+  return (
+    <UploadStep
+      loading={submissionState === "loading"}
+      errorMessage={submissionState === "error" ? statusMessage : ""}
+      onAnalyze={analyze}
+    />
   );
 }
