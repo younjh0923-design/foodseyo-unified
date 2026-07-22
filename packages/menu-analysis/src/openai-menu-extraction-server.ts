@@ -20,7 +20,7 @@ import {
 
 const OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses";
 const EXTRACTION_PROMPT_VERSION = "foodseyo-menu-image/1.0.0";
-const PROVIDER_SCHEMA_VERSION = "foodseyo-menu-image-schema/1.0.0";
+const PROVIDER_SCHEMA_VERSION = "foodseyo-menu-image-schema/1.0.1";
 const MAX_OUTPUT_TOKENS = 12_000;
 
 export interface TransientUploadedMenuImage {
@@ -43,9 +43,25 @@ type TransientImageResolver = (
   contentHandle: string,
 ) => TransientUploadedMenuImage | readonly TransientUploadedMenuImage[] | null;
 
+export type OpenAIMenuExtractionFailureStage =
+  | "openai_request"
+  | "provider_schema_validation"
+  | "canonical_conversion";
+
+export interface OpenAIMenuExtractionSafeFailure {
+  readonly correlationId: string;
+  readonly failedStage: OpenAIMenuExtractionFailureStage;
+  readonly safeErrorCode: PublicErrorCode;
+  readonly imageCount: number;
+  readonly imageByteSizes: readonly number[];
+}
+
 interface OpenAIMenuExtractionDependencies {
   readonly fetchImplementation: typeof fetch;
   readonly now: () => string;
+  readonly observeSafeFailure?: (
+    failure: OpenAIMenuExtractionSafeFailure,
+  ) => void;
 }
 
 interface ProviderMenuItem {
@@ -283,7 +299,6 @@ const structuredOutputSchema = (imageCount: number) => ({
                   type: "array",
                   minItems: 1,
                   maxItems: imageCount,
-                  uniqueItems: true,
                   items: {
                     type: "integer",
                     enum: Array.from({ length: imageCount }, (_, index) => index),
@@ -325,6 +340,7 @@ export class OpenAIMenuImageExtractionAdapter
     private readonly dependencies: OpenAIMenuExtractionDependencies = {
       fetchImplementation: globalThis.fetch.bind(globalThis),
       now: () => new Date().toISOString(),
+      observeSafeFailure: () => undefined,
     },
   ) {}
 
@@ -367,6 +383,19 @@ export class OpenAIMenuImageExtractionAdapter
     if (images.length === 0 || images.length > 5) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
+    const fail = (
+      failedStage: OpenAIMenuExtractionFailureStage,
+      safeErrorCode: PublicErrorCode,
+    ): PortResult<OpenAIMenuExtractionResult> => {
+      this.dependencies.observeSafeFailure?.({
+        correlationId: context.correlationId,
+        failedStage,
+        safeErrorCode,
+        imageCount: images.length,
+        imageByteSizes: images.map((image) => image.bytes.byteLength),
+      });
+      return { status: "error", error: publicError(safeErrorCode, context) };
+    };
 
     const providerController = new AbortController();
     const abortProvider = (): void => providerController.abort(context.signal.reason);
@@ -418,38 +447,35 @@ export class OpenAIMenuImageExtractionAdapter
       } catch {
         const timedOut = providerController.signal.reason instanceof DOMException &&
           providerController.signal.reason.name === "TimeoutError";
-        return {
-          status: "error",
-          error: publicError(
-            timedOut || isTimeoutAbortSignal(context.signal)
-              ? "UPSTREAM_TIMEOUT"
-              : "UPSTREAM_UNAVAILABLE",
-            context,
-          ),
-        };
+        return fail(
+          "openai_request",
+          timedOut || isTimeoutAbortSignal(context.signal)
+            ? "UPSTREAM_TIMEOUT"
+            : "UPSTREAM_UNAVAILABLE",
+        );
       }
       if (!response.ok) {
-        return { status: "error", error: publicError("UPSTREAM_UNAVAILABLE", context) };
+        return fail("openai_request", "UPSTREAM_UNAVAILABLE");
       }
       let payload: unknown;
       try {
         payload = await response.json();
       } catch {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       const text = responseText(payload);
       if (text === null) {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       let decoded: unknown;
       try {
         decoded = JSON.parse(text);
       } catch {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       const provider = parseProviderOutput(decoded, images.length);
       if (provider === null) {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       const extraction = CompactMenuExtractionSchema.safeParse({
         contractVersion: CONTRACT_VERSIONS.compactExtraction,
@@ -480,7 +506,7 @@ export class OpenAIMenuImageExtractionAdapter
         completedAt: this.dependencies.now(),
       });
       if (!extraction.success) {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("canonical_conversion", "INVALID_UPSTREAM_RESULT");
       }
       return {
         status: "success",
@@ -512,6 +538,8 @@ export const createOpenAIMenuImageExtractionAdapterFromEnvironment = (
     fetchImplementation:
       dependencies?.fetchImplementation ?? globalThis.fetch.bind(globalThis),
     now: dependencies?.now ?? (() => new Date().toISOString()),
+    observeSafeFailure:
+      dependencies?.observeSafeFailure ?? (() => undefined),
   });
 };
 

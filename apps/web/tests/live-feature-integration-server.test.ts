@@ -14,6 +14,10 @@ import { buildResultScreen, createLocalInputDraft } from "../src/foundation.js";
 import { OfficialMenuAnalysisService } from "../src/official-menu-analysis-server.js";
 import { OpenAIMenuGuidanceService } from "../src/openai-menu-guidance-server.js";
 import { RestaurantLinkCandidateResolver } from "../src/restaurant-link-server.js";
+import {
+  GooglePlacesCandidateFinder,
+  GooglePlacesTextSearchAdapter,
+} from "@foodseyo/restaurant-resolution/server";
 
 const context = PortInvocationContextSchema.parse({
   contractVersion: MODULE_INTERFACE_VERSION,
@@ -129,6 +133,147 @@ const resolution = RestaurantResolutionSchema.parse({
   );
   assert.equal(limited.status, "outcome");
   assert.equal(redirectFetches, 4);
+}
+
+// A real-shaped Place URL extracts the embedded Google Place ID and returns a
+// candidate. It does not auto-confirm the restaurant or persist anything.
+{
+  let detailsCalls = 0;
+  let finderCalls = 0;
+  const resolver = new RestaurantLinkCandidateResolver(
+    { GOOGLE_PLACES_API_KEY: "network-free-places-key" },
+    async () => {
+      finderCalls += 1;
+      return { status: "success", value: [candidate] };
+    },
+    {
+      generateId: () => "33333333-3333-4333-8333-333333333333",
+      fetchImplementation: async (input) => {
+        detailsCalls += 1;
+        assert.equal(
+          String(input).includes("ChIJN1t_tDeuEmsRUsoyG83frY4"),
+          true,
+        );
+        return Response.json({
+          id: "ChIJN1t_tDeuEmsRUsoyG83frY4",
+          displayName: { text: "Place URL Branch" },
+          formattedAddress: "1 Place URL Avenue",
+          location: { latitude: 40.7414, longitude: -73.9881 },
+        });
+      },
+    },
+  );
+  const result = await resolver.resolve(
+    "https://www.google.com/maps/place/Place+URL+Branch/@40.7414,-73.9881,17z/data=!4m6!3m5!1sChIJN1t_tDeuEmsRUsoyG83frY4!8m2!3d40.7414!4d-73.9881",
+    context,
+  );
+  assert.equal(result.status, "success");
+  assert.equal(detailsCalls, 1);
+  assert.equal(finderCalls, 0);
+  if (result.status === "success") {
+    assert.equal(result.value[0]?.displayName, "Place URL Branch");
+    assert.deepEqual(result.value[0]?.matchSignals, ["user_link"]);
+  }
+}
+
+// Search-shaped Maps URLs preserve both the query and coordinate location
+// bias. A zero-candidate result remains unconfirmed.
+{
+  let receivedClues: Parameters<ConstructorParameters<
+    typeof RestaurantLinkCandidateResolver
+  >[1]>[0] | null = null;
+  const resolver = new RestaurantLinkCandidateResolver(
+    {},
+    async (clues) => {
+      receivedClues = clues;
+      return { status: "success", value: [] };
+    },
+  );
+  const result = await resolver.resolve(
+    "https://www.google.com/maps/search/Shake+Shack+Madison+Square+Park/@40.7414,-73.9881,17z",
+    context,
+  );
+  assert.equal(result.status, "success");
+  if (result.status === "success") assert.equal(result.value.length, 0);
+  assert.equal(receivedClues?.name, "Shake Shack Madison Square Park");
+  assert.deepEqual(receivedClues?.location, {
+    latitude: 40.7414,
+    longitude: -73.9881,
+  });
+  assert.equal(receivedClues?.linkFingerprint?.startsWith("sha256:"), true);
+
+  const queryParameterResult = await resolver.resolve(
+    "https://www.google.com/maps/search/?api=1&query=Shake+Shack+Madison+Square+Park+New+York",
+    context,
+  );
+  assert.equal(queryParameterResult.status, "success");
+  assert.equal(
+    receivedClues?.name,
+    "Shake Shack Madison Square Park New York",
+  );
+}
+
+// A Google short link may never redirect to localhost or a private address.
+{
+  let finderCalls = 0;
+  const resolver = new RestaurantLinkCandidateResolver(
+    {},
+    async () => {
+      finderCalls += 1;
+      return { status: "success", value: [candidate] };
+    },
+    {
+      fetchImplementation: async () =>
+        new Response(null, {
+          status: 302,
+          headers: { location: "http://127.0.0.1/private" },
+        }),
+    },
+  );
+  const result = await resolver.resolve(
+    "https://maps.app.goo.gl/private-redirect",
+    context,
+  );
+  assert.equal(result.status, "outcome");
+  assert.equal(finderCalls, 0);
+}
+
+// A user-link search result is candidate evidence even when Google's display
+// name is shorter than the full search phrase. It still requires the caller's
+// explicit confirmation.
+{
+  const places = new GooglePlacesTextSearchAdapter(
+    "network-free-places-key",
+    {
+      candidateIdFactory: () => "44444444-4444-4444-8444-444444444444",
+      fetchImplementation: async () =>
+        Response.json({
+          places: [
+            {
+              id: "fixture-google-place-id",
+              displayName: { text: "Shake Shack Madison Square Park" },
+              formattedAddress: "Madison Avenue, New York, NY",
+              location: { latitude: 40.7414, longitude: -73.9881 },
+            },
+          ],
+        }),
+    },
+  );
+  const result = await new GooglePlacesCandidateFinder(places).findCandidates(
+    {
+      name: "Shake Shack Madison Square Park New York",
+      address: null,
+      visualText: null,
+      linkFingerprint: `sha256:${"a".repeat(64)}`,
+      location: null,
+    },
+    context,
+  );
+  assert.equal(result.status, "success");
+  if (result.status === "success") {
+    assert.equal(result.value.length, 1);
+    assert.deepEqual(result.value[0]?.matchSignals, ["user_link"]);
+  }
 }
 
 // General restaurant URLs reject local/private destinations before any

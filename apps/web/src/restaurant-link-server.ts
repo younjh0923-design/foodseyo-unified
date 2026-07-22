@@ -13,6 +13,7 @@ import {
   type PortInvocationContext,
   type PortResult,
   type PublicErrorCode,
+  type GeoPoint,
   type RestaurantCandidate,
 } from "@foodseyo/contracts";
 
@@ -30,7 +31,7 @@ type CandidateFinder = (
     readonly address: string | null;
     readonly visualText: string | null;
     readonly linkFingerprint: string | null;
-    readonly location: null;
+    readonly location: GeoPoint | null;
   },
   context: PortInvocationContext,
 ) => Promise<PortResult<readonly RestaurantCandidate[]>>;
@@ -161,22 +162,60 @@ const decodedSegment = (value: string): string | null => {
 
 const mapsReference = (
   url: URL,
-): { readonly placeId: string | null; readonly query: string | null } => {
-  const placeId =
+): {
+  readonly placeId: string | null;
+  readonly query: string | null;
+  readonly location: GeoPoint | null;
+} => {
+  const explicitPlaceId =
     decodedSegment(url.searchParams.get("query_place_id") ?? "") ??
     decodedSegment(url.searchParams.get("place_id") ?? "");
-  const query =
+  const embeddedPlaceId = (() => {
+    try {
+      const match = decodeURIComponent(url.toString()).match(
+        /(?:!1s|[?&](?:query_place_id|place_id)=)(ChIJ[A-Za-z0-9_-]{10,})/u,
+      );
+      return match?.[1] ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  const placeId = explicitPlaceId ?? embeddedPlaceId;
+  const parameterQuery =
     decodedSegment(url.searchParams.get("query") ?? "") ??
     decodedSegment(url.searchParams.get("q") ?? "");
-  if (query !== null || placeId !== null) return { placeId, query };
   const segments = url.pathname.split("/").filter(Boolean);
   const placeIndex = segments.findIndex((segment) => segment === "place");
+  const searchIndex = segments.findIndex((segment) => segment === "search");
+  const pathQuery =
+    (placeIndex >= 0 && segments[placeIndex + 1]
+      ? decodedSegment(segments[placeIndex + 1] ?? "")
+      : null) ??
+    (searchIndex >= 0 && segments[searchIndex + 1]
+      ? decodedSegment(segments[searchIndex + 1] ?? "")
+      : null);
+  const coordinateMatch = url.pathname.match(
+    /@(-?\d{1,2}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)(?:,|\/|$)/u,
+  );
+  const latitude = coordinateMatch?.[1] === undefined
+    ? Number.NaN
+    : Number(coordinateMatch[1]);
+  const longitude = coordinateMatch?.[2] === undefined
+    ? Number.NaN
+    : Number(coordinateMatch[2]);
+  const location =
+    Number.isFinite(latitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    Number.isFinite(longitude) &&
+    longitude >= -180 &&
+    longitude <= 180
+      ? { latitude, longitude }
+      : null;
   return {
     placeId,
-    query:
-      placeIndex >= 0 && segments[placeIndex + 1]
-        ? decodedSegment(segments[placeIndex + 1] ?? "")
-        : null,
+    query: parameterQuery ?? pathQuery,
+    location,
   };
 };
 
@@ -297,7 +336,7 @@ export class RestaurantLinkCandidateResolver {
             address: null,
             visualText: null,
             linkFingerprint: fingerprint,
-            location: null,
+            location: reference.location,
           },
           context,
         );

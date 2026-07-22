@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import {
   CONTRACT_VERSIONS,
   CompactMenuExtractionSchema,
+  PUBLIC_ERROR_REGISTRY,
   RestaurantCandidateSchema,
   type MenuSourceInput,
+  type PublicErrorCode,
 } from "@foodseyo/contracts";
 import {
   DeterministicMvpAnalysisRepository,
@@ -134,6 +136,163 @@ assert.equal(JSON.stringify(analyzeResult.value).includes(candidate.googlePlaceI
 assert.equal(JSON.stringify(analyzeResult.value).includes(serverOnlySecret), false);
 assert.equal(inner.snapshotCounts().canonicalAnalyses, 0);
 
+const twoImageResult = await service.analyze({
+  images: [
+    { bytes: new Uint8Array([1, 2]), mediaType: "image/jpeg" },
+    { bytes: new Uint8Array([3, 4]), mediaType: "image/png" },
+  ],
+  restaurantName: null,
+  language: "en",
+  signal: new AbortController().signal,
+});
+assert.equal(twoImageResult.status, "success");
+assert.deepEqual(extractedImageCounts, [1, 2]);
+assert.equal(inner.snapshotCounts().canonicalAnalyses, 0);
+
+const oversizedFailures: unknown[] = [];
+const oversizedResult = await service.analyze({
+  images: [
+    {
+      bytes: new Uint8Array(10 * 1024 * 1024 + 1),
+      mediaType: "image/jpeg",
+    },
+  ],
+  restaurantName: null,
+  language: "en",
+  signal: new AbortController().signal,
+  correlationId: "55555555-5555-4555-8555-555555555555",
+  observeSafeFailure: (failure) => oversizedFailures.push(failure),
+});
+assert.equal(oversizedResult.status, "error");
+if (oversizedResult.status === "error") {
+  assert.equal(oversizedResult.error.error.code, "PAYLOAD_TOO_LARGE");
+}
+assert.equal(
+  (oversizedFailures[0] as { failedStage?: string } | undefined)?.failedStage,
+  "image_decoding_size_validation",
+);
+assert.deepEqual(extractedImageCounts, [1, 2]);
+
+const testError = (code: PublicErrorCode, correlationId: string) => {
+  const definition = PUBLIC_ERROR_REGISTRY[code];
+  return {
+    error: {
+      code,
+      message: definition.message,
+      correlationId,
+      retryable: definition.retryable,
+    },
+    httpStatus: definition.httpStatus,
+  };
+};
+
+// The service reports provider, Google Places, and canonical failures at
+// separate safe stages without exposing images or provider payloads.
+{
+  const failures: unknown[] = [];
+  const providerFailureService = new LiveRestaurantConfirmationService({
+    environment: {
+      OPENAI_API_KEY: serverOnlySecret,
+      OPENAI_MENU_EXTRACTION_MODEL: "model:network-free-test",
+    },
+    now: () => new Date("2026-07-21T18:00:00.000Z"),
+    generateId: () => crypto.randomUUID(),
+    repository,
+    extractMenu: async (_source, _images, context) => ({
+      status: "error",
+      error: testError("UPSTREAM_UNAVAILABLE", context.correlationId),
+    }),
+    findCandidates: async () => ({ status: "success", value: [] }),
+  });
+  const result = await providerFailureService.analyze({
+    bytes: new Uint8Array([1]),
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+    observeSafeFailure: (failure) => failures.push(failure),
+  });
+  assert.equal(result.status, "error");
+  assert.equal(
+    (failures[0] as { failedStage?: string } | undefined)?.failedStage,
+    "openai_request",
+  );
+}
+
+{
+  const failures: unknown[] = [];
+  const placesFailureService = new LiveRestaurantConfirmationService({
+    environment: {
+      OPENAI_API_KEY: serverOnlySecret,
+      OPENAI_MENU_EXTRACTION_MODEL: "model:network-free-test",
+    },
+    now: () => new Date("2026-07-21T18:00:00.000Z"),
+    generateId: () => crypto.randomUUID(),
+    repository,
+    extractMenu: async (source) => ({
+      status: "success",
+      value: {
+        extraction: extractionFor(source),
+        restaurantClues: { name: null, address: null, visualText: null },
+      },
+    }),
+    findCandidates: async (_clues, context) => ({
+      status: "error",
+      error: testError("UPSTREAM_UNAVAILABLE", context.correlationId),
+    }),
+  });
+  const result = await placesFailureService.analyze({
+    bytes: new Uint8Array([1]),
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+    observeSafeFailure: (failure) => failures.push(failure),
+  });
+  assert.equal(result.status, "error");
+  assert.equal(
+    (failures[0] as { failedStage?: string } | undefined)?.failedStage,
+    "google_places_resolution",
+  );
+}
+
+{
+  const failures: unknown[] = [];
+  const canonicalFailureService = new LiveRestaurantConfirmationService({
+    environment: {
+      OPENAI_API_KEY: serverOnlySecret,
+      OPENAI_MENU_EXTRACTION_MODEL: "model:network-free-test",
+    },
+    now: () => new Date("2026-07-21T18:00:00.000Z"),
+    generateId: () => crypto.randomUUID(),
+    repository,
+    extractMenu: async (source) => ({
+      status: "success",
+      value: {
+        extraction: {
+          ...extractionFor(source),
+          menuScope: "not-a-menu-scope",
+        } as ReturnType<typeof extractionFor>,
+        restaurantClues: { name: null, address: null, visualText: null },
+      },
+    }),
+    findCandidates: async () => ({ status: "success", value: [] }),
+  });
+  const result = await canonicalFailureService.analyze({
+    bytes: new Uint8Array([1]),
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+    observeSafeFailure: (failure) => failures.push(failure),
+  });
+  assert.equal(result.status, "error");
+  assert.equal(
+    (failures[0] as { failedStage?: string } | undefined)?.failedStage,
+    "canonical_conversion",
+  );
+}
+
 const linkResult = await service.analyzeLink({
   link: "https://restaurant.example/menu",
   language: "en",
@@ -202,7 +361,7 @@ const repeated = await service.confirm({
 });
 assert.equal(repeated.status, "success");
 assert.equal(inner.snapshotCounts().publicationReceipts, 1);
-assert.equal(extractionCalls, 1, "confirm must not trigger a second provider extraction");
+assert.equal(extractionCalls, 2, "confirm must not trigger another provider extraction");
 
 returnCandidates = false;
 const fiveImageResult = await service.analyze({
@@ -216,7 +375,7 @@ const fiveImageResult = await service.analyze({
 });
 assert.equal(fiveImageResult.status, "success");
 if (fiveImageResult.status !== "success") throw new Error("five-image analysis failed");
-assert.deepEqual(extractedImageCounts, [1, 5]);
+assert.deepEqual(extractedImageCounts, [1, 2, 5]);
 assert.equal(fiveImageResult.value.restaurantScreen.candidates.length, 0);
 assert.equal(fiveImageResult.value.restaurantScreen.canContinueMenuOnly, true);
 const beforeMenuOnly = inner.snapshotCounts();
@@ -234,7 +393,7 @@ assert.equal(sixImageResult.status, "error");
 if (sixImageResult.status === "error") {
   assert.equal(sixImageResult.error.error.code, "INVALID_INPUT");
 }
-assert.deepEqual(extractedImageCounts, [1, 5]);
+assert.deepEqual(extractedImageCounts, [1, 2, 5]);
 assert.deepEqual(inner.snapshotCounts(), beforeMenuOnly);
 
 const menuOnly = await service.confirm({

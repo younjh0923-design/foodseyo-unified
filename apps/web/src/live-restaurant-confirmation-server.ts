@@ -38,6 +38,7 @@ import {
   OPENAI_MENU_EXTRACTION_VERSION,
   buildCanonicalMenuAnalysis,
   createOpenAIMenuImageExtractionAdapterFromEnvironment,
+  type OpenAIMenuExtractionFailureStage,
   type OpenAIMenuExtractionResult,
   type TransientUploadedMenuImage,
 } from "@foodseyo/menu-analysis";
@@ -86,6 +87,23 @@ interface LiveAnalyzeBaseInput {
   readonly restaurantName: string | null;
   readonly language: UiLanguage;
   readonly signal: AbortSignal;
+  readonly correlationId?: ReturnType<typeof randomUUID>;
+  readonly observeSafeFailure?: (failure: SafeMenuAnalysisFailure) => void;
+}
+
+export type SafeMenuAnalysisFailureStage =
+  | "request_parsing"
+  | "image_decoding_size_validation"
+  | OpenAIMenuExtractionFailureStage
+  | "google_places_resolution"
+  | "token_encryption";
+
+export interface SafeMenuAnalysisFailure {
+  readonly correlationId: string;
+  readonly failedStage: SafeMenuAnalysisFailureStage;
+  readonly safeErrorCode: PublicErrorCode;
+  readonly imageCount: number;
+  readonly imageByteSizes: readonly number[];
 }
 
 export type LiveAnalyzeInput = LiveAnalyzeBaseInput &
@@ -170,6 +188,10 @@ export interface LiveRestaurantConfirmationDependencies {
     source: MenuSourceInput,
     images: readonly TransientUploadedMenuImage[],
     context: PortInvocationContext,
+    observeSafeFailure?: (
+      failedStage: OpenAIMenuExtractionFailureStage,
+      safeErrorCode: PublicErrorCode,
+    ) => void,
   ) => Promise<PortResult<OpenAIMenuExtractionResult>>;
   readonly findCandidates: (
     clues: {
@@ -224,10 +246,13 @@ const publicError = (
   });
 };
 
-const contextFor = (signal: AbortSignal): PortInvocationContext =>
+const contextFor = (
+  signal: AbortSignal,
+  correlationId = randomUUID(),
+): PortInvocationContext =>
   PortInvocationContextSchema.parse({
     contractVersion: MODULE_INTERFACE_VERSION,
-    correlationId: randomUUID(),
+    correlationId,
     signal,
     timeoutMs: INVOCATION_TIMEOUT_MS,
   });
@@ -404,12 +429,27 @@ export class LiveRestaurantConfirmationService {
   async analyze(
     input: LiveAnalyzeInput,
   ): Promise<PortResult<LiveAnalyzeSuccess>> {
-    const context = contextFor(input.signal);
+    const context = contextFor(input.signal, input.correlationId);
     const images = normalizedImages(input);
     const byteCount = images.reduce(
       (total, image) => total + image.bytes.byteLength,
       0,
     );
+    let failureObserved = false;
+    const observeFailure = (
+      failedStage: SafeMenuAnalysisFailureStage,
+      safeErrorCode: PublicErrorCode,
+    ): void => {
+      if (failureObserved) return;
+      failureObserved = true;
+      input.observeSafeFailure?.({
+        correlationId: context.correlationId,
+        failedStage,
+        safeErrorCode,
+        imageCount: images.length,
+        imageByteSizes: images.map((image) => image.bytes.byteLength),
+      });
+    };
     if (
       images.length === 0 ||
       images.length > MAX_IMAGE_COUNT ||
@@ -420,18 +460,20 @@ export class LiveRestaurantConfirmationService {
           !LIVE_MENU_MEDIA_TYPES.includes(image.mediaType),
       )
     ) {
+      const safeErrorCode = images.some(
+        (image) => image.bytes.byteLength > MAX_IMAGE_BYTES,
+      )
+        ? "PAYLOAD_TOO_LARGE"
+        : "INVALID_INPUT";
+      observeFailure("image_decoding_size_validation", safeErrorCode);
       return {
         status: "error",
-        error: publicError(
-          images.some((image) => image.bytes.byteLength > MAX_IMAGE_BYTES)
-            ? "PAYLOAD_TOO_LARGE"
-            : "INVALID_INPUT",
-          context,
-        ),
+        error: publicError(safeErrorCode, context),
       };
     }
     const restaurantName = safeRestaurantName(input.restaurantName);
     if (input.restaurantName !== null && restaurantName === null) {
+      observeFailure("request_parsing", "INVALID_INPUT");
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
     const collectedAt = this.dependencies.now().toISOString();
@@ -459,8 +501,22 @@ export class LiveRestaurantConfirmationService {
       source,
       images,
       context,
+      observeFailure,
     );
-    if (extractionResult.status !== "success") return extractionResult;
+    if (extractionResult.status !== "success") {
+      if (extractionResult.status === "error") {
+        const code = extractionResult.error.error.code;
+        observeFailure(
+          code === "INVALID_INPUT"
+            ? "image_decoding_size_validation"
+            : code === "INVALID_UPSTREAM_RESULT"
+              ? "provider_schema_validation"
+              : "openai_request",
+          code,
+        );
+      }
+      return extractionResult;
+    }
 
     const clues = extractionResult.value.restaurantClues;
     const candidateResult = await this.dependencies.findCandidates(
@@ -496,6 +552,10 @@ export class LiveRestaurantConfirmationService {
     } else if (candidateResult.status === "outcome") {
       resolution = rejectedResolution();
     } else {
+      observeFailure(
+        "google_places_resolution",
+        candidateResult.error.error.code,
+      );
       return candidateResult;
     }
 
@@ -518,20 +578,34 @@ export class LiveRestaurantConfirmationService {
       { extraction, restaurantResolution: resolution },
       context,
     );
-    if (canonicalResult.status !== "success") return canonicalResult;
+    if (canonicalResult.status !== "success") {
+      if (canonicalResult.status === "error") {
+        observeFailure(
+          "canonical_conversion",
+          canonicalResult.error.error.code,
+        );
+      }
+      return canonicalResult;
+    }
 
-    const token = this.sealToken({
-      version: ANALYSIS_TOKEN_VERSION,
-      expiresAt: new Date(
-        this.dependencies.now().getTime() + ANALYSIS_TOKEN_TTL_MS,
-      ).toISOString(),
-      inputKind: "images",
-      extraction,
-      link: null,
-      resolution,
-      byteCount,
-      language: input.language,
-    });
+    let token: string;
+    try {
+      token = this.sealToken({
+        version: ANALYSIS_TOKEN_VERSION,
+        expiresAt: new Date(
+          this.dependencies.now().getTime() + ANALYSIS_TOKEN_TTL_MS,
+        ).toISOString(),
+        inputKind: "images",
+        extraction,
+        link: null,
+        resolution,
+        byteCount,
+        language: input.language,
+      });
+    } catch {
+      observeFailure("token_encryption", "INTERNAL_ERROR");
+      return { status: "error", error: publicError("INTERNAL_ERROR", context) };
+    }
     const draft = previewDraft(byteCount, images.length);
     return {
       status: "success",
@@ -1118,11 +1192,18 @@ export const createLiveRestaurantConfirmationService = (
     now: () => new Date(),
     generateId: () => randomUUID(),
     repository,
-    extractMenu: async (source, images, context) => {
+    extractMenu: async (source, images, context, observeSafeFailure) => {
       const adapter = createOpenAIMenuImageExtractionAdapterFromEnvironment(
         environment,
         (handle) =>
           handle === source.content.contentHandle ? images : null,
+        {
+          observeSafeFailure: (failure) =>
+            observeSafeFailure?.(
+              failure.failedStage,
+              failure.safeErrorCode,
+            ),
+        },
       );
       return adapter === null
         ? {
