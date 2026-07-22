@@ -41,7 +41,7 @@ export interface OpenAIMenuExtractionResult {
 
 type TransientImageResolver = (
   contentHandle: string,
-) => TransientUploadedMenuImage | null;
+) => TransientUploadedMenuImage | readonly TransientUploadedMenuImage[] | null;
 
 interface OpenAIMenuExtractionDependencies {
   readonly fetchImplementation: typeof fetch;
@@ -108,7 +108,10 @@ const boundedText = (value: unknown, maximum: number): string | null => {
     : null;
 };
 
-const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
+const parseProviderOutput = (
+  value: unknown,
+  imageCount: number,
+): ProviderMenuOutput | null => {
   if (
     !isRecord(value) ||
     !hasExactKeys(value, [
@@ -168,8 +171,14 @@ const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
         ) ||
         !Array.isArray(itemValue.sourceIndexes) ||
         itemValue.sourceIndexes.length === 0 ||
-        itemValue.sourceIndexes.length > 1 ||
-        !itemValue.sourceIndexes.every((index) => index === 0)
+        itemValue.sourceIndexes.length > imageCount ||
+        !itemValue.sourceIndexes.every(
+          (index) =>
+            Number.isInteger(index) &&
+            (index as number) >= 0 &&
+            (index as number) < imageCount,
+        ) ||
+        new Set(itemValue.sourceIndexes).size !== itemValue.sourceIndexes.length
       ) {
         return null;
       }
@@ -203,7 +212,7 @@ const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
         description,
         price,
         optionTexts: itemValue.optionTexts.map((option) => option.trim()),
-        sourceIndexes: [0],
+        sourceIndexes: itemValue.sourceIndexes as readonly number[],
       });
       totalItems += 1;
       if (totalItems > 200) return null;
@@ -221,7 +230,7 @@ const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
   };
 };
 
-const structuredOutputSchema = {
+const structuredOutputSchema = (imageCount: number) => ({
   type: "object",
   additionalProperties: false,
   required: [
@@ -273,8 +282,12 @@ const structuredOutputSchema = {
                 sourceIndexes: {
                   type: "array",
                   minItems: 1,
-                  maxItems: 1,
-                  items: { type: "integer", enum: [0] },
+                  maxItems: imageCount,
+                  uniqueItems: true,
+                  items: {
+                    type: "integer",
+                    enum: Array.from({ length: imageCount }, (_, index) => index),
+                  },
                 },
               },
             },
@@ -283,7 +296,7 @@ const structuredOutputSchema = {
       },
     },
   },
-} as const;
+} as const);
 
 const responseText = (payload: unknown): string | null => {
   if (!isRecord(payload) || !Array.isArray(payload.output)) return null;
@@ -345,8 +358,13 @@ export class OpenAIMenuImageExtractionAdapter
         ),
       };
     }
-    const image = this.resolveImage(parsedInput.data.content.contentHandle);
-    if (image === null) {
+    const resolvedImages = this.resolveImage(parsedInput.data.content.contentHandle);
+    const images = resolvedImages === null
+      ? []
+      : Array.isArray(resolvedImages)
+        ? resolvedImages
+        : [resolvedImages];
+    if (images.length === 0 || images.length > 5) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
 
@@ -358,7 +376,11 @@ export class OpenAIMenuImageExtractionAdapter
       context.timeoutMs,
     );
     try {
-      const dataUrl = `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`;
+      const imageInputs = images.map((image) => ({
+        type: "input_image" as const,
+        image_url: `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`,
+        detail: "high" as const,
+      }));
       let response: Response;
       try {
         response = await this.dependencies.fetchImplementation(OPENAI_RESPONSES_ENDPOINT, {
@@ -370,13 +392,13 @@ export class OpenAIMenuImageExtractionAdapter
           body: JSON.stringify({
             model: this.modelVersion,
             instructions:
-              "Extract only menu information visible in the supplied image. Preserve section and item order. Prices must be nonnegative integer minor units with ISO 4217 currency. Use null when a price, restaurant name, restaurant address, description, or section name is not visible. Do not invent ingredients, safety claims, reviews, or restaurant identity. sourceIndexes must be [0].",
+              `Extract only menu information visible in the ${images.length} supplied image${images.length === 1 ? "" : "s"}. Preserve image, section, and item order. Prices must be nonnegative integer minor units with ISO 4217 currency. Use null when a price, restaurant name, restaurant address, description, or section name is not visible. Do not invent ingredients, safety claims, reviews, or restaurant identity. sourceIndexes must list the zero-based source images that visibly support each item.`,
             input: [
               {
                 role: "user",
                 content: [
                   { type: "input_text", text: "Analyze this menu image for Foodseyo." },
-                  { type: "input_image", image_url: dataUrl, detail: "high" },
+                  ...imageInputs,
                 ],
               },
             ],
@@ -385,7 +407,7 @@ export class OpenAIMenuImageExtractionAdapter
                 type: "json_schema",
                 name: "foodseyo_compact_menu_extraction",
                 strict: true,
-                schema: structuredOutputSchema,
+                schema: structuredOutputSchema(images.length),
               },
             },
             max_output_tokens: MAX_OUTPUT_TOKENS,
@@ -425,7 +447,7 @@ export class OpenAIMenuImageExtractionAdapter
       } catch {
         return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
       }
-      const provider = parseProviderOutput(decoded);
+      const provider = parseProviderOutput(decoded, images.length);
       if (provider === null) {
         return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
       }

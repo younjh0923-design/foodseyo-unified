@@ -23,7 +23,7 @@ const source = MenuSourceInputSchema.parse({
     kind: "image_collection",
     contentHandle: "handle:network-free-image",
     sensitivity: "sensitive_transient",
-    byteCount: 4,
+    byteCount: 8,
     pageCount: null,
   },
   requestedAt: "2026-07-21T18:00:00.000Z",
@@ -42,7 +42,10 @@ const adapter = new OpenAIMenuImageExtractionAdapter(
   "model:network-free-test",
   (handle) =>
     handle === source.content.contentHandle
-      ? { bytes: new Uint8Array([1, 2, 3, 4]), mediaType: "image/jpeg" }
+      ? [
+          { bytes: new Uint8Array([1, 2, 3, 4]), mediaType: "image/jpeg" },
+          { bytes: new Uint8Array([5, 6, 7, 8]), mediaType: "image/png" },
+        ]
       : null,
   {
     now: () => "2026-07-21T18:00:01.000Z",
@@ -76,7 +79,7 @@ const adapter = new OpenAIMenuImageExtractionAdapter(
                           description: "Vegetable noodles",
                           price: { amountMinor: 1250, currency: "USD" },
                           optionTexts: ["Add tofu"],
-                          sourceIndexes: [0],
+                          sourceIndexes: [0, 1],
                         },
                       ],
                     },
@@ -99,13 +102,14 @@ assert.equal(requestBody.model, "model:network-free-test");
 assert.equal(requestBody.store, false);
 assert.equal("reasoning" in requestBody, false);
 assert.equal(JSON.stringify(requestBody).includes("data:image/jpeg;base64,AQIDBA=="), true);
+assert.equal(JSON.stringify(requestBody).includes("data:image/png;base64,BQYHCA=="), true);
 if (result.status !== "success") throw new Error("adapter result was not successful");
 assert.equal(result.value.restaurantClues.name, "Test Noodle House");
 assert.equal(result.value.extraction.menuScope, "dinner");
 assert.equal(result.value.extraction.sections[0]?.items[0]?.name, "Test Noodles");
 assert.deepEqual(
   result.value.extraction.sections[0]?.items[0]?.sourceEvidence[0]?.sourceIndexes,
-  [0],
+  [0, 1],
 );
 
 console.log("Foodseyo OpenAI 이미지 추출 adapter의 network-free 검증을 통과했습니다.");

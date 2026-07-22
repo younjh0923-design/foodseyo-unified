@@ -10,9 +10,6 @@ import { createLiveRestaurantConfirmationService } from "../../../../src/live-re
 export const runtime = "nodejs";
 export const maxDuration = 90;
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-
 const errorResponse = (code: PublicErrorCode): Response => {
   const definition = PUBLIC_ERROR_REGISTRY[code];
   return Response.json(
@@ -41,22 +38,19 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (
     !isRecord(body) ||
-    Object.keys(body).length !== 2 ||
-    typeof body.analysisToken !== "string" ||
-    body.analysisToken.length === 0 ||
-    body.analysisToken.length > 200_000 ||
-    (body.selectedCandidateId !== null &&
-      (typeof body.selectedCandidateId !== "string" ||
-        !UUID_PATTERN.test(body.selectedCandidateId)))
+    Object.keys(body).some((key) => key !== "link" && key !== "language") ||
+    typeof body.link !== "string" ||
+    body.link.length === 0 ||
+    body.link.length > 2_048 ||
+    (body.language !== undefined && body.language !== "en" && body.language !== "ko")
   ) {
     return errorResponse("INVALID_INPUT");
   }
-
   try {
     const service = createLiveRestaurantConfirmationService(process.env);
-    const result = await service.confirm({
-      analysisToken: body.analysisToken,
-      selectedCandidateId: body.selectedCandidateId,
+    const result = await service.analyzeLink({
+      link: body.link,
+      language: body.language === "ko" ? "ko" : "en",
       signal: request.signal,
     });
     if (result.status !== "success") {

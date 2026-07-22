@@ -42,19 +42,23 @@ export async function POST(request: Request): Promise<Response> {
       (key) =>
         key !== "image" && key !== "restaurantName" && key !== "language",
     ) ||
-    keys.filter((key) => key === "image").length !== 1 ||
+    keys.filter((key) => key === "image").length < 1 ||
+    keys.filter((key) => key === "image").length > 5 ||
     keys.filter((key) => key === "restaurantName").length > 1 ||
     keys.filter((key) => key === "language").length > 1
   ) {
     return errorResponse("INVALID_INPUT");
   }
-  const image = form.get("image");
+  const images = form.getAll("image");
   const restaurantNameValue = form.get("restaurantName");
   const languageValue = form.get("language");
   if (
-    !(image instanceof File) ||
-    !LIVE_MENU_MEDIA_TYPES.includes(
-      image.type as (typeof LIVE_MENU_MEDIA_TYPES)[number],
+    !images.every(
+      (image) =>
+        image instanceof File &&
+        LIVE_MENU_MEDIA_TYPES.includes(
+          image.type as (typeof LIVE_MENU_MEDIA_TYPES)[number],
+        ),
     ) ||
     (restaurantNameValue !== null && typeof restaurantNameValue !== "string") ||
     (languageValue !== null && languageValue !== "en" && languageValue !== "ko")
@@ -64,9 +68,14 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const service = createLiveRestaurantConfirmationService(process.env);
+    const transientImages = await Promise.all(
+      (images as File[]).map(async (image) => ({
+        bytes: new Uint8Array(await image.arrayBuffer()),
+        mediaType: image.type as (typeof LIVE_MENU_MEDIA_TYPES)[number],
+      })),
+    );
     const result = await service.analyze({
-      bytes: new Uint8Array(await image.arrayBuffer()),
-      mediaType: image.type as (typeof LIVE_MENU_MEDIA_TYPES)[number],
+      images: transientImages,
       restaurantName:
         typeof restaurantNameValue === "string" ? restaurantNameValue : null,
       language: languageValue === "en" ? "en" : "ko",

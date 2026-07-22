@@ -5,13 +5,10 @@ import {
   type PublicErrorCode,
 } from "@foodseyo/contracts";
 
-import { createLiveRestaurantConfirmationService } from "../../../../src/live-restaurant-confirmation-server.js";
+import { createLiveRestaurantConfirmationService } from "../../../src/live-restaurant-confirmation-server.js";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 const errorResponse = (code: PublicErrorCode): Response => {
   const definition = PUBLIC_ERROR_REGISTRY[code];
@@ -42,21 +39,20 @@ export async function POST(request: Request): Promise<Response> {
   if (
     !isRecord(body) ||
     Object.keys(body).length !== 2 ||
-    typeof body.analysisToken !== "string" ||
-    body.analysisToken.length === 0 ||
-    body.analysisToken.length > 200_000 ||
-    (body.selectedCandidateId !== null &&
-      (typeof body.selectedCandidateId !== "string" ||
-        !UUID_PATTERN.test(body.selectedCandidateId)))
+    typeof body.assistantToken !== "string" ||
+    body.assistantToken.length === 0 ||
+    body.assistantToken.length > 500_000 ||
+    typeof body.question !== "string" ||
+    body.question.length === 0 ||
+    body.question.length > 500
   ) {
     return errorResponse("INVALID_INPUT");
   }
-
   try {
     const service = createLiveRestaurantConfirmationService(process.env);
-    const result = await service.confirm({
-      analysisToken: body.analysisToken,
-      selectedCandidateId: body.selectedCandidateId,
+    const result = await service.assist({
+      assistantToken: body.assistantToken,
+      question: body.question,
       signal: request.signal,
     });
     if (result.status !== "success") {

@@ -454,3 +454,88 @@
   database schema, migration, provider prompt, or publication receipt changes.
 - **Status:** Accepted submission UI behavior
 - **Date:** 2026-07-22
+
+## U-020 - Move language selection into the minimal upload landing screen
+
+- **Decision:** Replace the language-only gate with one minimal landing screen:
+  Foodseyo identity, one short product promise, and one working menu-photo entry
+  card. English/한국어 remains available as a compact top-right control and
+  updates the landing copy immediately.
+- **Scope honesty:** The landing page exposes only the live menu-photo path. It
+  does not imitate an unavailable restaurant-link analysis flow.
+- **Compatibility:** Cookie, route, accessibility language, analysis-token
+  propagation, provider boundaries, and database behavior remain unchanged.
+- **Supersedes:** U-019 only where it required a separate language-choice gate.
+- **Status:** Accepted submission UI behavior
+- **Date:** 2026-07-22
+
+## U-021 - Make photo selection a native home action followed by review
+
+- **Decision:** The home photo card opens the device-native image chooser.
+  Selecting an image moves directly to a review step that shows the transient
+  image preview and accepts an optional user-declared restaurant name before
+  the existing menu-image analysis request begins.
+- **Privacy:** The raw image remains transient browser/server input. The
+  inter-page handoff stores only the encrypted analysis token, language, and
+  UI-safe restaurant-selection view model in same-tab `sessionStorage`, then
+  consumes it once.
+- **Compatibility:** Existing menu-image analysis and restaurant confirm/save
+  endpoints are unchanged. No shared contract, database schema, migration,
+  provider prompt, or Production behavior changes.
+- **Status:** Accepted submission UI behavior
+- **Date:** 2026-07-22
+
+## U-022 - Place the link field on the first screen without claiming analysis
+
+- **Decision:** Add the restaurant/menu link field above the photo card on the
+  minimal home screen. The field accepts only complete HTTP/HTTPS URLs and
+  reports local validation status in the selected language.
+- **Scope honesty:** No current `apps/web` API route consumes link input, so the
+  control explicitly states that link analysis is not connected after a valid
+  URL is checked. It does not navigate to fixture results or report analysis
+  progress or success.
+- **Compatibility:** No server contract, provider call, persistence behavior,
+  database schema, or migration changes.
+- **Status:** Accepted submission UI behavior
+- **Date:** 2026-07-22
+
+## U-023 - Connect the source projects through the existing confirmation and publication boundary
+
+- **Decision:** On `submission-team-integration`, adapt BiteMatch's native
+  multi-photo intake, explicit restaurant/branch confirmation, Google Maps link
+  handling, and official-site menu preference together with
+  travel-food-copilot's general-link search, menu overview, Dish Detail, and AI
+  ordering interaction. The current Foodseyo Google Places, canonical
+  validation, cache, Neon repository, and atomic confirm/save path remain the
+  authority.
+- **Input behavior:** The native chooser accepts one to five ordered JPG, PNG,
+  or WebP images, each up to 10 MB. A validated restaurant/menu link calls a
+  server route. Google Maps place references are resolved directly when
+  available; other links use bounded Web Search clues and still produce Google
+  Places candidates that require explicit user confirmation.
+- **Source behavior:** After link confirmation, acquisition prefers the
+  confirmed Place's official site and then uses the existing bounded Web Search
+  fallback. DNS answers and redirects remain revalidated, transport connects
+  only to an approved address, response types and bytes are bounded, and raw
+  source content is released after request-scoped extraction.
+- **Dish and assistant behavior:** Controlled taste/texture/ingredient guidance
+  is app-private and source-bound; it is not written as a new canonical claim.
+  The ordering copilot receives only the confirmed result view, recommends only
+  IDs in that menu, exposes unknowns, and never guarantees allergen or dietary
+  safety.
+- **No-candidate behavior:** An uploaded-menu analysis with zero restaurant
+  candidates may continue through the existing `analysis_only` canonical
+  persistence path. It creates no restaurant, external-reference,
+  restaurant-menu-version, or publication-receipt row. Link submissions remain
+  confirmation-gated because branch-bound official-source acquisition cannot
+  run without a selected Google Places candidate.
+- **Deployment configuration:** `OPENAI_WEB_SEARCH_MODEL` remains the preferred
+  dedicated name. When it is absent, the app-private integration may reuse the
+  approved `OPENAI_MENU_EXTRACTION_MODEL`; no generic `OPENAI_MODEL` alias or
+  environment-registry change is introduced.
+- **Compatibility:** No shared DTO, database schema, migration, legacy
+  environment alias, fixture result, or persistent raw-image store was added.
+  U-020 through U-022 remain historical records of the incremental UI state
+  and are superseded only for current live-link and multi-photo behavior.
+- **Status:** Accepted submission integration
+- **Date:** 2026-07-22

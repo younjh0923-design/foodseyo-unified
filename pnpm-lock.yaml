@@ -41,6 +41,9 @@ importers:
       '@foodseyo/restaurant-resolution':
         specifier: workspace:*
         version: link:../../packages/restaurant-resolution
+      '@foodseyo/source-acquisition':
+        specifier: workspace:*
+        version: link:../../packages/source-acquisition
       next:
         specifier: 16.2.10
         version: 16.2.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

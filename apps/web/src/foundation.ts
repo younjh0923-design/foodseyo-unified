@@ -127,6 +127,21 @@ export interface DishFactView {
   readonly evidence: EvidencePresentation;
 }
 
+export interface SourceBoundMenuGuidance {
+  readonly menuItemId: string;
+  readonly basicTastes: readonly string[];
+  readonly flavorNotes: readonly string[];
+  readonly textures: readonly string[];
+  readonly heat: string | null;
+  readonly richness: string | null;
+  readonly heatAdjustability: string | null;
+  readonly ingredients: readonly {
+    readonly name: string;
+    readonly basis: "source_stated" | "inferred_from_source";
+  }[];
+  readonly orderTip: string | null;
+}
+
 export interface MenuItemResultView {
   readonly menuItemId: string;
   readonly name: string;
@@ -137,6 +152,7 @@ export interface MenuItemResultView {
   readonly dishResolved: boolean;
   readonly dishStatusMessage: string;
   readonly facts: readonly DishFactView[];
+  readonly orderTip: string | null;
   readonly safetyNotice: string;
   readonly openDetailLabel: string;
   readonly openDetailAriaLabel: string;
@@ -713,6 +729,80 @@ const projectProfileFacts = (
   ];
 };
 
+const projectGuidanceFacts = (
+  guidance: SourceBoundMenuGuidance,
+  language: UiLanguage,
+): readonly DishFactView[] => {
+  const labels =
+    language === "ko"
+      ? {
+          basic_tastes: "기본 맛",
+          flavor_notes: "풍미",
+          textures: "식감",
+          heat: "매운 정도",
+          richness: "묵직함",
+          heat_adjustability: "맵기 조절",
+          ingredients: "재료",
+        }
+      : {
+          basic_tastes: "Basic tastes",
+          flavor_notes: "Flavor notes",
+          textures: "Texture",
+          heat: "Heat",
+          richness: "Richness",
+          heat_adjustability: "Heat options",
+          ingredients: "Ingredients",
+        };
+  const unknown = language === "ko" ? "확인되지 않음" : "Not confirmed";
+  const fact = (
+    key: DishFactView["key"],
+    values: readonly string[] | string | null,
+    basis: "source_stated" | "inferred_from_source" = "inferred_from_source",
+  ): DishFactView => {
+    const value =
+      Array.isArray(values)
+        ? values.length > 0
+          ? values.map(humanize).join(", ")
+          : null
+        : values === null
+          ? null
+          : humanize(values as string);
+    return value === null
+      ? {
+          key,
+          label: labels[key],
+          value: unknown,
+          state: "unknown",
+          evidence: EVIDENCE_PRESENTATION.unknown,
+        }
+      : {
+          key,
+          label: labels[key],
+          value,
+          state: "known",
+          evidence: EVIDENCE_PRESENTATION[basis],
+        };
+  };
+  const ingredientBasis = guidance.ingredients.every(
+    (ingredient) => ingredient.basis === "source_stated",
+  )
+    ? "source_stated"
+    : "inferred_from_source";
+  return [
+    fact("basic_tastes", guidance.basicTastes),
+    fact("flavor_notes", guidance.flavorNotes),
+    fact("textures", guidance.textures),
+    fact("heat", guidance.heat),
+    fact("richness", guidance.richness),
+    fact("heat_adjustability", guidance.heatAdjustability),
+    fact(
+      "ingredients",
+      guidance.ingredients.map((ingredient) => ingredient.name),
+      ingredientBasis,
+    ),
+  ];
+};
+
 const selectedRestaurant = (analysis: CanonicalMenuAnalysis) => {
   const selectedId = analysis.restaurantResolution.selectedCandidateId;
   return (
@@ -726,6 +816,7 @@ export const buildResultScreen = (
   draft: LocalInputDraft,
   analysis: CanonicalMenuAnalysis,
   language: UiLanguage = "en",
+  guidance: readonly SourceBoundMenuGuidance[] = [],
 ): ResultScreenView => {
   const parsed = CanonicalMenuAnalysisSchema.parse(analysis);
   const restaurant = selectedRestaurant(parsed);
@@ -744,6 +835,9 @@ export const buildResultScreen = (
         (match) =>
           match.menuItemId === item.menuItemId && match.state === "unresolved",
       );
+      const sourceGuidance =
+        guidance.find((candidate) => candidate.menuItemId === item.menuItemId) ??
+        null;
       return {
         menuItemId: item.menuItemId,
         name: item.name,
@@ -753,14 +847,20 @@ export const buildResultScreen = (
         price: formatMenuItemPrice(item, language),
         sectionIndex: item.sectionIndex,
         itemIndex: item.itemIndex,
-        dishResolved: profile !== null,
+        dishResolved: profile !== null || sourceGuidance !== null,
         dishStatusMessage:
-          profile !== null
+          profile !== null || sourceGuidance !== null
             ? language === "ko" ? "음식 상세 정보가 있어요" : "Dish details available"
             : unresolved
               ? language === "ko" ? "음식 일치는 확인되지 않았지만 메뉴 항목은 볼 수 있어요." : "Dish match unresolved; the menu item remains available."
               : language === "ko" ? "음식 상세 정보가 확인되지 않았어요." : "Dish details are not confirmed.",
-        facts: projectProfileFacts(profile),
+        facts:
+          profile !== null
+            ? projectProfileFacts(profile)
+            : sourceGuidance !== null
+              ? projectGuidanceFacts(sourceGuidance, language)
+              : projectProfileFacts(null),
+        orderTip: sourceGuidance?.orderTip ?? null,
         safetyNotice: SAFETY_NOTICE[language],
         openDetailLabel: language === "ko" ? "상세 보기" : "View details",
         openDetailAriaLabel:
