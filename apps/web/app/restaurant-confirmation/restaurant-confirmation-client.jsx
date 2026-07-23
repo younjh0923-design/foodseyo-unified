@@ -49,6 +49,8 @@ const COPY = {
     assistantError: "The ordering copilot couldn't answer. Please try again.",
     analyzeError: "We couldn't complete the menu analysis. Please try again.",
     confirmError: "We couldn't save the menu with that restaurant. Please try again.",
+    confirmExpired: "This analysis or restaurant choice is no longer current. Start again with the menu photo.",
+    confirmRetryable: "The save service is temporarily unavailable. Your restaurant was not changed; please try once more.",
   },
   ko: {
     confirmation: "식당 확인",
@@ -91,6 +93,8 @@ const COPY = {
     assistantError: "주문 도우미가 답하지 못했어요. 다시 시도해 주세요.",
     analyzeError: "메뉴 분석을 완료하지 못했어요. 다시 시도해 주세요.",
     confirmError: "선택한 식당에 메뉴를 저장하지 못했어요. 다시 시도해 주세요.",
+    confirmExpired: "분석 또는 식당 선택이 더 이상 유효하지 않아요. 메뉴 사진부터 다시 시작해 주세요.",
+    confirmRetryable: "저장 서비스가 일시적으로 응답하지 않아요. 식당 연결은 변경되지 않았으니 잠시 후 다시 시도해 주세요.",
   },
 };
 
@@ -364,6 +368,7 @@ export function RestaurantConfirmationExperience({ initialLanguage = "ko" }) {
   const [result, setResult] = useState(null);
   const [assistantToken, setAssistantToken] = useState(null);
   const inFlight = useRef(false);
+  const confirmRequest = useRef({ controller: null, id: 0 });
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -381,7 +386,32 @@ export function RestaurantConfirmationExperience({ initialLanguage = "ko" }) {
     setStage("confirmation");
   }, [language]);
 
+  useEffect(() => {
+    const clearRestoredTransientState = (event) => {
+      if (!event.persisted) return;
+      confirmRequest.current.controller?.abort();
+      confirmRequest.current = {
+        controller: null,
+        id: confirmRequest.current.id + 1,
+      };
+      inFlight.current = false;
+      setSelectedCandidateId(null);
+      setSubmissionState("idle");
+      setStatusMessage("");
+    };
+    window.addEventListener("pageshow", clearRestoredTransientState);
+    return () => {
+      window.removeEventListener("pageshow", clearRestoredTransientState);
+      confirmRequest.current.controller?.abort();
+    };
+  }, []);
+
   const reset = () => {
+    confirmRequest.current.controller?.abort();
+    confirmRequest.current = {
+      controller: null,
+      id: confirmRequest.current.id + 1,
+    };
     inFlight.current = false;
     window.location.assign("/");
   };
@@ -389,18 +419,40 @@ export function RestaurantConfirmationExperience({ initialLanguage = "ko" }) {
   const confirm = async (candidateId) => {
     if (!analysisToken || inFlight.current) return;
     inFlight.current = true; setSubmissionState("loading"); setStatusMessage("");
+    confirmRequest.current.controller?.abort();
+    const requestId = confirmRequest.current.id + 1;
+    const controller = new AbortController();
+    confirmRequest.current = { controller, id: requestId };
     try {
       const response = await fetch("/api/restaurant/confirm", {
         method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ analysisToken, selectedCandidateId: candidateId }),
+        signal: controller.signal,
       });
       const payload = await response.json().catch(() => null);
-      if (!response.ok || payload?.ok !== true || !payload.data?.result) throw new Error();
+      if (confirmRequest.current.id !== requestId) return;
+      if (!response.ok || payload?.ok !== true || !payload.data?.result) {
+        const failure = new Error("safe confirmation failure");
+        failure.publicError = payload?.error ?? null;
+        throw failure;
+      }
       setResult(payload.data.result); setAssistantToken(payload.data.assistantToken ?? null);
       setSubmissionState("idle"); setStage("result");
-    } catch {
-      setSubmissionState("error"); setStatusMessage(copy.confirmError);
-    } finally { inFlight.current = false; }
+    } catch (error) {
+      if (controller.signal.aborted || confirmRequest.current.id !== requestId) return;
+      const publicError = error?.publicError;
+      const message = publicError?.code === "INVALID_INPUT"
+        ? copy.confirmExpired
+        : publicError?.retryable === true
+          ? copy.confirmRetryable
+          : copy.confirmError;
+      setSubmissionState("error"); setStatusMessage(message);
+    } finally {
+      if (confirmRequest.current.id === requestId) {
+        confirmRequest.current.controller = null;
+        inFlight.current = false;
+      }
+    }
   };
 
   if (stage === "result" && result) return <ResultStep language={language} result={result}

@@ -9,6 +9,7 @@ import {
   LIVE_MENU_MEDIA_TYPES,
   createLiveRestaurantConfirmationService,
   type SafeMenuAnalysisFailure,
+  type SafeMenuAnalysisTiming,
 } from "../../../../src/live-restaurant-confirmation-server.js";
 
 export const runtime = "nodejs";
@@ -35,18 +36,55 @@ const errorResponse = (
 };
 
 export async function POST(request: Request): Promise<Response> {
+  const requestStartedAt = Date.now();
   const correlationId = randomUUID();
+  const analysisRequestId = randomUUID();
+  let requestParseMs = 0;
   let failureLogged = false;
   const observeSafeFailure = (failure: SafeMenuAnalysisFailure): void => {
     if (failureLogged) return;
     failureLogged = true;
     console.error(JSON.stringify({
       event: "menu_image_analysis_failed",
-      correlationId: failure.correlationId,
-      failedStage: failure.failedStage,
-      safeErrorCode: failure.safeErrorCode,
-      imageCount: failure.imageCount,
-      imageByteSizes: failure.imageByteSizes,
+      correlation_id: failure.correlationId,
+      analysis_request_id: analysisRequestId,
+      failed_stage: failure.failedStage,
+      safe_error_code: failure.safeErrorCode,
+      image_count: failure.imageCount,
+      image_byte_sizes: failure.imageByteSizes,
+    }));
+  };
+  const observeSafeTiming = (timing: SafeMenuAnalysisTiming): void => {
+    console.info(JSON.stringify({
+      event: "menu_image_analysis_timing",
+      correlation_id: timing.correlationId,
+      analysis_request_id: analysisRequestId,
+      request_parse_ms: requestParseMs,
+      image_preprocess_ms: timing.imagePreprocessingMs,
+      extraction_cache_lookup_ms: timing.cacheLookupMs,
+      openai_extraction_ms: timing.openAiMs,
+      restaurant_resolution_ms: timing.googlePlacesMs,
+      canonical_validation_ms: timing.canonicalMs,
+      token_build_ms: timing.tokenMs,
+      total_ms: Date.now() - requestStartedAt,
+      image_count: timing.imageCount,
+      total_byte_size: timing.originalByteSizes.reduce(
+        (total, byteSize) => total + byteSize,
+        0,
+      ),
+      original_dimensions: timing.originalDimensions,
+      provider_dimensions: timing.providerDimensions,
+      provider_byte_sizes: timing.providerByteSizes,
+      extraction_cache_hit: timing.cacheStatus === "hit",
+      extraction_cache_status: timing.cacheStatus,
+      resolution_cache_hit: false,
+      restaurant_clue_present: timing.restaurantCluePresent,
+      user_hint_present: timing.userHintPresent,
+      candidate_count: timing.candidateCount,
+      publication_mode:
+        timing.outcome === "candidates"
+          ? "pending_restaurant_confirmation"
+          : "menu_only_available",
     }));
   };
   const fail = (
@@ -101,6 +139,7 @@ export async function POST(request: Request): Promise<Response> {
   ) {
     return fail("image_decoding_size_validation", "INVALID_INPUT", uploadedFiles);
   }
+  requestParseMs = Date.now() - requestStartedAt;
 
   let transientImages: Array<{
     readonly bytes: Uint8Array;
@@ -131,6 +170,7 @@ export async function POST(request: Request): Promise<Response> {
       signal: request.signal,
       correlationId,
       observeSafeFailure,
+      observeSafeTiming,
     });
     if (result.status !== "success") {
       if (result.status === "error") {

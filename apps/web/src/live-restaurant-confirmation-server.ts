@@ -28,6 +28,7 @@ import {
 } from "@foodseyo/contracts";
 import {
   getRuntimeMvpAnalysisRepository,
+  type ExactAnalysisIdentity,
   type MvpAnalysisRepository,
   type PostgresMvpAnalysisRepository,
   type SemanticVersionVector,
@@ -62,6 +63,11 @@ import {
   type SourceBoundMenuGuidance,
 } from "./foundation.js";
 import { RestaurantLinkCandidateResolver } from "./restaurant-link-server.js";
+import {
+  prepareMenuImagesForProvider,
+  type PreparedMenuImages,
+  type SafeImageDimensions,
+} from "./menu-image-preprocessing-server.js";
 import { OfficialMenuAnalysisService } from "./official-menu-analysis-server.js";
 import {
   OpenAIMenuGuidanceService,
@@ -89,6 +95,7 @@ interface LiveAnalyzeBaseInput {
   readonly signal: AbortSignal;
   readonly correlationId?: ReturnType<typeof randomUUID>;
   readonly observeSafeFailure?: (failure: SafeMenuAnalysisFailure) => void;
+  readonly observeSafeTiming?: (timing: SafeMenuAnalysisTiming) => void;
 }
 
 export type SafeMenuAnalysisFailureStage =
@@ -104,6 +111,27 @@ export interface SafeMenuAnalysisFailure {
   readonly safeErrorCode: PublicErrorCode;
   readonly imageCount: number;
   readonly imageByteSizes: readonly number[];
+}
+
+export interface SafeMenuAnalysisTiming {
+  readonly correlationId: string;
+  readonly totalMs: number;
+  readonly cacheLookupMs: number;
+  readonly imagePreprocessingMs: number;
+  readonly openAiMs: number;
+  readonly googlePlacesMs: number;
+  readonly canonicalMs: number;
+  readonly tokenMs: number;
+  readonly cacheStatus: "hit" | "miss" | "unavailable";
+  readonly imageCount: number;
+  readonly originalByteSizes: readonly number[];
+  readonly providerByteSizes: readonly number[];
+  readonly originalDimensions: readonly SafeImageDimensions[];
+  readonly providerDimensions: readonly SafeImageDimensions[];
+  readonly candidateCount: number;
+  readonly outcome: "candidates" | "menu_only_available";
+  readonly restaurantCluePresent: boolean;
+  readonly userHintPresent: boolean;
 }
 
 export type LiveAnalyzeInput = LiveAnalyzeBaseInput &
@@ -142,6 +170,17 @@ export interface LiveConfirmInput {
   readonly analysisToken: string;
   readonly selectedCandidateId: string | null;
   readonly signal: AbortSignal;
+  readonly correlationId?: ReturnType<typeof randomUUID>;
+  readonly observeSafeTiming?: (timing: SafeConfirmationTiming) => void;
+}
+
+export interface SafeConfirmationTiming {
+  readonly correlationId: string;
+  readonly totalMs: number;
+  readonly confirmCacheLookupMs: number;
+  readonly publicationMs: number;
+  readonly cacheReuse: boolean;
+  readonly outcome: "analysis_only" | "restaurant_linked";
 }
 
 export interface LiveConfirmSuccess {
@@ -193,6 +232,9 @@ export interface LiveRestaurantConfirmationDependencies {
       safeErrorCode: PublicErrorCode,
     ) => void,
   ) => Promise<PortResult<OpenAIMenuExtractionResult>>;
+  readonly prepareImagesForProvider?: (
+    images: readonly TransientUploadedMenuImage[],
+  ) => Promise<PreparedMenuImages>;
   readonly findCandidates: (
     clues: {
       readonly name: string | null;
@@ -354,6 +396,58 @@ const rebindExtractionSource = (
     })),
   });
 
+const extractionFromCanonical = (
+  analysis: CanonicalMenuAnalysis,
+): CompactMenuExtraction => {
+  const itemsBySection = new Map<number, typeof analysis.menuItems>();
+  for (const item of analysis.menuItems) {
+    const items = itemsBySection.get(item.sectionIndex) ?? [];
+    itemsBySection.set(item.sectionIndex, [...items, item]);
+  }
+  return CompactMenuExtractionSchema.parse({
+    contractVersion: CONTRACT_VERSIONS.compactExtraction,
+    extractionState: "unvalidated",
+    source: analysis.source,
+    restaurantContext: null,
+    menuScope: analysis.menuVersion?.menuScope ?? "default",
+    sections: [...itemsBySection.entries()]
+      .sort(([left], [right]) => left - right)
+      .map(([sectionIndex, items]) => ({
+        sectionIndex,
+        // Section labels are not part of the canonical snapshot contract.
+        // Menu item order and source evidence remain exact and reusable.
+        name: null,
+        items: [...items]
+          .sort((left, right) => left.itemIndex - right.itemIndex)
+          .map((item) => ({
+            itemIndex: item.itemIndex,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            optionTexts: item.optionTexts,
+            sourceEvidence: item.sourceEvidence,
+          })),
+      })),
+    warningCodes: analysis.warningCodes,
+    completedAt: analysis.validatedAt,
+  });
+};
+
+const sourceVisibleCluesFromCanonical = (
+  analysis: CanonicalMenuAnalysis,
+): OpenAIMenuExtractionResult["restaurantClues"] => {
+  const sourceVisibleCandidate = analysis.restaurantResolution.candidates.find(
+    (candidate) => candidate.matchSignals.includes("visual_text"),
+  );
+  return sourceVisibleCandidate === undefined
+    ? { name: null, address: null, visualText: null }
+    : {
+        name: sourceVisibleCandidate.displayName,
+        address: sourceVisibleCandidate.fullAddress,
+        visualText: sourceVisibleCandidate.displayName,
+      };
+};
+
 const withConfirmedContext = (
   extraction: CompactMenuExtraction,
   resolution: RestaurantResolution,
@@ -430,6 +524,7 @@ export class LiveRestaurantConfirmationService {
     input: LiveAnalyzeInput,
   ): Promise<PortResult<LiveAnalyzeSuccess>> {
     const context = contextFor(input.signal, input.correlationId);
+    const analysisStartedAt = Date.now();
     const images = normalizedImages(input);
     const byteCount = images.reduce(
       (total, image) => total + image.bytes.byteLength,
@@ -478,7 +573,7 @@ export class LiveRestaurantConfirmationService {
     }
     const collectedAt = this.dependencies.now().toISOString();
     const contentHandle = `upload:${this.dependencies.generateId()}`;
-    const source = MenuSourceInputSchema.parse({
+    let source = MenuSourceInputSchema.parse({
       contractVersion: CONTRACT_VERSIONS.menuSource,
       source: {
         sourceRef: this.dependencies.generateId(),
@@ -497,12 +592,82 @@ export class LiveRestaurantConfirmationService {
       },
       requestedAt: collectedAt,
     });
-    const extractionResult = await this.dependencies.extractMenu(
-      source,
-      images,
-      context,
-      observeFailure,
-    );
+    const modelVersion =
+      this.dependencies.environment[SERVER_ENV_NAMES.menuExtractionModel]?.trim();
+    let cacheIdentity: ExactAnalysisIdentity | null = null;
+    let cachedCanonical: CanonicalMenuAnalysis | null = null;
+    let cacheStatus: SafeMenuAnalysisTiming["cacheStatus"] = "unavailable";
+    const cacheStartedAt = Date.now();
+    if (modelVersion) {
+      try {
+        cacheIdentity = await this.dependencies.repository.resolveExactIdentity({
+          analysisContractId: this.dependencies.generateId(),
+          evidenceSetId: this.dependencies.generateId(),
+          sourceRef: source.source.sourceRef,
+          sourceType: source.source.sourceType,
+          sourceFingerprint: source.source.sourceFingerprint,
+          evidenceIdentityVersion: EVIDENCE_IDENTITY_VERSION,
+          collectedAt: source.source.collectedAt,
+          createdAt: collectedAt,
+          versions: versionVector(modelVersion),
+        });
+        source = MenuSourceInputSchema.parse({
+          ...source,
+          source: { ...source.source, sourceRef: cacheIdentity.sourceRef },
+        });
+        cachedCanonical =
+          await this.dependencies.repository.findReusableCanonicalAnalysis(
+            cacheIdentity,
+            collectedAt,
+          );
+        cacheStatus = cachedCanonical === null ? "miss" : "hit";
+      } catch {
+        // Exact-cache preparation is an optimization. A database/cache miss or
+        // temporary lookup failure must not prevent the provider-backed path.
+        cacheIdentity = null;
+        cachedCanonical = null;
+        cacheStatus = "unavailable";
+      }
+    }
+    const cacheLookupMs = Date.now() - cacheStartedAt;
+    let providerImages = images;
+    let originalDimensions: readonly SafeImageDimensions[] = [];
+    let providerDimensions: readonly SafeImageDimensions[] = [];
+    const preprocessingStartedAt = Date.now();
+    if (
+      cachedCanonical === null &&
+      this.dependencies.prepareImagesForProvider !== undefined
+    ) {
+      try {
+        const prepared = await this.dependencies.prepareImagesForProvider(images);
+        providerImages = prepared.images;
+        originalDimensions = prepared.originalDimensions;
+        providerDimensions = prepared.providerDimensions;
+      } catch {
+        observeFailure("image_decoding_size_validation", "INVALID_INPUT");
+        return { status: "error", error: publicError("INVALID_INPUT", context) };
+      }
+    }
+    const imagePreprocessingMs = Date.now() - preprocessingStartedAt;
+    const openAiStartedAt = Date.now();
+    const extractionResult: PortResult<OpenAIMenuExtractionResult> =
+      cachedCanonical === null
+        ? await this.dependencies.extractMenu(
+            source,
+            providerImages,
+            context,
+            observeFailure,
+          )
+        : {
+            status: "success",
+            value: {
+              extraction: extractionFromCanonical(cachedCanonical),
+              restaurantClues: sourceVisibleCluesFromCanonical(cachedCanonical),
+            },
+          };
+    const openAiMs = cachedCanonical === null
+      ? Date.now() - openAiStartedAt
+      : 0;
     if (extractionResult.status !== "success") {
       if (extractionResult.status === "error") {
         const code = extractionResult.error.error.code;
@@ -519,6 +684,7 @@ export class LiveRestaurantConfirmationService {
     }
 
     const clues = extractionResult.value.restaurantClues;
+    const placesStartedAt = Date.now();
     const candidateResult = await this.dependencies.findCandidates(
       {
         name: restaurantName ?? clues.name,
@@ -529,6 +695,7 @@ export class LiveRestaurantConfirmationService {
       },
       context,
     );
+    const googlePlacesMs = Date.now() - placesStartedAt;
     let resolution: RestaurantResolution;
     if (candidateResult.status === "success") {
       const resolutionResult = await new FoundationRestaurantResolutionPort().resolve(
@@ -564,6 +731,7 @@ export class LiveRestaurantConfirmationService {
       (count, section) => count + section.items.length,
       0,
     );
+    const canonicalStartedAt = Date.now();
     const validation = new CanonicalMenuValidationService((request) =>
       buildCanonicalMenuAnalysis(request, {
         analysisId: this.dependencies.generateId(),
@@ -587,8 +755,10 @@ export class LiveRestaurantConfirmationService {
       }
       return canonicalResult;
     }
+    const canonicalMs = Date.now() - canonicalStartedAt;
 
     let token: string;
+    const tokenStartedAt = Date.now();
     try {
       token = this.sealToken({
         version: ANALYSIS_TOKEN_VERSION,
@@ -606,7 +776,32 @@ export class LiveRestaurantConfirmationService {
       observeFailure("token_encryption", "INTERNAL_ERROR");
       return { status: "error", error: publicError("INTERNAL_ERROR", context) };
     }
+    const tokenMs = Date.now() - tokenStartedAt;
     const draft = previewDraft(byteCount, images.length);
+    input.observeSafeTiming?.({
+      correlationId: context.correlationId,
+      totalMs: Date.now() - analysisStartedAt,
+      cacheLookupMs,
+      imagePreprocessingMs,
+      openAiMs,
+      googlePlacesMs,
+      canonicalMs,
+      tokenMs,
+      cacheStatus,
+      imageCount: images.length,
+      originalByteSizes: images.map((image) => image.bytes.byteLength),
+      providerByteSizes: providerImages.map((image) => image.bytes.byteLength),
+      originalDimensions,
+      providerDimensions,
+      candidateCount: resolution.candidates.length,
+      outcome:
+        resolution.candidates.length > 0
+          ? "candidates"
+          : "menu_only_available",
+      restaurantCluePresent:
+        clues.name !== null || clues.address !== null || clues.visualText !== null,
+      userHintPresent: restaurantName !== null,
+    });
     return {
       status: "success",
       value: {
@@ -690,7 +885,40 @@ export class LiveRestaurantConfirmationService {
   async confirm(
     input: LiveConfirmInput,
   ): Promise<PortResult<LiveConfirmSuccess>> {
-    const context = contextFor(input.signal);
+    const confirmationStartedAt = Date.now();
+    const context = contextFor(input.signal, input.correlationId);
+    let confirmCacheLookupMs = 0;
+    let publicationStartedAt: number | null = null;
+    const finish = async (
+      analysis: CanonicalMenuAnalysis,
+      byteCount: number,
+      language: UiLanguage,
+      cacheReuse: boolean,
+    ): Promise<PortResult<LiveConfirmSuccess>> => {
+      const result = await this.successFromCanonical(
+        analysis,
+        byteCount,
+        language,
+        context,
+      );
+      if (result.status === "success") {
+        input.observeSafeTiming?.({
+          correlationId: context.correlationId,
+          totalMs: Date.now() - confirmationStartedAt,
+          confirmCacheLookupMs,
+          publicationMs:
+            publicationStartedAt === null
+              ? 0
+              : Date.now() - publicationStartedAt,
+          cacheReuse,
+          outcome:
+            analysis.publicationState === "eligible"
+              ? "restaurant_linked"
+              : "analysis_only",
+        });
+      }
+      return result;
+    };
     let token: TokenPayload;
     try {
       token = this.openToken(input.analysisToken);
@@ -701,6 +929,11 @@ export class LiveRestaurantConfirmationService {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
     const continuesMenuOnly = input.selectedCandidateId === null;
+    const selectedCandidate = continuesMenuOnly
+      ? undefined
+      : token.resolution.candidates.find(
+          (candidate) => candidate.candidateId === input.selectedCandidateId,
+        );
     if (continuesMenuOnly) {
       if (
         token.inputKind !== "images" ||
@@ -710,11 +943,7 @@ export class LiveRestaurantConfirmationService {
       ) {
         return { status: "error", error: publicError("INVALID_INPUT", context) };
       }
-    } else if (
-      !token.resolution.candidates.some(
-        (candidate) => candidate.candidateId === input.selectedCandidateId,
-      )
-    ) {
+    } else if (selectedCandidate === undefined) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
 
@@ -786,6 +1015,7 @@ export class LiveRestaurantConfirmationService {
       };
     }
     let identity;
+    const confirmCacheLookupStartedAt = Date.now();
     try {
       identity = await this.dependencies.repository.resolveExactIdentity({
         analysisContractId: this.dependencies.generateId(),
@@ -803,26 +1033,28 @@ export class LiveRestaurantConfirmationService {
       return { status: "error", error: publicError("INTERNAL_ERROR", context) };
     }
 
-    const reusable = await this.dependencies.repository.findReusableCanonicalAnalysis(
-      identity,
-      recordedAt,
-    );
+    const reusable = selectedCandidate === undefined
+      ? await this.dependencies.repository.findReusableCanonicalAnalysis(
+          identity,
+          recordedAt,
+        )
+      : await this.dependencies.repository.findPublishedCanonicalAnalysisByGooglePlaceId(
+          identity,
+          selectedCandidate.googlePlaceId,
+          recordedAt,
+        );
+    confirmCacheLookupMs = Date.now() - confirmCacheLookupStartedAt;
     if (reusable !== null) {
-      if (
-        reusable.restaurantResolution.selectedCandidateId !==
-        input.selectedCandidateId
-      ) {
-        return { status: "error", error: publicError("INVALID_INPUT", context) };
-      }
-      return this.successFromCanonical(
+      return finish(
         reusable,
         byteCount,
         token.language,
-        context,
+        true,
       );
     }
 
     const runId = this.dependencies.generateId();
+    publicationStartedAt = Date.now();
     const owner = await this.dependencies.repository.acquireAnalysisOwner({
       identity,
       runId,
@@ -830,44 +1062,42 @@ export class LiveRestaurantConfirmationService {
       leaseExpiresAt: new Date(
         Date.parse(recordedAt) + OWNER_LEASE_MS,
       ).toISOString(),
+      ...(selectedCandidate === undefined
+        ? {}
+        : { publicationGooglePlaceId: selectedCandidate.googlePlaceId }),
     });
     if (owner.status === "reusable") {
-      if (
-        owner.analysis.restaurantResolution.selectedCandidateId !==
-        input.selectedCandidateId
-      ) {
-        return { status: "error", error: publicError("INVALID_INPUT", context) };
-      }
-      return this.successFromCanonical(
+      return finish(
         owner.analysis,
         byteCount,
         token.language,
-        context,
+        true,
       );
     }
     if (owner.status === "waiting") {
-      const waited = await this.dependencies.repository.waitForReusableCanonicalAnalysis(
-        identity,
-        { maxPolls: 6, pollIntervalMs: 250 },
-        () => this.dependencies.now().toISOString(),
-      );
+      const waited = selectedCandidate === undefined
+        ? await this.dependencies.repository.waitForReusableCanonicalAnalysis(
+            identity,
+            { maxPolls: 6, pollIntervalMs: 250 },
+            () => this.dependencies.now().toISOString(),
+          )
+        : await this.dependencies.repository.waitForPublishedCanonicalAnalysisByGooglePlaceId(
+            identity,
+            selectedCandidate.googlePlaceId,
+            { maxPolls: 6, pollIntervalMs: 250 },
+            () => this.dependencies.now().toISOString(),
+          );
       if (waited.status !== "reusable") {
         return {
           status: "error",
           error: publicError("ANALYSIS_TEMPORARILY_UNAVAILABLE", context),
         };
       }
-      if (
-        waited.analysis.restaurantResolution.selectedCandidateId !==
-        input.selectedCandidateId
-      ) {
-        return { status: "error", error: publicError("INVALID_INPUT", context) };
-      }
-      return this.successFromCanonical(
+      return finish(
         waited.analysis,
         byteCount,
         token.language,
-        context,
+        true,
       );
     }
     if (owner.status === "terminal") {
@@ -962,11 +1192,11 @@ export class LiveRestaurantConfirmationService {
       }
       return pipelineResult;
     }
-    return this.successFromCanonical(
+    return finish(
       pipelineResult.value,
       byteCount,
       token.language,
-      context,
+      false,
     );
   }
 
@@ -1192,6 +1422,7 @@ export const createLiveRestaurantConfirmationService = (
     now: () => new Date(),
     generateId: () => randomUUID(),
     repository,
+    prepareImagesForProvider: prepareMenuImagesForProvider,
     extractMenu: async (source, images, context, observeSafeFailure) => {
       const adapter = createOpenAIMenuImageExtractionAdapterFromEnvironment(
         environment,

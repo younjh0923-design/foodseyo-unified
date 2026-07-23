@@ -40,3 +40,14 @@ publication result. Both implementations return only frozen outcomes and
 public errors. `buildCanonicalMenuAnalysis` supplies the deterministic minimal
 canonical projection used by the submission composition; it creates no new
 shared DTO and adds no inferred Dish or culinary claims.
+
+The reanalysis performance repair keeps a single Responses request but updates
+the private prompt/schema version to inspect the full image for restaurant
+identity before menu items, including headers, logos, top corners, footers,
+mixed scripts, visible address/location text, phone numbers, and official
+domains. `restaurantVisualText` is provider-private and is converted into the
+existing restaurant-clue boundary; it is not added to a shared DTO. Dense-menu
+completeness remains authoritative, so high image detail and the existing
+12,000-token ceiling are retained while the web server supplies an oriented,
+bounded provider derivative. Network-free tests cover one, two, and five
+images and malformed provider output.

@@ -91,6 +91,12 @@ export interface AcquireOwnerRequest {
   readonly runId: string;
   readonly startedAt: string;
   readonly leaseExpiresAt: string;
+  /**
+   * A stable publication target allows a later restaurant-linked publication
+   * to succeed an existing analysis-only snapshot. Request-scoped candidate
+   * UUIDs must never be used here.
+   */
+  readonly publicationGooglePlaceId?: string;
 }
 
 export interface MarkAnalysisFailureRequest {
@@ -147,9 +153,21 @@ export interface MvpAnalysisRepository {
     identity: ExactAnalysisIdentity,
     observedAt: string,
   ): Promise<CanonicalMenuAnalysis | null>;
+  findPublishedCanonicalAnalysisByGooglePlaceId(
+    identity: ExactAnalysisIdentity,
+    googlePlaceId: string,
+    observedAt: string,
+  ): Promise<CanonicalMenuAnalysis | null>;
   acquireAnalysisOwner(request: AcquireOwnerRequest): Promise<OwnerAcquisition>;
   waitForReusableCanonicalAnalysis(
     identity: ExactAnalysisIdentity,
+    policy: WaitPolicy,
+    observedAt: () => string,
+    scheduler?: WaitScheduler,
+  ): Promise<WaitResult>;
+  waitForPublishedCanonicalAnalysisByGooglePlaceId(
+    identity: ExactAnalysisIdentity,
+    googlePlaceId: string,
     policy: WaitPolicy,
     observedAt: () => string,
     scheduler?: WaitScheduler,
@@ -461,6 +479,32 @@ const findReusable = async (
   return result.rows[0] ? parseCanonicalRow(result.rows[0]) : null;
 };
 
+const findPublishedByGooglePlaceId = async (
+  executor: SqlExecutor,
+  identity: ExactAnalysisIdentity,
+  googlePlaceId: string,
+  observedAt: string,
+): Promise<CanonicalMenuAnalysis | null> => {
+  const result = await executor.query<CanonicalRow>(
+    `select ca.canonical_analysis_json
+       from canonical_analyses ca
+       join analysis_runs ar on ar.id = ca.producing_run_id
+       join publication_receipts pr on pr.analysis_id = ca.id
+       join restaurant_external_references rer
+         on rer.restaurant_id = ca.restaurant_id
+        and rer.provider = 'google_places'
+      where ca.evidence_set_id = $1
+        and ca.analysis_contract_id = $2
+        and rer.external_id = $3
+        and ca.expires_at > $4::timestamptz
+        and ar.status = 'ready'
+      order by ca.created_at desc
+      limit 1`,
+    [identity.evidenceSetId, identity.analysisContractId, googlePlaceId, observedAt],
+  );
+  return result.rows[0] ? parseCanonicalRow(result.rows[0]) : null;
+};
+
 const readBlockingRun = async (
   executor: SqlExecutor,
   identity: ExactAnalysisIdentity,
@@ -569,6 +613,22 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
     return findReusable(this.sql, identity, observedAt);
   }
 
+  findPublishedCanonicalAnalysisByGooglePlaceId(
+    identity: ExactAnalysisIdentity,
+    googlePlaceId: string,
+    observedAt: string,
+  ): Promise<CanonicalMenuAnalysis | null> {
+    validateIdentity(identity);
+    requireNonblank(googlePlaceId, "googlePlaceId");
+    requireTimestamp(observedAt, "observedAt");
+    return findPublishedByGooglePlaceId(
+      this.sql,
+      identity,
+      googlePlaceId,
+      observedAt,
+    );
+  }
+
   async findActiveRestaurantMenuVersion(
     restaurantId: string,
     menuScope: string,
@@ -606,20 +666,34 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
       throw new PersistenceContractError("lease must expire after it starts");
     }
 
-    const reusable = await this.findReusableCanonicalAnalysis(
-      request.identity,
-      request.startedAt,
-    );
+    const publicationGooglePlaceId = request.publicationGooglePlaceId;
+    if (publicationGooglePlaceId !== undefined) {
+      requireNonblank(publicationGooglePlaceId, "publicationGooglePlaceId");
+    }
+
+    const reusable = publicationGooglePlaceId === undefined
+      ? await this.findReusableCanonicalAnalysis(
+          request.identity,
+          request.startedAt,
+        )
+      : await this.findPublishedCanonicalAnalysisByGooglePlaceId(
+          request.identity,
+          publicationGooglePlaceId,
+          request.startedAt,
+        );
     if (reusable) {
       return { status: "reusable", analysis: reusable };
     }
 
     return this.sql.transaction(async (executor) => {
-      const transactionReusable = await findReusable(
-        executor,
-        request.identity,
-        request.startedAt,
-      );
+      const transactionReusable = publicationGooglePlaceId === undefined
+        ? await findReusable(executor, request.identity, request.startedAt)
+        : await findPublishedByGooglePlaceId(
+            executor,
+            request.identity,
+            publicationGooglePlaceId,
+            request.startedAt,
+          );
       if (transactionReusable) {
         return { status: "reusable", analysis: transactionReusable };
       }
@@ -675,11 +749,14 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
       );
       const newOwner = inserted.rows[0];
       if (newOwner) {
-        const committedWhileInserting = await findReusable(
-          executor,
-          request.identity,
-          request.startedAt,
-        );
+        const committedWhileInserting = publicationGooglePlaceId === undefined
+          ? await findReusable(executor, request.identity, request.startedAt)
+          : await findPublishedByGooglePlaceId(
+              executor,
+              request.identity,
+              publicationGooglePlaceId,
+              request.startedAt,
+            );
         if (committedWhileInserting) {
           const released = await executor.query(
             `update analysis_runs
@@ -704,11 +781,14 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
         }
         return { status: "owner", owner: runRowToOwner(newOwner) };
       }
-      const committedWhileWaiting = await findReusable(
-        executor,
-        request.identity,
-        request.startedAt,
-      );
+      const committedWhileWaiting = publicationGooglePlaceId === undefined
+        ? await findReusable(executor, request.identity, request.startedAt)
+        : await findPublishedByGooglePlaceId(
+            executor,
+            request.identity,
+            publicationGooglePlaceId,
+            request.startedAt,
+          );
       if (committedWhileWaiting) {
         return { status: "reusable", analysis: committedWhileWaiting };
       }
@@ -745,6 +825,39 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
       if (reusable) {
         return { status: "reusable", analysis: reusable };
       }
+      const blocking = await readBlockingRun(this.sql, identity);
+      if (blocking?.status === "failed_terminal" && blocking.safe_error_code) {
+        return {
+          status: "terminal",
+          safeErrorCode: parseSafeAnalysisErrorCode(
+            blocking.safe_error_code,
+            "stored safeErrorCode",
+          ),
+        };
+      }
+    }
+    return { status: "busy" };
+  }
+
+  async waitForPublishedCanonicalAnalysisByGooglePlaceId(
+    identity: ExactAnalysisIdentity,
+    googlePlaceId: string,
+    policy: WaitPolicy,
+    observedAt: () => string,
+    scheduler: WaitScheduler = defaultWaitScheduler,
+  ): Promise<WaitResult> {
+    validateIdentity(identity);
+    requireNonblank(googlePlaceId, "googlePlaceId");
+    validateWaitPolicy(policy);
+    for (let poll = 0; poll < policy.maxPolls; poll += 1) {
+      await scheduler(policy.pollIntervalMs, poll);
+      const now = observedAt();
+      const reusable = await this.findPublishedCanonicalAnalysisByGooglePlaceId(
+        identity,
+        googlePlaceId,
+        now,
+      );
+      if (reusable) return { status: "reusable", analysis: reusable };
       const blocking = await readBlockingRun(this.sql, identity);
       if (blocking?.status === "failed_terminal" && blocking.safe_error_code) {
         return {
@@ -1020,6 +1133,24 @@ export class PostgresMvpAnalysisRepository implements MvpAnalysisRepository {
         throw new InjectedPublicationFailure(request.faultPoint);
       }
 
+      // The partial unique index permits one active canonical snapshot for an
+      // exact evidence/contract identity. Keep the prior immutable JSON row,
+      // but retire it inside the same transaction before publishing its
+      // restaurant-linked successor. Any later failure rolls this update back.
+      await executor.query(
+        `update canonical_analyses
+            set invalidated_at = $3,
+                safe_invalidation_code = 'publication_superseded'
+          where evidence_set_id = $1
+            and analysis_contract_id = $2
+            and invalidated_at is null`,
+        [
+          request.identity.evidenceSetId,
+          request.identity.analysisContractId,
+          request.persistedAt,
+        ],
+      );
+
       await executor.query(
         `insert into canonical_analyses (
           id, evidence_set_id, analysis_contract_id, producing_run_id,
@@ -1209,6 +1340,7 @@ interface MemoryCanonical {
   readonly expiresAt: string;
   readonly identityKey: string;
   readonly runId: string;
+  invalidatedAt: string | null;
 }
 
 interface MemoryMenuVersion {
@@ -1329,12 +1461,39 @@ export class DeterministicMvpAnalysisRepository
         );
         return (
           entry.identityKey === identityKey &&
+          entry.invalidatedAt === null &&
           Date.parse(entry.expiresAt) > observed &&
           run?.status === "ready" &&
           (entry.analysis.publicationState === "analysis_only" ||
             this.#receipts.has(entry.analysis.analysisId))
         );
       });
+    return reusable?.analysis ?? null;
+  }
+
+  async findPublishedCanonicalAnalysisByGooglePlaceId(
+    identity: ExactAnalysisIdentity,
+    googlePlaceId: string,
+    observedAt: string,
+  ): Promise<CanonicalMenuAnalysis | null> {
+    validateIdentity(identity);
+    requireNonblank(googlePlaceId, "googlePlaceId");
+    const observed = requireTimestamp(observedAt, "observedAt");
+    const identityKey = exactIdentityKey(identity);
+    const restaurantId = this.#externalReferences.get(googlePlaceId);
+    if (!restaurantId) return null;
+    const reusable = [...this.#canonical].reverse().find((entry) => {
+      const run = this.#runs.find(
+        (candidate) => candidate.owner.runId === entry.runId,
+      );
+      return (
+        entry.identityKey === identityKey &&
+        Date.parse(entry.expiresAt) > observed &&
+        run?.status === "ready" &&
+        entry.analysis.restaurantResolution.restaurantId === restaurantId &&
+        this.#receipts.has(entry.analysis.analysisId)
+      );
+    });
     return reusable?.analysis ?? null;
   }
 
@@ -1351,10 +1510,20 @@ export class DeterministicMvpAnalysisRepository
     if (leaseExpiresAt <= startedAt) {
       throw new PersistenceContractError("lease must expire after it starts");
     }
-    const reusable = await this.findReusableCanonicalAnalysis(
-      request.identity,
-      request.startedAt,
-    );
+    const publicationGooglePlaceId = request.publicationGooglePlaceId;
+    if (publicationGooglePlaceId !== undefined) {
+      requireNonblank(publicationGooglePlaceId, "publicationGooglePlaceId");
+    }
+    const reusable = publicationGooglePlaceId === undefined
+      ? await this.findReusableCanonicalAnalysis(
+          request.identity,
+          request.startedAt,
+        )
+      : await this.findPublishedCanonicalAnalysisByGooglePlaceId(
+          request.identity,
+          publicationGooglePlaceId,
+          request.startedAt,
+        );
     if (reusable) {
       return { status: "reusable", analysis: reusable };
     }
@@ -1429,6 +1598,37 @@ export class DeterministicMvpAnalysisRepository
     return { status: "busy" };
   }
 
+  async waitForPublishedCanonicalAnalysisByGooglePlaceId(
+    identity: ExactAnalysisIdentity,
+    googlePlaceId: string,
+    policy: WaitPolicy,
+    observedAt: () => string,
+    scheduler: WaitScheduler = defaultWaitScheduler,
+  ): Promise<WaitResult> {
+    validateIdentity(identity);
+    requireNonblank(googlePlaceId, "googlePlaceId");
+    validateWaitPolicy(policy);
+    const identityKey = exactIdentityKey(identity);
+    for (let poll = 0; poll < policy.maxPolls; poll += 1) {
+      await scheduler(policy.pollIntervalMs, poll);
+      const reusable = await this.findPublishedCanonicalAnalysisByGooglePlaceId(
+        identity,
+        googlePlaceId,
+        observedAt(),
+      );
+      if (reusable) return { status: "reusable", analysis: reusable };
+      const terminal = [...this.#runs].reverse().find(
+        (candidate) =>
+          candidate.identityKey === identityKey &&
+          candidate.status === "failed_terminal",
+      );
+      if (terminal?.safeErrorCode) {
+        return { status: "terminal", safeErrorCode: terminal.safeErrorCode };
+      }
+    }
+    return { status: "busy" };
+  }
+
   async markAnalysisFailure(request: MarkAnalysisFailureRequest): Promise<void> {
     validateIdentity(request.identity);
     requireUuid(request.runId, "runId");
@@ -1487,6 +1687,7 @@ export class DeterministicMvpAnalysisRepository
       analysis,
       expiresAt: request.expiresAt,
       identityKey,
+      invalidatedAt: null,
       runId: request.runId,
     });
     run.status = "ready";
@@ -1600,6 +1801,11 @@ export class DeterministicMvpAnalysisRepository
         activeVersion.state = "superseded";
         activeVersion.validUntil = analysis.menuVersion.validFrom;
       }
+      for (const entry of this.#canonical) {
+        if (entry.identityKey === identityKey && entry.invalidatedAt === null) {
+          entry.invalidatedAt = request.persistedAt;
+        }
+      }
       this.#menuVersions.set(analysis.menuVersion.menuVersionId, {
         id: analysis.menuVersion.menuVersionId,
         menuScope: analysis.menuVersion.menuScope,
@@ -1623,6 +1829,7 @@ export class DeterministicMvpAnalysisRepository
         analysis,
         expiresAt: request.expiresAt,
         identityKey,
+        invalidatedAt: null,
         runId: request.runId,
       });
       this.#receipts.set(analysis.analysisId, receipt);

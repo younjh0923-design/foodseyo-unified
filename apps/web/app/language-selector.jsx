@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { storePendingAnalysis } from "./analysis-handoff.js";
 
@@ -105,7 +105,16 @@ export function LanguageSelector({ initialLanguage = "en" }) {
   const [submissionState, setSubmissionState] = useState("idle");
   const [statusMessage, setStatusMessage] = useState("");
   const fileInputRef = useRef(null);
+  const analyzeRequestRef = useRef({ controller: null, id: 0 });
+  const linkRequestRef = useRef({ controller: null, id: 0 });
   const copy = COPY[language];
+
+  const cancelRequests = useCallback(() => {
+    analyzeRequestRef.current.controller?.abort();
+    linkRequestRef.current.controller?.abort();
+    analyzeRequestRef.current = { controller: null, id: analyzeRequestRef.current.id + 1 };
+    linkRequestRef.current = { controller: null, id: linkRequestRef.current.id + 1 };
+  }, []);
 
   useEffect(() => {
     if (images.length === 0) {
@@ -117,6 +126,25 @@ export function LanguageSelector({ initialLanguage = "en" }) {
     return () => nextPreviewUrls.forEach((url) => URL.revokeObjectURL(url));
   }, [images]);
 
+  useEffect(() => {
+    const resetRestoredIntake = (event) => {
+      if (!event.persisted) return;
+      cancelRequests();
+      setImages([]);
+      setRestaurantName("");
+      setRestaurantLink("");
+      setLinkStatus("idle");
+      setSubmissionState("idle");
+      setStatusMessage("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+    window.addEventListener("pageshow", resetRestoredIntake);
+    return () => {
+      window.removeEventListener("pageshow", resetRestoredIntake);
+      cancelRequests();
+    };
+  }, [cancelRequests]);
+
   const chooseLanguage = (nextLanguage) => {
     setLanguage(nextLanguage);
     document.cookie = `foodseyo_language=${nextLanguage}; Path=/; Max-Age=${LANGUAGE_COOKIE_MAX_AGE}; SameSite=Lax`;
@@ -124,8 +152,12 @@ export function LanguageSelector({ initialLanguage = "en" }) {
   };
 
   const chooseImages = (fileList) => {
+    cancelRequests();
     setStatusMessage("");
     setSubmissionState("idle");
+    setRestaurantName("");
+    setRestaurantLink("");
+    setLinkStatus("idle");
     const nextImages = Array.from(fileList ?? []);
     if (
       nextImages.length === 0 ||
@@ -145,6 +177,7 @@ export function LanguageSelector({ initialLanguage = "en" }) {
   };
 
   const resetImage = () => {
+    cancelRequests();
     setImages([]);
     setRestaurantName("");
     setStatusMessage("");
@@ -157,14 +190,23 @@ export function LanguageSelector({ initialLanguage = "en" }) {
     if (images.length === 0 || submissionState === "loading") return;
     setSubmissionState("loading");
     setStatusMessage("");
+    analyzeRequestRef.current.controller?.abort();
+    const requestId = analyzeRequestRef.current.id + 1;
+    const controller = new AbortController();
+    analyzeRequestRef.current = { controller, id: requestId };
     const form = new FormData();
     images.forEach((image) => form.append("image", image));
     form.append("language", language);
     if (restaurantName.trim()) form.append("restaurantName", restaurantName.trim());
 
     try {
-      const response = await fetch("/api/analyze/menu-images", { method: "POST", body: form });
+      const response = await fetch("/api/analyze/menu-images", {
+        method: "POST",
+        body: form,
+        signal: controller.signal,
+      });
       const payload = await response.json().catch(() => null);
+      if (analyzeRequestRef.current.id !== requestId) return;
       if (!response.ok || payload?.ok !== true || !payload.data?.restaurantScreen) {
         throw new Error();
       }
@@ -175,9 +217,14 @@ export function LanguageSelector({ initialLanguage = "en" }) {
       });
       if (!stored) throw new Error();
       window.location.assign(`/restaurant-confirmation?lang=${language}`);
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted || analyzeRequestRef.current.id !== requestId) return;
       setSubmissionState("error");
       setStatusMessage(copy.analyzeError);
+    } finally {
+      if (analyzeRequestRef.current.id === requestId) {
+        analyzeRequestRef.current.controller = null;
+      }
     }
   };
 
@@ -189,13 +236,19 @@ export function LanguageSelector({ initialLanguage = "en" }) {
     }
     if (linkStatus === "loading") return;
     setLinkStatus("loading");
+    linkRequestRef.current.controller?.abort();
+    const requestId = linkRequestRef.current.id + 1;
+    const controller = new AbortController();
+    linkRequestRef.current = { controller, id: requestId };
     try {
       const response = await fetch("/api/analyze/restaurant-link", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ link: restaurantLink.trim(), language }),
+        signal: controller.signal,
       });
       const payload = await response.json().catch(() => null);
+      if (linkRequestRef.current.id !== requestId) return;
       if (!response.ok || payload?.ok !== true || !payload.data?.restaurantScreen) {
         throw new Error();
       }
@@ -207,7 +260,12 @@ export function LanguageSelector({ initialLanguage = "en" }) {
       if (!stored) throw new Error();
       window.location.assign(`/restaurant-confirmation?lang=${language}`);
     } catch {
+      if (controller.signal.aborted || linkRequestRef.current.id !== requestId) return;
       setLinkStatus("error");
+    } finally {
+      if (linkRequestRef.current.id === requestId) {
+        linkRequestRef.current.controller = null;
+      }
     }
   };
 
@@ -311,6 +369,11 @@ export function LanguageSelector({ initialLanguage = "en" }) {
               value={restaurantLink} aria-label={copy.linkPlaceholder}
               placeholder={copy.linkPlaceholder}
               onChange={(event) => {
+                linkRequestRef.current.controller?.abort();
+                linkRequestRef.current = {
+                  controller: null,
+                  id: linkRequestRef.current.id + 1,
+                };
                 setRestaurantLink(event.target.value);
                 setLinkStatus("idle");
               }} />
@@ -336,7 +399,10 @@ export function LanguageSelector({ initialLanguage = "en" }) {
         <button
           type="button"
           className="upload-entry-card"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            cancelRequests();
+            fileInputRef.current?.click();
+          }}
           aria-label={copy.actionAria}
         >
           <UploadMark />

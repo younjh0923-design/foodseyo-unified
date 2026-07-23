@@ -128,7 +128,8 @@ input:focus-visible {
 }
 
 .language-switcher button {
-  min-height: 38px;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   border-radius: 999px;
   background: transparent;

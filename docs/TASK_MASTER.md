@@ -616,6 +616,18 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
+Production reanalysis incident repair is active on
+`fix/reanalysis-restaurant-linking-performance` from `origin/main`
+`dda19ad88d7eed465e9e2ba736aabf11fe5fc6ce`. The repair separates raw-image
+extraction identity, request-local restaurant resolution, and stable
+Google-Place publication identity; moves exact-cache reuse before image/OpenAI
+work; preserves an earlier `analysis_only` row when publishing a linked
+successor; adds a bounded EXIF-corrected provider derivative; improves
+full-image restaurant clue extraction; and isolates stale browser/Safari
+state. It changes no shared DTO, public error, schema, migration, runtime role,
+or Production deployment. Preview verification remains required before this
+branch may be proposed for integration.
+
 Submission integration is implemented on `submission-team-integration`: the
 minimal bilingual landing screen accepts a restaurant/menu link or one to five
 menu photos. Both routes converge on explicit Google Places branch

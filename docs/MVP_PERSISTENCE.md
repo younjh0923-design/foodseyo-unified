@@ -304,6 +304,32 @@ Initial fault injection is mandatory:
 The first three leave no eligible canonical or publication projection. The
 last recovers the identical committed receipt.
 
+## Reanalysis and publication identity
+
+Image reanalysis keeps three identities separate without changing the physical
+schema or the frozen receipt DTO:
+
+- extraction identity is the ordered original MIME type, byte length, and raw
+  byte fingerprint plus the semantic version vector;
+- restaurant resolution is request-scoped and may use the current normalized
+  user hint, while candidate UUIDs remain ephemeral UI selectors;
+- restaurant-linked publication is keyed by the exact extraction identity and
+  the server-only stable Google Place ID.
+
+An exact reusable canonical result is looked up before image conversion and the
+OpenAI request. A hit reuses only the menu extraction; Google Places resolution
+still runs from the current request's hint and source-visible clues. A prior
+user-entered hint is never restored from the cache.
+
+When an `analysis_only` snapshot is later linked to a confirmed restaurant,
+the prior canonical row is preserved. The publication transaction retires the
+previous active row with `publication_superseded`, inserts a separate eligible
+canonical row, and writes its menu projection and receipt atomically. A failure
+after retirement rolls the complete transaction back, leaving the original
+analysis-only snapshot reusable. Repeating confirmation for the same Google
+Place ID returns the existing receipt even when a new request generated a
+different candidate UUID; a different Place ID creates a distinct publication.
+
 ## DB-5 gate
 
 DB-1 through DB-4 may create code, migration files, deterministic fixtures,

@@ -111,6 +111,16 @@ const recordRepository = (
     acquireAnalysisOwner: (request) => inner.acquireAnalysisOwner(request),
     findRestaurantByExternalReference: (googlePlaceId) =>
       inner.findRestaurantByExternalReference(googlePlaceId),
+    findPublishedCanonicalAnalysisByGooglePlaceId: (
+      identity,
+      googlePlaceId,
+      observedAt,
+    ) =>
+      inner.findPublishedCanonicalAnalysisByGooglePlaceId(
+        identity,
+        googlePlaceId,
+        observedAt,
+      ),
     findReusableCanonicalAnalysis: (identity, observedAt) =>
       inner.findReusableCanonicalAnalysis(identity, observedAt),
     markAnalysisFailure: (request) => inner.markAnalysisFailure(request),
@@ -134,6 +144,20 @@ const recordRepository = (
     ) =>
       inner.waitForReusableCanonicalAnalysis(
         identity,
+        policy,
+        observedAt,
+        scheduler,
+      ),
+    waitForPublishedCanonicalAnalysisByGooglePlaceId: (
+      identity,
+      googlePlaceId,
+      policy,
+      observedAt,
+      scheduler,
+    ) =>
+      inner.waitForPublishedCanonicalAnalysisByGooglePlaceId(
+        identity,
+        googlePlaceId,
         policy,
         observedAt,
         scheduler,

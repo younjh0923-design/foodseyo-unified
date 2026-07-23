@@ -69,6 +69,7 @@ const adapter = new OpenAIMenuImageExtractionAdapter(
                   analysisQuality: "good",
                   restaurantName: "Test Noodle House",
                   restaurantAddress: "18 Test Street, Boston, MA",
+                  restaurantVisualText: "TEST NOODLE HOUSE",
                   menuScope: "dinner",
                   sections: [
                     {
@@ -106,6 +107,23 @@ assert.equal(
   false,
   "strict Structured Outputs must not contain unsupported uniqueItems",
 );
+const serializedRequest = JSON.stringify(requestBody);
+for (const requiredRestaurantClueInstruction of [
+  "headers",
+  "logos",
+  "top corners",
+  "footers",
+  "mixed-script text",
+  "restaurantVisualText",
+  "phone number",
+  "official domain",
+]) {
+  assert.equal(
+    serializedRequest.includes(requiredRestaurantClueInstruction),
+    true,
+    `provider request must prioritize ${requiredRestaurantClueInstruction}`,
+  );
+}
 assert.equal(JSON.stringify(requestBody).includes("data:image/jpeg;base64,AQIDBA=="), true);
 assert.equal(JSON.stringify(requestBody).includes("data:image/png;base64,BQYHCA=="), true);
 if (result.status !== "success") throw new Error("adapter result was not successful");
@@ -128,6 +146,7 @@ const providerOutput = (sourceIndexes: readonly number[]) => ({
             analysisQuality: "good",
             restaurantName: null,
             restaurantAddress: null,
+            restaurantVisualText: null,
             menuScope: "default",
             sections: [
               {
