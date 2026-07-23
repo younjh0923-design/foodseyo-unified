@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "tsx tests/canonical-pipeline.test.ts",
+    "test": "tsx tests/canonical-pipeline.test.ts && tsx tests/openai-menu-extraction-server.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

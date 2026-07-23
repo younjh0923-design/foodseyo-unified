@@ -38,6 +38,8 @@ export * from "./canonical-pipeline.js";
 export {
   CompactMenuExtractionService,
 } from "./compact-menu-extraction-service.js";
+export * from "./openai-menu-extraction-server.js";
+export * from "./canonical-menu-builder.js";
 
 const contractValuesEqual = (left: unknown, right: unknown): boolean => {
   if (Object.is(left, right)) {

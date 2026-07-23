@@ -148,6 +148,9 @@ const buildCandidateSignals = (
   ) {
     signals.push("visual_text");
   }
+  if (clues.linkFingerprint !== null) {
+    signals.push("user_link");
+  }
   return signals;
 };
 

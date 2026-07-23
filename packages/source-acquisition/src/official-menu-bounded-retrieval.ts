@@ -136,6 +136,10 @@ interface BoundedOfficialMenuCollectorDependencies
 
 export interface BoundedOfficialMenuAcquisitionRuntime {
   readonly orchestrator: OfficialMenuSourceAcquisitionOrchestrator;
+  readContent(
+    content: TransientMenuContent,
+    context: PortInvocationContext,
+  ): Promise<Uint8Array | null>;
   releaseScope(context: PortInvocationContext): void;
 }
 
@@ -1143,6 +1147,10 @@ export const createBoundedOfficialMenuAcquisitionRuntime = (
         );
   return Object.freeze({
     orchestrator,
+    readContent: (
+      content: TransientMenuContent,
+      context: PortInvocationContext,
+    ): Promise<Uint8Array | null> => contentStore.read(content, context),
     releaseScope: (context: PortInvocationContext): void =>
       contentStore.releaseScope(context),
   });

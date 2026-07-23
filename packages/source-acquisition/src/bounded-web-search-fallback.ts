@@ -12,6 +12,7 @@ import {
   type PublicErrorCode,
   type PublicErrorEnvelope,
   type PublicOutcome,
+  type TransientMenuContent,
 } from "@foodseyo/contracts";
 
 import { restaurantContextFromMenuSourceRequest } from "./foundation.js";
@@ -44,6 +45,10 @@ export interface BoundedWebSearchFallbackDependencies
 
 export interface BoundedWebSearchFallbackRuntime {
   readonly service: WebSearchMenuFallbackService;
+  readContent(
+    content: TransientMenuContent,
+    context: PortInvocationContext,
+  ): Promise<Uint8Array | null>;
   releaseScope(context: PortInvocationContext): void;
 }
 
@@ -243,6 +248,10 @@ export const createBoundedWebSearchFallbackRuntime = (
       dependencies.discovery,
       collector,
     ),
+    readContent: (
+      content: TransientMenuContent,
+      context: PortInvocationContext,
+    ): Promise<Uint8Array | null> => store.read(content, context),
     releaseScope: (context: PortInvocationContext): void =>
       store.releaseScope(context),
   });

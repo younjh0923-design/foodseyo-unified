@@ -351,6 +351,10 @@ class FixtureTransport implements OfficialMenuHttpTransport {
   );
   assert.equal(first.value.menuSource.requestedAt, requestedAt);
   assert.equal(first.value.menuSource.source.collectedAt, collectedAt);
+  assert.notEqual(
+    await runtime.readContent(first.value.menuSource.content, context),
+    null,
+  );
   assert.deepEqual(dns.calls, ["private.example", "safe.example"]);
   assert.equal(transport.requests.length, 1);
   assert.equal(

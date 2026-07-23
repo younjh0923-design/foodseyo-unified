@@ -25,6 +25,7 @@ import {
 } from "@foodseyo/contracts";
 
 export * from "./mvp-persistence.js";
+export * from "./runtime.js";
 
 const publicError = (
   code: PublicErrorCode,

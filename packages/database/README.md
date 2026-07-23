@@ -47,6 +47,12 @@ proves rollback and prevents partial publication. DB-3 and DB-4 replace that
 foundation with the authorized exact-cache and publication repository APIs;
 runtime credentials and live database application remain gated by DB-5.
 
+For the explicitly authorized submission rollout, `runtime.ts` composes the
+existing repository with a small `pg` pool using only the environment-scoped
+pooled `DATABASE_URL`. It rejects non-Postgres and non-pooler URLs, never reads
+migrator credentials, and never creates or alters schema objects. No migration
+is added or executed by this runtime adapter.
+
 DB-3 adds `PostgresMvpAnalysisRepository` behind an injected transaction
 runner and its network-free deterministic counterpart. The minimal API resolves
 exact evidence plus semantic identities, elects one lease owner, provides a
