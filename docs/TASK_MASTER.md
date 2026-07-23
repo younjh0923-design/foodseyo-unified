@@ -388,8 +388,9 @@ marked `DONE`.
   server-only Responses API adapter behind the existing compact extraction
   port. Its exact structured-output mapping, transient image handling, and safe
   failure behavior are covered by a network-free injected-transport test. The
-  broader official-source and Web Search dependencies keep the full task
-  status `BLOCKED`.
+  branch accepts one to five ordered images and also extracts acquired
+  official HTML/PDF or bounded Web Search sources into the same frozen compact
+  extraction contract. Full checkpoint status remains gated on review.
 
 ### S1.5 Canonical normalization and validation
 
@@ -425,6 +426,11 @@ marked `DONE`.
   certainty; separate sensory axes and source/general labels remain visible;
   deterministic fallback always exists; Youn's canonical and evidence rules
   remain authoritative.
+- **Submission integration evidence:** an app-private source-bound guidance
+  model projects controlled taste, texture, heat, richness, ingredient basis,
+  and an ordering tip onto the saved canonical menu. It does not persist new
+  claims or bypass the gated canonical claim merge. The ordering copilot sees
+  only this confirmed result and may return only item IDs in that menu.
 
 ### S1.7 Integrated mobile experience
 
@@ -439,12 +445,13 @@ marked `DONE`.
 - **Acceptance:** one coherent walkthrough exercises the official-source route
   and one exercises the Web Search fallback; no dead control; error recovery
   does not lose selected inputs unless privacy policy requires it.
-- **Submission integration evidence:** the mobile uploaded-image path is live
-  on `submission-team-integration`: upload, one server analysis call, UI-safe
-  Google candidate presentation, explicit user confirmation, canonical
-  validation, and atomic Neon publication. Fixture and state-preview controls
-  are absent. The broader link/fallback/Dish Detail scope keeps the full task
-  status `BLOCKED`.
+- **Submission integration evidence:** `submission-team-integration` now has
+  upload and link intake, Google Maps/general-link restaurant lookup, UI-safe
+  candidate confirmation, official-site-first collection, bounded Web Search
+  fallback, canonical validation and atomic publication, grouped results,
+  Dish Detail, and a confirmed-menu-only ordering copilot. Fixture and
+  state-preview controls are absent. The full checkpoint remains `BLOCKED`
+  until required review and real-environment walkthrough evidence are recorded.
 
 ## Milestone S2 - Required database persistence and reuse
 
@@ -609,10 +616,29 @@ already in S1-S3. The items below extend its breadth after submission.
 
 ## Immediate next action
 
-Submission UI localization is implemented on `submission-team-integration`:
-the first screen offers English and 한국어, and the selected language is
-preserved across upload, restaurant confirmation, errors, and results without
-changing menu source content, shared contracts, or database schema.
+Submission integration is implemented on `submission-team-integration`: the
+minimal bilingual landing screen accepts a restaurant/menu link or one to five
+menu photos. Both routes converge on explicit Google Places branch
+confirmation before official-site-first or uploaded-menu analysis, canonical
+validation, and atomic publication. The result includes grouped menu items,
+Dish Detail, evidence-labelled source-bound guidance, and a confirmed-menu-only
+ordering copilot. The selected language remains preserved across review,
+confirmation, errors, results, details, and assistant responses. No shared
+contract, database schema, or migration was added.
+
+Final integration audit continues on
+`feat/acquisition-detail-assistant-integration`. Focused network-free coverage
+now fixes one- and five-image acceptance, six-image rejection, bounded Google
+Maps short-link redirects, localhost/private-address rejection, non-automatic
+general-link candidates, official-source failure into Web Search fallback,
+zero persistence before confirmation, image-only continuation when no
+restaurant candidate exists, evidence-basis separation in Dish Detail,
+assistant strict-schema compatibility, duplicate and malformed response
+rejection, allergen-safety refusal, unsupported restaurant-recipe claim
+normalization, and provider-ID/secret non-exposure. The
+menu-only continuation persists an `analysis_only` canonical record without
+restaurant publication rows. No Preview or Production migration is authorized
+by this audit.
 
 U2 Core Integration is complete. The Issue #21 contract action on
 `contracts/issue-21-web-experience` is complete: PR #30 exact HEAD

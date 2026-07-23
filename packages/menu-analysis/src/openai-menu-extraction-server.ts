@@ -20,7 +20,7 @@ import {
 
 const OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses";
 const EXTRACTION_PROMPT_VERSION = "foodseyo-menu-image/1.0.0";
-const PROVIDER_SCHEMA_VERSION = "foodseyo-menu-image-schema/1.0.0";
+const PROVIDER_SCHEMA_VERSION = "foodseyo-menu-image-schema/1.0.1";
 const MAX_OUTPUT_TOKENS = 12_000;
 
 export interface TransientUploadedMenuImage {
@@ -41,11 +41,27 @@ export interface OpenAIMenuExtractionResult {
 
 type TransientImageResolver = (
   contentHandle: string,
-) => TransientUploadedMenuImage | null;
+) => TransientUploadedMenuImage | readonly TransientUploadedMenuImage[] | null;
+
+export type OpenAIMenuExtractionFailureStage =
+  | "openai_request"
+  | "provider_schema_validation"
+  | "canonical_conversion";
+
+export interface OpenAIMenuExtractionSafeFailure {
+  readonly correlationId: string;
+  readonly failedStage: OpenAIMenuExtractionFailureStage;
+  readonly safeErrorCode: PublicErrorCode;
+  readonly imageCount: number;
+  readonly imageByteSizes: readonly number[];
+}
 
 interface OpenAIMenuExtractionDependencies {
   readonly fetchImplementation: typeof fetch;
   readonly now: () => string;
+  readonly observeSafeFailure?: (
+    failure: OpenAIMenuExtractionSafeFailure,
+  ) => void;
 }
 
 interface ProviderMenuItem {
@@ -108,7 +124,10 @@ const boundedText = (value: unknown, maximum: number): string | null => {
     : null;
 };
 
-const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
+const parseProviderOutput = (
+  value: unknown,
+  imageCount: number,
+): ProviderMenuOutput | null => {
   if (
     !isRecord(value) ||
     !hasExactKeys(value, [
@@ -168,8 +187,14 @@ const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
         ) ||
         !Array.isArray(itemValue.sourceIndexes) ||
         itemValue.sourceIndexes.length === 0 ||
-        itemValue.sourceIndexes.length > 1 ||
-        !itemValue.sourceIndexes.every((index) => index === 0)
+        itemValue.sourceIndexes.length > imageCount ||
+        !itemValue.sourceIndexes.every(
+          (index) =>
+            Number.isInteger(index) &&
+            (index as number) >= 0 &&
+            (index as number) < imageCount,
+        ) ||
+        new Set(itemValue.sourceIndexes).size !== itemValue.sourceIndexes.length
       ) {
         return null;
       }
@@ -203,7 +228,7 @@ const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
         description,
         price,
         optionTexts: itemValue.optionTexts.map((option) => option.trim()),
-        sourceIndexes: [0],
+        sourceIndexes: itemValue.sourceIndexes as readonly number[],
       });
       totalItems += 1;
       if (totalItems > 200) return null;
@@ -221,7 +246,7 @@ const parseProviderOutput = (value: unknown): ProviderMenuOutput | null => {
   };
 };
 
-const structuredOutputSchema = {
+const structuredOutputSchema = (imageCount: number) => ({
   type: "object",
   additionalProperties: false,
   required: [
@@ -273,8 +298,11 @@ const structuredOutputSchema = {
                 sourceIndexes: {
                   type: "array",
                   minItems: 1,
-                  maxItems: 1,
-                  items: { type: "integer", enum: [0] },
+                  maxItems: imageCount,
+                  items: {
+                    type: "integer",
+                    enum: Array.from({ length: imageCount }, (_, index) => index),
+                  },
                 },
               },
             },
@@ -283,7 +311,7 @@ const structuredOutputSchema = {
       },
     },
   },
-} as const;
+} as const);
 
 const responseText = (payload: unknown): string | null => {
   if (!isRecord(payload) || !Array.isArray(payload.output)) return null;
@@ -312,6 +340,7 @@ export class OpenAIMenuImageExtractionAdapter
     private readonly dependencies: OpenAIMenuExtractionDependencies = {
       fetchImplementation: globalThis.fetch.bind(globalThis),
       now: () => new Date().toISOString(),
+      observeSafeFailure: () => undefined,
     },
   ) {}
 
@@ -345,10 +374,28 @@ export class OpenAIMenuImageExtractionAdapter
         ),
       };
     }
-    const image = this.resolveImage(parsedInput.data.content.contentHandle);
-    if (image === null) {
+    const resolvedImages = this.resolveImage(parsedInput.data.content.contentHandle);
+    const images = resolvedImages === null
+      ? []
+      : Array.isArray(resolvedImages)
+        ? resolvedImages
+        : [resolvedImages];
+    if (images.length === 0 || images.length > 5) {
       return { status: "error", error: publicError("INVALID_INPUT", context) };
     }
+    const fail = (
+      failedStage: OpenAIMenuExtractionFailureStage,
+      safeErrorCode: PublicErrorCode,
+    ): PortResult<OpenAIMenuExtractionResult> => {
+      this.dependencies.observeSafeFailure?.({
+        correlationId: context.correlationId,
+        failedStage,
+        safeErrorCode,
+        imageCount: images.length,
+        imageByteSizes: images.map((image) => image.bytes.byteLength),
+      });
+      return { status: "error", error: publicError(safeErrorCode, context) };
+    };
 
     const providerController = new AbortController();
     const abortProvider = (): void => providerController.abort(context.signal.reason);
@@ -358,7 +405,11 @@ export class OpenAIMenuImageExtractionAdapter
       context.timeoutMs,
     );
     try {
-      const dataUrl = `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`;
+      const imageInputs = images.map((image) => ({
+        type: "input_image" as const,
+        image_url: `data:${image.mediaType};base64,${Buffer.from(image.bytes).toString("base64")}`,
+        detail: "high" as const,
+      }));
       let response: Response;
       try {
         response = await this.dependencies.fetchImplementation(OPENAI_RESPONSES_ENDPOINT, {
@@ -370,13 +421,13 @@ export class OpenAIMenuImageExtractionAdapter
           body: JSON.stringify({
             model: this.modelVersion,
             instructions:
-              "Extract only menu information visible in the supplied image. Preserve section and item order. Prices must be nonnegative integer minor units with ISO 4217 currency. Use null when a price, restaurant name, restaurant address, description, or section name is not visible. Do not invent ingredients, safety claims, reviews, or restaurant identity. sourceIndexes must be [0].",
+              `Extract only menu information visible in the ${images.length} supplied image${images.length === 1 ? "" : "s"}. Preserve image, section, and item order. Prices must be nonnegative integer minor units with ISO 4217 currency. Use null when a price, restaurant name, restaurant address, description, or section name is not visible. Do not invent ingredients, safety claims, reviews, or restaurant identity. sourceIndexes must list the zero-based source images that visibly support each item.`,
             input: [
               {
                 role: "user",
                 content: [
                   { type: "input_text", text: "Analyze this menu image for Foodseyo." },
-                  { type: "input_image", image_url: dataUrl, detail: "high" },
+                  ...imageInputs,
                 ],
               },
             ],
@@ -385,7 +436,7 @@ export class OpenAIMenuImageExtractionAdapter
                 type: "json_schema",
                 name: "foodseyo_compact_menu_extraction",
                 strict: true,
-                schema: structuredOutputSchema,
+                schema: structuredOutputSchema(images.length),
               },
             },
             max_output_tokens: MAX_OUTPUT_TOKENS,
@@ -396,38 +447,35 @@ export class OpenAIMenuImageExtractionAdapter
       } catch {
         const timedOut = providerController.signal.reason instanceof DOMException &&
           providerController.signal.reason.name === "TimeoutError";
-        return {
-          status: "error",
-          error: publicError(
-            timedOut || isTimeoutAbortSignal(context.signal)
-              ? "UPSTREAM_TIMEOUT"
-              : "UPSTREAM_UNAVAILABLE",
-            context,
-          ),
-        };
+        return fail(
+          "openai_request",
+          timedOut || isTimeoutAbortSignal(context.signal)
+            ? "UPSTREAM_TIMEOUT"
+            : "UPSTREAM_UNAVAILABLE",
+        );
       }
       if (!response.ok) {
-        return { status: "error", error: publicError("UPSTREAM_UNAVAILABLE", context) };
+        return fail("openai_request", "UPSTREAM_UNAVAILABLE");
       }
       let payload: unknown;
       try {
         payload = await response.json();
       } catch {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       const text = responseText(payload);
       if (text === null) {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       let decoded: unknown;
       try {
         decoded = JSON.parse(text);
       } catch {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
-      const provider = parseProviderOutput(decoded);
+      const provider = parseProviderOutput(decoded, images.length);
       if (provider === null) {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("provider_schema_validation", "INVALID_UPSTREAM_RESULT");
       }
       const extraction = CompactMenuExtractionSchema.safeParse({
         contractVersion: CONTRACT_VERSIONS.compactExtraction,
@@ -458,7 +506,7 @@ export class OpenAIMenuImageExtractionAdapter
         completedAt: this.dependencies.now(),
       });
       if (!extraction.success) {
-        return { status: "error", error: publicError("INVALID_UPSTREAM_RESULT", context) };
+        return fail("canonical_conversion", "INVALID_UPSTREAM_RESULT");
       }
       return {
         status: "success",
@@ -490,6 +538,8 @@ export const createOpenAIMenuImageExtractionAdapterFromEnvironment = (
     fetchImplementation:
       dependencies?.fetchImplementation ?? globalThis.fetch.bind(globalThis),
     now: dependencies?.now ?? (() => new Date().toISOString()),
+    observeSafeFailure:
+      dependencies?.observeSafeFailure ?? (() => undefined),
   });
 };
 

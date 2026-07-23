@@ -941,6 +941,7 @@ for (const [name, dnsResolver, transport, scheduler, expectedCode] of [
   });
   assert.deepEqual(Object.keys(publicRuntime).sort(), [
     "orchestrator",
+    "readContent",
     "releaseScope",
   ]);
   const publicResult = await publicRuntime.orchestrator.acquire(
@@ -948,6 +949,16 @@ for (const [name, dnsResolver, transport, scheduler, expectedCode] of [
     integrationContext,
   );
   assert.equal(publicResult.status, "success");
+  if (publicResult.status !== "success") {
+    throw new Error("public runtime acquisition expected");
+  }
+  assert.deepEqual(
+    await publicRuntime.readContent(
+      publicResult.value.content,
+      integrationContext,
+    ),
+    HTML_BYTES,
+  );
   publicRuntime.releaseScope(integrationContext);
 }
 
