@@ -19,8 +19,8 @@ import {
 } from "@foodseyo/contracts";
 
 const OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses";
-const EXTRACTION_PROMPT_VERSION = "foodseyo-menu-image/1.0.0";
-const PROVIDER_SCHEMA_VERSION = "foodseyo-menu-image-schema/1.0.1";
+const EXTRACTION_PROMPT_VERSION = "foodseyo-menu-image/1.1.0";
+const PROVIDER_SCHEMA_VERSION = "foodseyo-menu-image-schema/1.1.0";
 const MAX_OUTPUT_TOKENS = 12_000;
 
 export interface TransientUploadedMenuImage {
@@ -81,6 +81,7 @@ interface ProviderMenuOutput {
   readonly analysisQuality: "good" | "partial" | "unreadable";
   readonly restaurantName: string | null;
   readonly restaurantAddress: string | null;
+  readonly restaurantVisualText: string | null;
   readonly menuScope: MenuScope;
   readonly sections: readonly ProviderMenuSection[];
 }
@@ -135,6 +136,7 @@ const parseProviderOutput = (
       "menuScope",
       "restaurantAddress",
       "restaurantName",
+      "restaurantVisualText",
       "sections",
     ]) ||
     !["good", "partial", "unreadable"].includes(
@@ -149,9 +151,11 @@ const parseProviderOutput = (
 
   const restaurantName = boundedText(value.restaurantName, 200);
   const restaurantAddress = boundedText(value.restaurantAddress, 400);
+  const restaurantVisualText = boundedText(value.restaurantVisualText, 500);
   if (
     (value.restaurantName !== null && restaurantName === null) ||
-    (value.restaurantAddress !== null && restaurantAddress === null)
+    (value.restaurantAddress !== null && restaurantAddress === null) ||
+    (value.restaurantVisualText !== null && restaurantVisualText === null)
   ) {
     return null;
   }
@@ -241,6 +245,7 @@ const parseProviderOutput = (
     analysisQuality: value.analysisQuality as ProviderMenuOutput["analysisQuality"],
     restaurantName,
     restaurantAddress,
+    restaurantVisualText,
     menuScope: value.menuScope as MenuScope,
     sections,
   };
@@ -253,6 +258,7 @@ const structuredOutputSchema = (imageCount: number) => ({
     "analysisQuality",
     "restaurantName",
     "restaurantAddress",
+    "restaurantVisualText",
     "menuScope",
     "sections",
   ],
@@ -260,6 +266,7 @@ const structuredOutputSchema = (imageCount: number) => ({
     analysisQuality: { type: "string", enum: ["good", "partial", "unreadable"] },
     restaurantName: { type: ["string", "null"] },
     restaurantAddress: { type: ["string", "null"] },
+    restaurantVisualText: { type: ["string", "null"] },
     menuScope: { type: "string", enum: [...MENU_SCOPES] },
     sections: {
       type: "array",
@@ -421,7 +428,7 @@ export class OpenAIMenuImageExtractionAdapter
           body: JSON.stringify({
             model: this.modelVersion,
             instructions:
-              `Extract only menu information visible in the ${images.length} supplied image${images.length === 1 ? "" : "s"}. Preserve image, section, and item order. Prices must be nonnegative integer minor units with ISO 4217 currency. Use null when a price, restaurant name, restaurant address, description, or section name is not visible. Do not invent ingredients, safety claims, reviews, or restaurant identity. sourceIndexes must list the zero-based source images that visibly support each item.`,
+              `Extract only information visible in the ${images.length} supplied menu image${images.length === 1 ? "" : "s"}. Before reading dishes, inspect the full image—especially headers, logos, top corners, footers, and mixed-script text—for restaurant identity. restaurantName must be the exact visible restaurant or brand name, never a menu section or dish name. restaurantAddress is the exact visible address or city/location text. restaurantVisualText is other concise identifying text visible in the image, such as a logo transcription, phone number, or official domain; use null when absent. Preserve image, section, and item order. Prices must be nonnegative integer minor units with ISO 4217 currency. Use null when a price, restaurant identity clue, description, or section name is not visible. Do not invent ingredients, safety claims, reviews, or restaurant identity. sourceIndexes must list the zero-based source images that visibly support each item.`,
             input: [
               {
                 role: "user",
@@ -515,7 +522,8 @@ export class OpenAIMenuImageExtractionAdapter
           restaurantClues: {
             name: provider.restaurantName,
             address: provider.restaurantAddress,
-            visualText: provider.restaurantName,
+            visualText:
+              provider.restaurantVisualText ?? provider.restaurantName,
           },
         },
       };

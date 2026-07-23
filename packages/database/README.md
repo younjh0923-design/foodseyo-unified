@@ -70,3 +70,12 @@ lifecycle, items, reusable Dish identities, matches, and receipt. The adapter
 projects internal receipt rows into the exact frozen five-field DTO and parses
 that projection through `PublicationReceiptSchema`. Deterministic faults prove
 pre-commit rollback and committed-but-uncertain identical receipt recovery.
+
+The reanalysis repair adds an internal stable-publication lookup by exact
+evidence identity plus server-only Google Place ID. Request-scoped candidate
+UUIDs never participate in cache or publication equality. A later
+restaurant-linked publication preserves the earlier `analysis_only` canonical
+row, retires it and writes the successor plus receipt in the existing atomic
+transaction, and reuses the same receipt for repeated confirmation of the same
+Place. This uses the existing invalidation columns, external-reference table,
+and receipt table; no migration, runtime credential, or frozen DTO changes.

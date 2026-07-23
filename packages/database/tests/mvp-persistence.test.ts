@@ -511,6 +511,55 @@ for (const faultPoint of [
   assert.equal(counts.publicationReceipts, 0);
 }
 
+const successorRollbackRepository = new DeterministicMvpAnalysisRepository();
+const successorIdentity = await successorRollbackRepository.resolveExactIdentity(
+  identityRequest,
+);
+const analysisOnlyOwner = await successorRollbackRepository.acquireAnalysisOwner({
+  identity: successorIdentity,
+  leaseExpiresAt: "2026-07-21T18:10:00.000Z",
+  runId: "61616161-6161-4161-8161-616161616161",
+  startedAt: "2026-07-21T18:01:00.000Z",
+});
+assert.equal(analysisOnlyOwner.status, "owner");
+if (analysisOnlyOwner.status !== "owner") assert.fail("expected analysis-only owner");
+await successorRollbackRepository.persistAnalysisOnly({
+  analysis: analysisOnly,
+  expiresAt: "2026-07-21T20:00:00.000Z",
+  identity: successorIdentity,
+  persistedAt: "2026-07-21T18:02:00.000Z",
+  runId: analysisOnlyOwner.owner.runId,
+});
+const successorOwner = await successorRollbackRepository.acquireAnalysisOwner({
+  identity: successorIdentity,
+  leaseExpiresAt: "2026-07-21T18:20:00.000Z",
+  publicationGooglePlaceId: "fixture_place_branch_a",
+  runId: "62626262-6262-4262-8262-626262626262",
+  startedAt: "2026-07-21T18:03:00.000Z",
+});
+assert.equal(successorOwner.status, "owner");
+if (successorOwner.status !== "owner") assert.fail("expected successor owner");
+await assert.rejects(
+  successorRollbackRepository.publishEligibleAnalysis(
+    publicationRequest(
+      successorIdentity,
+      successorOwner.owner.runId,
+      "before_receipt",
+    ),
+  ),
+  InjectedPublicationFailure,
+);
+assert.deepEqual(
+  await successorRollbackRepository.findReusableCanonicalAnalysis(
+    successorIdentity,
+    "2026-07-21T18:06:00.000Z",
+  ),
+  analysisOnly,
+  "failed successor publication must leave the prior analysis-only snapshot active",
+);
+assert.equal(successorRollbackRepository.snapshotCounts().canonicalAnalyses, 1);
+assert.equal(successorRollbackRepository.snapshotCounts().publicationReceipts, 0);
+
 const uncertainRepository = new DeterministicMvpAnalysisRepository();
 const uncertainOwner = await acquirePublicationOwner(
   uncertainRepository,

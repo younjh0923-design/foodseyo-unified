@@ -26,6 +26,16 @@ const repository: MvpAnalysisRepository & {
   findActiveRestaurantMenuVersion: async () => null,
   findRestaurantByExternalReference: (googlePlaceId) =>
     inner.findRestaurantByExternalReference(googlePlaceId),
+  findPublishedCanonicalAnalysisByGooglePlaceId: (
+    identity,
+    googlePlaceId,
+    observedAt,
+  ) =>
+    inner.findPublishedCanonicalAnalysisByGooglePlaceId(
+      identity,
+      googlePlaceId,
+      observedAt,
+    ),
   findReusableCanonicalAnalysis: (identity, observedAt) =>
     inner.findReusableCanonicalAnalysis(identity, observedAt),
   markAnalysisFailure: (request) => inner.markAnalysisFailure(request),
@@ -34,6 +44,19 @@ const repository: MvpAnalysisRepository & {
   resolveExactIdentity: (request) => inner.resolveExactIdentity(request),
   waitForReusableCanonicalAnalysis: (identity, policy, observedAt, scheduler) =>
     inner.waitForReusableCanonicalAnalysis(identity, policy, observedAt, scheduler),
+  waitForPublishedCanonicalAnalysisByGooglePlaceId: (
+    identity,
+    googlePlaceId,
+    policy,
+    observedAt,
+    scheduler,
+  ) => inner.waitForPublishedCanonicalAnalysisByGooglePlaceId(
+    identity,
+    googlePlaceId,
+    policy,
+    observedAt,
+    scheduler,
+  ),
 };
 
 const candidate = RestaurantCandidateSchema.parse({
@@ -345,7 +368,7 @@ assert.deepEqual(inner.snapshotCounts(), {
   analysisRuns: 1,
   canonicalAnalyses: 1,
   dishes: 0,
-  menuEvidenceSets: 1,
+  menuEvidenceSets: 3,
   menuItemDishMatches: 0,
   menuItems: 1,
   publicationReceipts: 1,
@@ -414,5 +437,354 @@ assert.equal(
   beforeMenuOnly.restaurantMenuVersions,
 );
 assert.equal(afterMenuOnly.publicationReceipts, beforeMenuOnly.publicationReceipts);
+
+// Production regression: an analysis-only save may be followed by a fresh
+// candidate UUID for the same source. Equality is the stable Google Place ID,
+// the prior extraction is reused before OpenAI, and the old snapshot is kept.
+{
+  const regressionInner = new DeterministicMvpAnalysisRepository();
+  const regressionRepository: typeof repository = {
+    acquireAnalysisOwner: (request) => regressionInner.acquireAnalysisOwner(request),
+    findActiveRestaurantMenuVersion: async () => null,
+    findRestaurantByExternalReference: (googlePlaceId) =>
+      regressionInner.findRestaurantByExternalReference(googlePlaceId),
+    findPublishedCanonicalAnalysisByGooglePlaceId: (identity, placeId, observedAt) =>
+      regressionInner.findPublishedCanonicalAnalysisByGooglePlaceId(
+        identity,
+        placeId,
+        observedAt,
+      ),
+    findReusableCanonicalAnalysis: (identity, observedAt) =>
+      regressionInner.findReusableCanonicalAnalysis(identity, observedAt),
+    markAnalysisFailure: (request) => regressionInner.markAnalysisFailure(request),
+    persistAnalysisOnly: (request) => regressionInner.persistAnalysisOnly(request),
+    publishEligibleAnalysis: (request) =>
+      regressionInner.publishEligibleAnalysis(request),
+    resolveExactIdentity: (request) => regressionInner.resolveExactIdentity(request),
+    waitForPublishedCanonicalAnalysisByGooglePlaceId: (
+      identity,
+      placeId,
+      policy,
+      observedAt,
+      scheduler,
+    ) => regressionInner.waitForPublishedCanonicalAnalysisByGooglePlaceId(
+      identity,
+      placeId,
+      policy,
+      observedAt,
+      scheduler,
+    ),
+    waitForReusableCanonicalAnalysis: (identity, policy, observedAt, scheduler) =>
+      regressionInner.waitForReusableCanonicalAnalysis(
+        identity,
+        policy,
+        observedAt,
+        scheduler,
+      ),
+  };
+  let regressionExtractionCalls = 0;
+  let regressionPreparationCalls = 0;
+  const regressionCandidateHints: Array<string | null> = [];
+  const regressionService = new LiveRestaurantConfirmationService({
+    environment: {
+      OPENAI_API_KEY: serverOnlySecret,
+      OPENAI_MENU_EXTRACTION_MODEL: "model:network-free-test",
+    },
+    now: () => new Date("2026-07-21T18:00:00.000Z"),
+    generateId: () => crypto.randomUUID(),
+    repository: regressionRepository,
+    prepareImagesForProvider: async (images) => {
+      regressionPreparationCalls += 1;
+      return {
+        images,
+        originalDimensions: images.map(() => ({ width: 4_032, height: 3_024 })),
+        providerDimensions: images.map(() => ({ width: 2_048, height: 1_536 })),
+      };
+    },
+    extractMenu: async (source) => {
+      regressionExtractionCalls += 1;
+      return {
+        status: "success",
+        value: {
+          extraction: extractionFor(source),
+          restaurantClues: { name: null, address: null, visualText: null },
+        },
+      };
+    },
+    findCandidates: async (clues) => {
+      regressionCandidateHints.push(clues.name);
+      if (clues.name === null) return { status: "success", value: [] };
+      const other = clues.name.includes("Other");
+      return {
+        status: "success",
+        value: [RestaurantCandidateSchema.parse({
+          ...candidate,
+          candidateId: crypto.randomUUID(),
+          googlePlaceId: other ? "test-place-branch-b" : candidate.googlePlaceId,
+          displayName: other ? "Other Test Restaurant" : candidate.displayName,
+          matchSignals: ["name"],
+        })],
+      };
+    },
+  });
+  const sameImage = new Uint8Array([91, 92, 93, 94]);
+  const first = await regressionService.analyze({
+    bytes: sameImage,
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(first.status, "success");
+  if (first.status !== "success") assert.fail("first regression analysis failed");
+  assert.equal(first.value.restaurantScreen.candidates.length, 0);
+  assert.equal(regressionPreparationCalls, 1);
+  assert.deepEqual(regressionCandidateHints, [null]);
+  const firstSave = await regressionService.confirm({
+    analysisToken: first.value.analysisToken,
+    selectedCandidateId: null,
+    signal: new AbortController().signal,
+  });
+  assert.equal(firstSave.status, "success");
+
+  const second = await regressionService.analyze({
+    bytes: sameImage,
+    mediaType: "image/jpeg",
+    restaurantName: "Test Noodle House",
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(second.status, "success");
+  if (second.status !== "success") assert.fail("second regression analysis failed");
+  assert.equal(regressionExtractionCalls, 1, "same exact image must skip OpenAI");
+  assert.equal(
+    regressionPreparationCalls,
+    1,
+    "an exact-cache hit must skip provider image conversion",
+  );
+  assert.equal(regressionCandidateHints.at(-1), "Test Noodle House");
+  const secondCandidateId = second.value.restaurantScreen.candidates[0]?.candidateId;
+  assert.ok(secondCandidateId);
+  const linked = await regressionService.confirm({
+    analysisToken: second.value.analysisToken,
+    selectedCandidateId: secondCandidateId,
+    signal: new AbortController().signal,
+  });
+  assert.equal(linked.status, "success");
+  if (linked.status !== "success") assert.fail("restaurant linking failed");
+  assert.equal(regressionInner.snapshotCounts().canonicalAnalyses, 2);
+  assert.equal(regressionInner.snapshotCounts().publicationReceipts, 1);
+
+  const repeatedAnalyze = await regressionService.analyze({
+    bytes: sameImage,
+    mediaType: "image/jpeg",
+    restaurantName: "Test Noodle House",
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(repeatedAnalyze.status, "success");
+  if (repeatedAnalyze.status !== "success") assert.fail("repeat analysis failed");
+  const freshCandidateId = repeatedAnalyze.value.restaurantScreen.candidates[0]?.candidateId;
+  assert.ok(freshCandidateId);
+  assert.notEqual(freshCandidateId, secondCandidateId);
+  assert.equal(regressionPreparationCalls, 1);
+  assert.equal(regressionCandidateHints.at(-1), "Test Noodle House");
+  const repeatedConfirm = await regressionService.confirm({
+    analysisToken: repeatedAnalyze.value.analysisToken,
+    selectedCandidateId: freshCandidateId,
+    signal: new AbortController().signal,
+  });
+  assert.equal(repeatedConfirm.status, "success");
+  if (repeatedConfirm.status !== "success") assert.fail("repeat confirm failed");
+  assert.equal(repeatedConfirm.value.analysisId, linked.value.analysisId);
+  assert.equal(regressionInner.snapshotCounts().canonicalAnalyses, 2);
+  assert.equal(regressionInner.snapshotCounts().publicationReceipts, 1);
+
+  const noHintRepeat = await regressionService.analyze({
+    bytes: sameImage,
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(noHintRepeat.status, "success");
+  if (noHintRepeat.status !== "success") assert.fail("no-hint repeat failed");
+  assert.equal(noHintRepeat.value.restaurantScreen.candidates.length, 0);
+  assert.equal(regressionExtractionCalls, 1);
+  assert.equal(regressionPreparationCalls, 1);
+  assert.equal(
+    regressionCandidateHints.at(-1),
+    null,
+    "a new no-hint request must not inherit the prior user hint",
+  );
+
+  const different = await regressionService.analyze({
+    bytes: sameImage,
+    mediaType: "image/jpeg",
+    restaurantName: "Other Test Restaurant",
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(different.status, "success");
+  if (different.status !== "success") assert.fail("different-place analysis failed");
+  const differentCandidateId = different.value.restaurantScreen.candidates[0]?.candidateId;
+  assert.ok(differentCandidateId);
+  const differentConfirm = await regressionService.confirm({
+    analysisToken: different.value.analysisToken,
+    selectedCandidateId: differentCandidateId,
+    signal: new AbortController().signal,
+  });
+  assert.equal(differentConfirm.status, "success");
+  assert.equal(regressionInner.snapshotCounts().canonicalAnalyses, 3);
+  assert.equal(regressionInner.snapshotCounts().publicationReceipts, 2);
+  assert.equal(regressionExtractionCalls, 1);
+  assert.equal(regressionPreparationCalls, 1);
+
+  const orderedImages = [
+    { bytes: new Uint8Array([11, 12]), mediaType: "image/jpeg" as const },
+    { bytes: new Uint8Array([21, 22]), mediaType: "image/png" as const },
+  ];
+  const ordered = await regressionService.analyze({
+    images: orderedImages,
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(ordered.status, "success");
+  if (ordered.status !== "success") assert.fail("ordered analysis failed");
+  await regressionService.confirm({
+    analysisToken: ordered.value.analysisToken,
+    selectedCandidateId: null,
+    signal: new AbortController().signal,
+  });
+  assert.equal(regressionExtractionCalls, 2);
+  assert.equal(regressionPreparationCalls, 2);
+  await regressionService.analyze({
+    images: orderedImages,
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(regressionExtractionCalls, 2, "same image order must hit exact cache");
+  assert.equal(regressionPreparationCalls, 2);
+  await regressionService.analyze({
+    images: [...orderedImages].reverse(),
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(regressionExtractionCalls, 3, "reversed image order must miss exact cache");
+  assert.equal(regressionPreparationCalls, 3);
+
+  let changedModelExtractionCalls = 0;
+  const changedModelService = new LiveRestaurantConfirmationService({
+    environment: {
+      OPENAI_API_KEY: serverOnlySecret,
+      OPENAI_MENU_EXTRACTION_MODEL: "model:network-free-test-v2",
+    },
+    now: () => new Date("2026-07-21T18:00:00.000Z"),
+    generateId: () => crypto.randomUUID(),
+    repository: regressionRepository,
+    extractMenu: async (source) => {
+      changedModelExtractionCalls += 1;
+      return {
+        status: "success",
+        value: {
+          extraction: extractionFor(source),
+          restaurantClues: { name: null, address: null, visualText: null },
+        },
+      };
+    },
+    findCandidates: async () => ({ status: "success", value: [] }),
+  });
+  const changedModel = await changedModelService.analyze({
+    bytes: sameImage,
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(changedModel.status, "success");
+  assert.equal(
+    changedModelExtractionCalls,
+    1,
+    "a model version change must miss the exact cache",
+  );
+}
+
+// Cache/database lookup failure is fail-open for analysis and never exposes
+// database details through the public result.
+{
+  const failOpenInner = new DeterministicMvpAnalysisRepository();
+  let failOpenExtractionCalls = 0;
+  const failOpenService = new LiveRestaurantConfirmationService({
+    environment: {
+      OPENAI_API_KEY: serverOnlySecret,
+      OPENAI_MENU_EXTRACTION_MODEL: "model:network-free-test",
+    },
+    now: () => new Date("2026-07-21T18:00:00.000Z"),
+    generateId: () => crypto.randomUUID(),
+    repository: {
+      acquireAnalysisOwner: (request) => failOpenInner.acquireAnalysisOwner(request),
+      findActiveRestaurantMenuVersion: async () => null,
+      findRestaurantByExternalReference: (placeId) =>
+        failOpenInner.findRestaurantByExternalReference(placeId),
+      findPublishedCanonicalAnalysisByGooglePlaceId: (identity, placeId, observedAt) =>
+        failOpenInner.findPublishedCanonicalAnalysisByGooglePlaceId(
+          identity,
+          placeId,
+          observedAt,
+        ),
+      findReusableCanonicalAnalysis: async () => {
+        throw new Error("synthetic database outage");
+      },
+      markAnalysisFailure: (request) => failOpenInner.markAnalysisFailure(request),
+      persistAnalysisOnly: (request) => failOpenInner.persistAnalysisOnly(request),
+      publishEligibleAnalysis: (request) => failOpenInner.publishEligibleAnalysis(request),
+      resolveExactIdentity: (request) => failOpenInner.resolveExactIdentity(request),
+      waitForPublishedCanonicalAnalysisByGooglePlaceId: (
+        identity,
+        placeId,
+        policy,
+        observedAt,
+        scheduler,
+      ) => failOpenInner.waitForPublishedCanonicalAnalysisByGooglePlaceId(
+        identity,
+        placeId,
+        policy,
+        observedAt,
+        scheduler,
+      ),
+      waitForReusableCanonicalAnalysis: (identity, policy, observedAt, scheduler) =>
+        failOpenInner.waitForReusableCanonicalAnalysis(
+          identity,
+          policy,
+          observedAt,
+          scheduler,
+        ),
+    },
+    extractMenu: async (source) => {
+      failOpenExtractionCalls += 1;
+      return {
+        status: "success",
+        value: {
+          extraction: extractionFor(source),
+          restaurantClues: { name: null, address: null, visualText: null },
+        },
+      };
+    },
+    findCandidates: async () => ({ status: "success", value: [] }),
+  });
+  const result = await failOpenService.analyze({
+    bytes: new Uint8Array([61, 62, 63]),
+    mediaType: "image/jpeg",
+    restaurantName: null,
+    language: "en",
+    signal: new AbortController().signal,
+  });
+  assert.equal(result.status, "success");
+  assert.equal(failOpenExtractionCalls, 1);
+  assert.equal(JSON.stringify(result).includes("synthetic database outage"), false);
+}
 
 console.log("Foodseyo live 분석·확인·원자 저장 서비스 검증을 통과했습니다.");

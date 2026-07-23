@@ -66,3 +66,20 @@ are defined by `@foodseyo/contracts/web-experience`. Issue #21's exact PR #30
 merged to `main`, so this boundary is available to dependent feature slices.
 The submission integration composes the bounded source-acquisition primitives
 without changing a shared DTO or database schema.
+
+For repeated photo analysis, the server fingerprints the ordered original
+MIME types and bytes, checks the exact canonical cache before provider work,
+and creates a separate EXIF-corrected JPEG derivative with a 2,048-pixel long
+edge only for the OpenAI request. A cache hit skips both derivative conversion
+and menu extraction while still rerunning Google Places from the current user
+hint and source-visible clues. Candidate UUIDs stay encrypted-token selectors;
+confirmation resolves them to the server-only Google Place ID used for stable,
+idempotent publication.
+
+Starting or changing a photo analysis aborts the previous request and clears
+the prior candidate, error, hint, link, token handoff, and saving state. Request
+IDs prevent late responses from replacing a newer flow. Safari `pageshow`
+restoration clears only transient intake/confirmation state, so deliberate
+result viewing remains available while a fresh analysis cannot inherit a past
+selection or failure. Runtime logs contain only safe IDs, counts, byte sizes,
+dimensions, booleans, safe stages/codes, and per-stage durations.

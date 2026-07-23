@@ -539,3 +539,30 @@
   and are superseded only for current live-link and multi-photo behavior.
 - **Status:** Accepted submission integration
 - **Date:** 2026-07-22
+
+## U-024 - Separate extraction, restaurant resolution, and publication identity
+
+- **Decision:** Exact extraction identity remains the ordered original image
+  MIME/byte fingerprint plus semantic versions. Restaurant resolution is a
+  fresh request using the current hint and source-visible clues. Publication
+  equality uses the server-only Google Place ID, never the request-scoped
+  candidate UUID.
+- **Cache behavior:** Exact canonical cache lookup moves before image
+  conversion and OpenAI. A hit skips both while rerunning Places; a missing or
+  unavailable cache safely falls through to the provider-backed path. Cached
+  user-entered hints are not reused.
+- **Publication behavior:** A later restaurant-linked confirmation preserves
+  the earlier `analysis_only` row and creates a separate eligible canonical
+  analysis and receipt. The active-row transition and all publication writes
+  remain one transaction, so rollback restores the prior snapshot. Same-Place
+  retries are idempotent across fresh candidate UUIDs; different Places are
+  distinct publications.
+- **Image behavior:** Raw bytes remain the evidence identity. OpenAI receives a
+  separate server-only derivative with EXIF orientation normalized, no crop,
+  a 2,048-pixel long edge, and bounded adaptive JPEG compression. The private
+  provider prompt/schema prioritizes full-image restaurant clues without
+  adding another model call.
+- **Compatibility:** No shared DTO, public error code, database schema,
+  migration, runtime role, publication receipt, or environment name changes.
+- **Status:** Accepted Production incident repair
+- **Date:** 2026-07-22
