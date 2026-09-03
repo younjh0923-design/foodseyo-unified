@@ -168,6 +168,32 @@ input:focus-visible {
   line-height: 1.55;
 }
 
+.legacy-demo-notice {
+  border: 1px solid #dfc9b9;
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1.5rem;
+  background: #faf2e9;
+  padding: 0.9rem 1rem;
+}
+
+.legacy-demo-notice strong {
+  color: #7a3e29;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.legacy-demo-notice p {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+  color: #5f5148;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .link-intake-form {
   margin-top: clamp(3rem, 8vh, 4.5rem);
 }
@@ -203,6 +229,10 @@ input:focus-visible {
 .link-field-row input::placeholder {
   color: #9b9d99;
   opacity: 1;
+}
+
+.link-field-row input:disabled {
+  cursor: not-allowed;
 }
 
 .link-field-row button {
@@ -264,8 +294,19 @@ input:focus-visible {
   box-shadow: 0 12px 32px rgba(23, 35, 28, 0.04);
 }
 
-.upload-entry-card:hover {
+.upload-entry-card:not(:disabled):hover {
   border-color: var(--accent);
+}
+
+.upload-entry-card:disabled {
+  background: #f5f3ee;
+  color: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.upload-entry-card:disabled .upload-mark {
+  background: #8b918c;
 }
 
 .upload-mark {

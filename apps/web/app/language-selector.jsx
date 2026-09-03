@@ -9,6 +9,7 @@ const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp";
 const ACCEPTED_IMAGE_TYPE_SET = new Set(ACCEPTED_IMAGE_TYPES.split(","));
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_IMAGE_COUNT = 5;
+export const LEGACY_READ_ONLY = true;
 
 const COPY = {
   en: {
@@ -37,6 +38,11 @@ const COPY = {
     back: "Back to home",
     invalidImage: "Choose 1 to 5 JPG, PNG, or WebP images, up to 10 MB each.",
     analyzeError: "We couldn't complete the menu analysis. Please try again.",
+    legacyLabel: "Legacy demo",
+    legacyPreserved: "Foodseyo v1 is preserved as a legacy demo.",
+    legacyUnavailable: "Live menu analysis is no longer available.",
+    readOnlyAction: "Menu upload unavailable",
+    readOnlyActionDescription: "Uploads are disabled in this read-only demo.",
   },
   ko: {
     languageLabel: "언어 선택",
@@ -64,6 +70,11 @@ const COPY = {
     back: "홈으로 돌아가기",
     invalidImage: "장당 10MB 이하의 JPG, PNG 또는 WebP 이미지를 1~5장 선택해 주세요.",
     analyzeError: "메뉴 분석을 완료하지 못했어요. 다시 시도해 주세요.",
+    legacyLabel: "레거시 데모",
+    legacyPreserved: "Foodseyo v1은 레거시 데모로 보존되어 있습니다.",
+    legacyUnavailable: "실시간 메뉴 분석은 더 이상 제공되지 않습니다.",
+    readOnlyAction: "메뉴 업로드 사용 불가",
+    readOnlyActionDescription: "이 읽기 전용 데모에서는 업로드가 비활성화되어 있습니다.",
   },
 };
 
@@ -152,6 +163,7 @@ export function LanguageSelector({ initialLanguage = "en" }) {
   };
 
   const chooseImages = (fileList) => {
+    if (LEGACY_READ_ONLY) return;
     cancelRequests();
     setStatusMessage("");
     setSubmissionState("idle");
@@ -187,6 +199,7 @@ export function LanguageSelector({ initialLanguage = "en" }) {
 
   const analyze = async (event) => {
     event.preventDefault();
+    if (LEGACY_READ_ONLY) return;
     if (images.length === 0 || submissionState === "loading") return;
     setSubmissionState("loading");
     setStatusMessage("");
@@ -230,6 +243,7 @@ export function LanguageSelector({ initialLanguage = "en" }) {
 
   const checkRestaurantLink = async (event) => {
     event.preventDefault();
+    if (LEGACY_READ_ONLY) return;
     if (!isSupportedRestaurantLink(restaurantLink)) {
       setLinkStatus("invalid");
       return;
@@ -363,10 +377,19 @@ export function LanguageSelector({ initialLanguage = "en" }) {
           <p>{copy.description}</p>
         </section>
 
+        <aside className="legacy-demo-notice" aria-labelledby="legacy-demo-label">
+          <strong id="legacy-demo-label">{copy.legacyLabel}</strong>
+          <p id="legacy-demo-message">
+            <span>{copy.legacyPreserved}</span>
+            <span>{copy.legacyUnavailable}</span>
+          </p>
+        </aside>
+
         <form className="link-intake-form" onSubmit={checkRestaurantLink} noValidate>
           <div className="link-field-row">
             <input type="url" inputMode="url" autoCapitalize="none" autoCorrect="off"
               value={restaurantLink} aria-label={copy.linkPlaceholder}
+              aria-describedby="legacy-demo-message" disabled={LEGACY_READ_ONLY}
               placeholder={copy.linkPlaceholder}
               onChange={(event) => {
                 linkRequestRef.current.controller?.abort();
@@ -378,7 +401,7 @@ export function LanguageSelector({ initialLanguage = "en" }) {
                 setLinkStatus("idle");
               }} />
             <button type="submit" aria-label={copy.linkAction}
-              disabled={!restaurantLink.trim() || linkStatus === "loading"}>
+              disabled={LEGACY_READ_ONLY || !restaurantLink.trim() || linkStatus === "loading"}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="m5 12h13M13 6l6 6-6 6" />
               </svg>
@@ -399,6 +422,8 @@ export function LanguageSelector({ initialLanguage = "en" }) {
         <button
           type="button"
           className="upload-entry-card"
+          disabled={LEGACY_READ_ONLY}
+          aria-describedby="legacy-demo-message"
           onClick={() => {
             cancelRequests();
             fileInputRef.current?.click();
@@ -407,15 +432,16 @@ export function LanguageSelector({ initialLanguage = "en" }) {
         >
           <UploadMark />
           <span className="upload-entry-copy">
-            <strong>{copy.action}</strong>
-            <span>{copy.actionDescription}</span>
+            <strong>{copy.readOnlyAction}</strong>
+            <span>{copy.readOnlyActionDescription}</span>
           </span>
           <svg className="entry-arrow" viewBox="0 0 24 24" aria-hidden="true">
             <path d="m9 5 7 7-7 7" />
           </svg>
         </button>
         <input ref={fileInputRef} className="visually-hidden" type="file"
-          accept={ACCEPTED_IMAGE_TYPES} multiple tabIndex={-1} aria-hidden="true"
+          accept={ACCEPTED_IMAGE_TYPES} multiple disabled={LEGACY_READ_ONLY}
+          tabIndex={-1} aria-hidden="true"
           onChange={(event) => chooseImages(event.target.files)} />
         {statusMessage ? <p className="landing-error" role="alert">{statusMessage}</p> : null}
       </div>

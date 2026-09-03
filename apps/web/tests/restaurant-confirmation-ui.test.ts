@@ -112,8 +112,11 @@ const confirmRouteSource = await readFile(
   "utf8",
 );
 const globalStyles = await readFile(resolve("app/globals.css"), "utf8");
-assert.match(homeSource, /fetch\("\/api\/analyze\/menu-images"/u);
-assert.match(homeSource, /fetch\("\/api\/analyze\/restaurant-link"/u);
+assert.match(homeSource, /export const LEGACY_READ_ONLY = true/u);
+assert.equal(
+  homeSource.match(/if \(LEGACY_READ_ONLY\) return;/gu)?.length,
+  3,
+);
 assert.match(clientSource, /fetch\("\/api\/restaurant\/confirm"/u);
 assert.match(clientSource, /fetch\("\/api\/assistant"/u);
 assert.match(clientSource, /onContinueMenuOnly=\{\(\) => confirm\(null\)\}/u);
@@ -127,14 +130,20 @@ const koreanLanding = renderToStaticMarkup(
   createElement(LanguageSelector, { initialLanguage: "ko" }),
 );
 assert.match(englishLanding, /Know what you&#x27;re ordering\./u);
-assert.match(englishLanding, /Scan or upload a menu/u);
+assert.match(englishLanding, /Foodseyo v1 is preserved as a legacy demo\./u);
+assert.match(englishLanding, /Live menu analysis is no longer available\./u);
+assert.match(englishLanding, /Menu upload unavailable/u);
 assert.match(englishLanding, /Paste a restaurant or menu link/u);
 assert.match(englishLanding, /type="file"/u);
 assert.match(englishLanding, /multiple=""/u);
+assert.match(englishLanding, /<input[^>]*type="url"[^>]*disabled=""/u);
+assert.match(englishLanding, /<button[^>]*class="upload-entry-card"[^>]*disabled=""/u);
 assert.doesNotMatch(englishLanding, /restaurant-confirmation\?lang=en/u);
 assert.match(englishLanding, /aria-pressed="true"[^>]*>EN/u);
 assert.match(koreanLanding, /뭐 먹지\?/u);
-assert.match(koreanLanding, /메뉴 촬영 또는 업로드/u);
+assert.match(koreanLanding, /Foodseyo v1은 레거시 데모로 보존되어 있습니다\./u);
+assert.match(koreanLanding, /실시간 메뉴 분석은 더 이상 제공되지 않습니다\./u);
+assert.match(koreanLanding, /메뉴 업로드 사용 불가/u);
 assert.match(koreanLanding, /식당 또는 메뉴 링크 붙여넣기/u);
 assert.match(koreanLanding, /type="file"/u);
 assert.doesNotMatch(koreanLanding, /restaurant-confirmation\?lang=ko/u);
@@ -158,33 +167,11 @@ assert.match(clientSource, /confirmRequest\.current\.id !== requestId/u);
 assert.match(clientSource, /publicError\?\.code === "INVALID_INPUT"/u);
 assert.match(clientSource, /publicError\?\.retryable === true/u);
 assert.match(clientSource, /event\.persisted/u);
-for (const durationField of [
-  "request_parse_ms",
-  "image_preprocess_ms",
-  "extraction_cache_lookup_ms",
-  "openai_extraction_ms",
-  "restaurant_resolution_ms",
-  "canonical_validation_ms",
-  "token_build_ms",
-  "total_ms",
-]) {
-  assert.match(analyzeRouteSource, new RegExp(durationField, "u"));
-}
-for (const durationField of [
-  "confirm_cache_lookup_ms",
-  "publication_ms",
-  "total_ms",
-]) {
-  assert.match(confirmRouteSource, new RegExp(durationField, "u"));
-}
-assert.match(analyzeRouteSource, /safe_error_code/u);
-assert.match(analyzeRouteSource, /failed_stage/u);
-assert.match(confirmRouteSource, /safe_error_code/u);
-assert.match(confirmRouteSource, /failed_stage/u);
 for (const routeSource of [analyzeRouteSource, confirmRouteSource]) {
+  assert.match(routeSource, /legacyReadOnlyResponse/u);
   assert.doesNotMatch(
     routeSource,
-    /console\.(?:info|error|log)\([^;]*(?:analysisToken|restaurantName|providerResponse|DATABASE_URL|API_KEY)/su,
+    /createLiveRestaurantConfirmationService|process\.env|console\.(?:info|error|log)/su,
   );
 }
 for (const forbidden of ["Fixture", "preview-toolbar", "fixture-banner", "setTimeout"] as const) {
